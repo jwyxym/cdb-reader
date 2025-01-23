@@ -6,14 +6,8 @@
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "unshow_list_page" id = "under_list_page">
-                    <div id = "upload_area"
-                        @dragenter.prevent="is_uploading = true"
-                        @dragover.prevent="is_uploading = true"
-                        @dragleave.prevent="is_uploading = false"
-                        @drop.prevent="upload_file"
-                        @click="() => { upload_file_input.click(); }"
-                    >
-                        <h4>点击或拖拽上传文件</h4>
+                    <div id = "upload_area" @dragenter.prevent="is_uploading = true" @dragover.prevent="is_uploading = true" @dragleave.prevent="is_uploading = false" @drop.prevent="upload_file" @click="() => { upload_file_input.click(); }">
+                        <h4>拖拽文件或点击此处上传文件</h4>
                         <input type = "file" multiple accept="image/*, text/*, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "click_upload_file" style = "display: none;"/>
                     </div>
                     <div id = "cdb_list">
@@ -274,10 +268,19 @@
     #upload_area {
         width: 25vw;
         height: 10vh;
-        border: 2px dashed #000000;
+        border: 2px dashed #bbbbbb;
+
+        color: #bbbbbb;
 
         text-align: center;
         justify-self: center;
+
+        cursor: pointer;
+    }
+
+    #upload_area:hover {
+        border: 2px dashed black;
+        color: black;
     }
 
     .cdb_list_btn {

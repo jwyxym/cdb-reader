@@ -57,18 +57,22 @@
         <div id = "card_box">
             <transition name = "card_type">
                 <div v-if = "show_card_box[0][0]" id = "card_type">
-                    <span v-for = "(i, v) in type_list" :key = "v" :style = "{ 'grid-column-start': [1, 3, 5][v % 3], 'grid-column-end': [1, 3, 5][v % 3] + 1, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }">{{ i[1] }}:&nbsp;</span>
-                    <input type = "checkbox" v-for = "(i, v) in type_list" :key = "v" v-model = "card_type[v]" :style = "{ 'grid-column-start': [1, 3, 5][v % 3] + 1, 'grid-column-end': [1, 3, 5][v % 3] + 2, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }"/>
+                    <button class = "unshow_card_box_btn" @click = "whether_show_card_box(false, 0)" :title = "show_card_box[2][0]">&gt;</button>
+                    <h2>卡片类型</h2>
+                    <div v-for = "(i, v) in type_list" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card_category[v]"/> </div>
+                    <!-- <span v-for = "(i, v) in type_list" :key = "v" :style = "{ 'grid-column-start': [1, 3, 5][v % 3], 'grid-column-end': [1, 3, 5][v % 3] + 1, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }">{{ i[1] }}:&nbsp;</span>
+                    <input type = "checkbox" v-for = "(i, v) in type_list" :key = "v" v-model = "card_type[v]" :style = "{ 'grid-column-start': [1, 3, 5][v % 3] + 1, 'grid-column-end': [1, 3, 5][v % 3] + 2, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }"/> -->
                 </div>
             </transition>
             <transition name = "card_category">
                 <div v-if = "show_card_box[0][1]" id = "card_category">
-                    <span v-for = "(i, v) in category_list" :key = "v" :style = "{ 'grid-column-start': [1, 3, 5][v % 3], 'grid-column-end': [1, 3, 5][v % 3] + 1, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }">{{ i[1] }}:&nbsp;</span>
-                    <input type = "checkbox" v-for = "(i, v) in category_list" :key = "v" v-model = "card_category[v]" :style = "{ 'grid-column-start': [1, 3, 5][v % 3] + 1, 'grid-column-end': [1, 3, 5][v % 3] + 2, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }"/>
+                    <button class = "unshow_card_box_btn" @click = "whether_show_card_box(false, 1)" :title = "show_card_box[2][1]">&gt;</button>
+                    <h2>效果分类</h2>
+                    <div v-for = "(i, v) in category_list" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card_category[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_hint">
-                <div v-if = "show_card_box[0][2]" id = "card_hint">
+                <div v-if = "show_card_box[0][2]" id = "card_hint" >
                     <span id = "card_hint_title">脚本提示文字:&nbsp;</span>
                     <span class = 'card_hint_I' v-for = "(i, v) in Array(8).fill(0)" :key = "v" :style = "{ 'grid-row-start': v + 2, 'grid-row-end': v + 3 }">{{ v }}:&nbsp;</span>
                     <input class = 'card_hint_I' v-for = "(i, v) in Array(8).fill(0)" :key = "v"  v-model = "card_hint[v]" :style = "{ 'grid-row-start': v + 2, 'grid-row-end': v + 3 }"/>
@@ -77,7 +81,7 @@
                 </div>
             </transition>
             <transition name = "card_box_btn">
-                <div v-if = "!show_card_box[0][0] &&!show_card_box[0][1] &&!show_card_box[0][2]" id = "card_box_btn"><button v-for = "(i, v) in Array(3).fill(0)" :key = "v" @click = "() => { show_card_box[0][v] = true; }" :title = "show_card_box[1][v]">&lt;</button></div>
+                <div v-if = "unshow_card_box" id = "card_box_btn"><button v-for = "(i, v) in Array(3).fill(0)" :key = "v" @click = "whether_show_card_box(true, v)" :title = "show_card_box[1][v]">&lt;</button></div>
             </transition>
         </div>
     </div>
@@ -116,7 +120,8 @@
     let card_link = 0;
 
     let whether_show_links = ref(['点击隐藏连接箭头', true, '&#10003']);
-    let show_card_box = ref([[false, false, false], ['显示卡片类型', '显示卡片分类', '显示卡片脚本提示文字']]);
+    let show_card_box = ref([[false, false, false], ['显示卡片类型', '显示效果分类', '显示卡片脚本提示文字'], ['隐藏卡片类型', '隐藏效果分类', '隐藏卡片脚本提示文字']]);
+    let unshow_card_box = ref(true);
     let show_links_btn = ref(null);
 
     let get_select = defineProps(['cdb', 'page', 'card', 'close']);
@@ -255,6 +260,18 @@
             console.error('发送请求失败:', error);
         }
     };
+
+    async function whether_show_card_box(chk, v) {
+        if (chk) {
+            unshow_card_box.value = false;
+            await(new Promise(resolve => setTimeout(resolve, 500)));
+            show_card_box.value[0][v] = true;
+        } else {
+            show_card_box.value[0][v] = false;
+            await(new Promise(resolve => setTimeout(resolve, 500)));
+            unshow_card_box.value = true;
+        }
+    }
 </script>
 
 <style scoped>
@@ -379,10 +396,62 @@
 
         display: grid;
 
-        grid-template-columns: repeat(6, 1fr);
-        grid-template-rows: repeat(8, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(16, 1fr);
 
-        justify-items: center;
+        justify-items: left;
+    }
+
+    #card_category div, #card_type div {
+        width: 9vw;
+
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+
+    }
+
+    #card_category div span, #card_type div span {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        justify-self: center;
+    }
+
+    #card_category div input, #card_type div input {
+        grid-column-start: 3;
+        grid-column-end: 4;
+        justify-self: right;
+
+        height: 50%;
+        width: 50%;
+    }
+
+    .unshow_card_box_btn {
+        width: 4vw;
+        height: 4vh;
+
+        align-self: center;
+        justify-self: left;
+
+        border: none;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+        background-color: green;
+
+        cursor: pointer;
+
+        grid-column-start: 1;
+        grid-column-end: 2;
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+
+    #card_category h2, #card_type h2 {
+        justify-self: center;
+        grid-column-start: 1;
+        grid-column-end: 4;
+        grid-row-start: 1;
+        grid-row-end: 2;
     }
 
     #card_type, #card_category, #card_hint {
@@ -390,7 +459,6 @@
         height: 100vh;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         justify-self: center;
-        text-align: center;
     }
 
     #card_hint {
