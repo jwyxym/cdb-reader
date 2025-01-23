@@ -9,14 +9,14 @@ def read_card_info(file):
             if '#####' in line:
                 continue
             if line.startswith('##'):
-                if j != 4:
-                    card_info.append([])
+                card_info.append([])
                 j += 1
-                continue
-            if j == 4:
                 continue
             line = line.replace('\n', '').split('\t')
             if line[1] == 'N/A':
+                continue
+            if j == 4:
+                card_info[-1].append(int(line[0], 16))
                 continue
             card_info[-1].append([line[0]])
             info = ''

@@ -1,5 +1,4 @@
 from sqlite3 import connect
-from unittest import result
 
 from read_config import read_card_info
 
@@ -54,6 +53,11 @@ def get_data(rows, file):
                     else:
                         type_list.append(False)
                 card_data[-1][-1].append(type_list)
+            elif i == 5 or i == 6:
+                if (row[i] > -1):
+                    card_data[-1][-1].append(row[i])
+                else:
+                    card_data[-1][-1].append('?')
             elif i == 7:
                 level = ''
                 for lv in card_info[3]:

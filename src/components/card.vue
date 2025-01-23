@@ -6,9 +6,11 @@
         </div>
         <div id = "card_pic">
             <img :src = "card_pic"/>
-            <div id = "card_link"><img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "link_list[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 }" v-if = "whether_show_links[1]"/></div>
+            <div id = "card_link">
+                <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "link_list_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 }" v-if = "whether_show_links[1] && is_type_link" @mouseover = "change_src(i)" @mouseleave = "reset_src(i)" @click = "change_card_link(i)"/>
+            </div>
             <div>
-                <button ref = "show_links_btn" @click = "whether_show_or_not_links" :title = "whether_show_links[0]" v-html = " whether_show_links[2] "></button>
+                <button ref = "show_links_btn" @click = "whether_show_or_not_links" :title = "whether_show_links[0]" v-html = "whether_show_links[2]" v-if = "is_type_link"></button>
             </div>
         </div>
         <div id = "card_ot">
@@ -41,7 +43,7 @@
         </div>
         <div id = "card_id">
             <span>同名卡:&nbsp;&nbsp;</span>
-            <input @input = "filter_input($event, ['card_id_II'])" v-model = "card_id_II"/>
+            <input @input = "filter_input($event, ['card_alias'])" v-model = "card_alias"/>
             <span>卡号:&nbsp;&nbsp;</span>
             <input @input = "filter_input($event, ['card_id'])" v-model = "card_id"/>
         </div>
@@ -60,8 +62,6 @@
                     <button class = "unshow_card_box_btn" @click = "whether_show_card_box(false, 0)" :title = "show_card_box[2][0]">&gt;</button>
                     <h2>卡片类型</h2>
                     <div v-for = "(i, v) in type_list" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card_category[v]"/> </div>
-                    <!-- <span v-for = "(i, v) in type_list" :key = "v" :style = "{ 'grid-column-start': [1, 3, 5][v % 3], 'grid-column-end': [1, 3, 5][v % 3] + 1, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }">{{ i[1] }}:&nbsp;</span>
-                    <input type = "checkbox" v-for = "(i, v) in type_list" :key = "v" v-model = "card_type[v]" :style = "{ 'grid-column-start': [1, 3, 5][v % 3] + 1, 'grid-column-end': [1, 3, 5][v % 3] + 2, 'grid-row-start': Math.floor(v / 3) + 1, 'grid-row-end': Math.floor(v / 3) + 2 }"/> -->
                 </div>
             </transition>
             <transition name = "card_category">
@@ -73,11 +73,11 @@
             </transition>
             <transition name = "card_hint">
                 <div v-if = "show_card_box[0][2]" id = "card_hint" >
-                    <span id = "card_hint_title">脚本提示文字:&nbsp;</span>
-                    <span class = 'card_hint_I' v-for = "(i, v) in Array(8).fill(0)" :key = "v" :style = "{ 'grid-row-start': v + 2, 'grid-row-end': v + 3 }">{{ v }}:&nbsp;</span>
-                    <input class = 'card_hint_I' v-for = "(i, v) in Array(8).fill(0)" :key = "v"  v-model = "card_hint[v]" :style = "{ 'grid-row-start': v + 2, 'grid-row-end': v + 3 }"/>
-                    <span class = 'card_hint_II' v-for = "(i, v) in Array(8).fill(0)" :key = "v" :style = "{ 'grid-row-start': v + 2, 'grid-row-end': v + 3 }">{{ v + 8 }}:&nbsp;</span>
-                    <input class = 'card_hint_II' v-for = "(i, v) in Array(8).fill(0)" :key = "v"  v-model = "card_hint[v + 8]" :style = "{ 'grid-row-start': v + 2, 'grid-row-end': v + 3 }"/>
+                    <button class = "unshow_card_box_btn" @click = "whether_show_card_box(false, 2)" :title = "show_card_box[2][2]">&gt;</button>
+                    <h2>脚本提示文字</h2>
+                    <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
+                        <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card_hint[v]"/>
+                    </div>
                 </div>
             </transition>
             <transition name = "card_box_btn">
@@ -99,6 +99,7 @@
     let category_list = ref([]);
     let link_list = ref([]);
 
+    let link_list_pics = ref([]);
     let card_data = ref([]);
     
     let card_name = ref('');
@@ -107,7 +108,7 @@
     let card_level = ref(level_list.value[0][1]);
     let card_race = ref(race_list.value[0][1]);
     let card_id = ref(0);
-    let card_id_II = ref(0);
+    let card_alias = ref(0);
     let card_pic = ref('/cover.png');
     let card_atk = ref(0);
     let card_def = ref(0);
@@ -117,8 +118,9 @@
     let card_category = ref([]);
     let card_hint = ref([]);
     let card_setcard = ref(Array(4).fill('0'));
-    let card_link = 0;
+    let card_link = ref(0);
 
+    let is_type_link = ref(false)
     let whether_show_links = ref(['点击隐藏连接箭头', true, '&#10003']);
     let show_card_box = ref([[false, false, false], ['显示卡片类型', '显示效果分类', '显示卡片脚本提示文字'], ['隐藏卡片类型', '隐藏效果分类', '隐藏卡片脚本提示文字']]);
     let unshow_card_box = ref(true);
@@ -133,9 +135,9 @@
     onMounted(() => {
         for (let i = 1; i < 9; i++) {
             if (i == 5) {
-                link_list.value.push('');
+                link_list_pics.value.push('');
             }
-            link_list.value.push('./link-arrow/arrow' + i + '.png');
+            link_list_pics.value.push('./link-arrow/arrow' + i + '.png');
         }
         get_card_info();
     });
@@ -159,29 +161,53 @@
         get_card_data();
     }, { immediate: true, deep: true });
 
+    function change_card_link(i) {
+        if ((card_link.value & link_list.value[i]) > 0)
+            card_link.value -= link_list.value[i]
+        else
+            card_link.value += link_list.value[i]
+        console.log(card_link.value)
+        change_src(i)
+    }
+
+    function change_src(i) {
+        if (link_list_pics.value[i].endsWith('-I.png'))
+            return;
+        link_list_pics.value[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '-I.png'
+    }
+
+    
+    function reset_src(i) {
+        if ((card_link.value & link_list.value[i]) == 0)
+            link_list_pics.value[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '.png'
+    }
+
     function filter_input(event, t, str_filter = /[^0-9]/) {
+        let input_value = event.target.value;
         if (t[0] == 'card_setcard') {
-            let input_value = event.target.value;
             let new_value = input_value.replace(str_filter, '').slice(0, 4)
             card_setcard.value[t[1]] = new_value;
         } else if (t[0] == 'card_id') {
-            let input_value = event.target.value;
             let new_value = input_value.replace(str_filter, '').slice(0, 19);
             card_id.value = new_value;
-        } else if (t[0] == 'card_id_II') {
-            let input_value = event.target.value;
+        } else if (t[0] == 'card_alias') {
             let new_value = input_value.replace(str_filter, '').slice(0, 19);
-            card_id_II.value = new_value;
+            card_alias.value = new_value;
         } else if (t[0] == 'card_atk') {
-            let input_value = event.target.value;
-            let new_value = input_value.replace(str_filter, '').slice(0, 19);
-            card_atk.value = new_value;
+            if (input_value.slice(0, 1) == '-' || input_value.slice(0, 1) == '?') {
+                card_atk.value = '?';
+            } else {
+                let new_value = input_value.replace(str_filter, '').slice(0, 19);
+                card_atk.value = new_value;
+            }
         } else if (t[0] == 'card_def') {
-            let input_value = event.target.value;
-            let new_value = input_value.replace(str_filter, '').slice(0, 19);
-            card_def.value = new_value;
+            if (input_value.slice(0, 1) == '-' || input_value.slice(0, 1) == '?') {
+                card_def.value = '?';
+            } else {
+                let new_value = input_value.replace(str_filter, '').slice(0, 19);
+                card_def.value = new_value;
+            }
         } else if (t[0] == 'card_pendulum') {
-            let input_value = event.target.value;
             let new_value = input_value.replace(str_filter, '');
             while (new_value != '' && parseInt(new_value) >= 255)
                 new_value = new_value.slice(0, -1);
@@ -204,7 +230,7 @@
         card_level.value = level_list.value[0][1];
         card_race.value = race_list.value[0][1];
         card_id.value = 0;
-        card_id_II.value = 0;
+        card_alias.value = 0;
         card_pic.value = '/cover.png';
         card_atk.value = 0;
         card_def.value = 0;
@@ -214,7 +240,7 @@
         card_category.value = Array(category_list.value.length).fill(false);
         card_hint.value = Array(16).fill('');
         card_setcard.value = Array(4).fill(0);
-        card_link = 0;
+        card_link.value = 0;
     }
 
     async function get_card_info() {
@@ -223,9 +249,10 @@
                 ot_list.value = get.data[1];
                 attribute_list.value = get.data[2];
                 level_list.value = get.data[3];
-                category_list.value = get.data[4];
-                race_list.value = get.data[5];
-                type_list.value = get.data[6];
+                link_list.value = get.data[4];
+                category_list.value = get.data[5];
+                race_list.value = get.data[6];
+                type_list.value = get.data[7];
                 clear_card()
             })
             .catch(error => {
@@ -243,7 +270,7 @@
             let data = response.data;
             card_id.value = data[0];
             card_ot.value = data[1];
-            card_id_II.value = data[2];
+            card_alias.value = data[2];
             card_setcard.value = data[3];
             card_type.value = data[4];
             card_atk.value = data[5];
@@ -391,9 +418,6 @@
     }
 
     #card_type, #card_category {
-        height: 100%;
-        width: 90%;
-
         display: grid;
 
         grid-template-columns: repeat(3, 1fr);
@@ -407,7 +431,6 @@
 
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-
     }
 
     #card_category div span, #card_type div span {
@@ -446,7 +469,15 @@
         grid-row-end: 2;
     }
 
-    #card_category h2, #card_type h2 {
+    #card_hint {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(17, 1fr);
+
+        justify-items: left;
+    }
+
+    #card_category h2, #card_type h2, #card_hint h2 {
         justify-self: center;
         grid-column-start: 1;
         grid-column-end: 4;
@@ -461,43 +492,29 @@
         justify-self: center;
     }
 
-    #card_hint {
+    #card_hint div {
+        width: 100%;
+        grid-column-start: 1;
+        grid-column-end: 4;
+
         display: grid;
-
         grid-template-columns: repeat(6, 1fr);
-        grid-template-rows: repeat(17, 1fr);
-
         justify-items: center;
     }
 
-    #card_hint #card_hint_title {
-        grid-column-start: 1;
-        grid-column-end: 7;
-
-        grid-row-start: 1;
-        grid-row-end: 2;
-    }
-
-    #card_hint #card_hint_I {
+    #card_hint div span {
+        align-self: center;
+        font-size: 120%;
         grid-column-start: 1;
         grid-column-end: 2;
     }
 
-    #card_hint #card_hint_II {
-        grid-column-start: 4;
-        grid-column-end: 5;
-    }
-
-    #card_hint #card_hint_I {
+    #card_hint div input {
         grid-column-start: 2;
-        grid-column-end: 4;
-        width: 80%;
-    }
-
-    #card_hint #card_hint_II {
-        grid-column-start: 5;
         grid-column-end: 7;
-        width: 80%;
+
+        width: 100%;
+        height: 80%;
     }
 
     #card_box_btn {
