@@ -170,10 +170,6 @@
         if ((type_count & 0x4000000) > 0)
             def_or_link = card_link.value
 
-        is_type_pendulum.value = (type_count & 0x1000000) > 0;
-        is_type_link.value = (type_count & 0x4000000) > 0;
-
-
         return [
             [
                 card_id.value,
@@ -217,10 +213,14 @@
             }
             link_list_pics.value.push('./link-arrow/arrow' + i + '.png');
         }
-        // is_type_link.value = false;
-        // is_type_pendulum.value = false;
         get_card_info();
     });
+
+    watch(card_data, (new_value) => {
+        let type_count = new_value[1][4];
+        is_type_pendulum.value = (type_count & 0x1000000) > 0;
+        is_type_link.value = (type_count & 0x4000000) > 0;
+    }, { deep: true, immediate: true });
 
     watch(get_select, (new_value) => {
         close_card.value = new_value.close;
