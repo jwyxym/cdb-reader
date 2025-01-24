@@ -91,7 +91,6 @@ def save_cdb():
     card_data = data.get('data')
     code = data.get('code')
     cdb = data.get('cdb')
-    print(card_data)
     change_cdb(card_data, f'{buffer}/{cdb}')
     return jsonify(), 200
 
