@@ -9,11 +9,13 @@ from read_config import read_card_info
 
 app = Flask(__name__, static_folder='dist')
 
+cache = './cache'
+
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if exists('./uploads'):
-        rmtree('./uploads')
+    if exists(cache):
+        rmtree(cache)
     if path != "" and exists(join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
@@ -23,8 +25,8 @@ def serve(path):
 def remove_file():
     data = request.json
     file = data.get('file')
-    if exists(f'./uploads/{file}'):
-        remove(f'./uploads/{file}')
+    if exists(f'{cache}/{file}'):
+        remove(f'{cache}/{file}')
     return jsonify(), 200
 
 @app.route('/api/initialize', methods = ['GET'])
@@ -46,15 +48,15 @@ def get_file():
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
-        file_path = f'./uploads/{file_name}'
+        file_path = f'{cache}/{file_name}'
 
-        if not exists('./uploads'):
-            mkdir('./uploads')
-            windll.kernel32.SetFileAttributesW('./uploads', 2)
+        if not exists(cache):
+            mkdir(cache)
+            windll.kernel32.SetFileAttributesW(cache, 2)
 
         i = 1
         while exists(file_path):
-            file_path = f'./uploads/{file_name[ : file_name.find(".")]}({i}){file_name[file_name.find(".") : ]}'
+            file_path = f'{cache}/{file_name[ : file_name.find(".")]}({i}){file_name[file_name.find(".") : ]}'
             i += 1
 
         file.save(file_path)
@@ -68,7 +70,7 @@ def get_file():
 def read_cdb():
     data = request.json
     cdb = data.get('cdb')
-    cdb_list = sql(f'./uploads/{cdb}', 'list')
+    cdb_list = sql(f'{cache}/{cdb}', 'list')
     if len(cdb_list) == 0:
         return jsonify({'error': '无法读取cdb文件'}), 400
     return jsonify(cdb_list)
@@ -81,7 +83,7 @@ def read_card():
     cdb = data.get('cdb')
     if not exists('./config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
-    return jsonify(sql(f'./uploads/{cdb}', 'data')[int(page)][int(card)])
+    return jsonify(sql(f'{cache}/{cdb}', 'data')[int(page)][int(card)])
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000)
