@@ -1,17 +1,20 @@
 from flask import Flask, send_from_directory, jsonify, request
 from os.path import exists, join
 from os import mkdir, remove, listdir
-from shutil import rmtree
-from ctypes import windll
+from shutil import rmtree, copy
 from webbrowser import open_new
-from asyncio import run, get_running_loop
 
 from sqlite_cdb import sql
 from read_config import read_card_info
+from file_manager import process_pic, copy_cdb, initialize_dir
 
 app = Flask(__name__, static_folder='dist')
 
-cache = './dist/cache'
+buffer = './dist/buffer'
+cdb_buffer_folder_path = 'cdb_buffer'
+pics_folder_path = 'pics'
+script_folder_path = 'script'
+package_folder_path = 'package'
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -25,15 +28,15 @@ def serve(path):
 def remove_file():
     data = request.json
     file = data.get('file')
-    if exists(f'{cache}/{file}'):
-        remove(f'{cache}/{file}')
+    if exists(f'{buffer}/{file}'):
+        remove(f'{buffer}/{file}')
     return jsonify(), 200
 
 @app.route('/api/get_cdbs', methods = ['GET'])
 def get_cdbs():
     opened_cdbs = []
-    if exists(cache):
-        for file in listdir(cache):
+    if exists(buffer):
+        for file in listdir(buffer):
             if file.endswith('.cdb'):
                 opened_cdbs.append(file)
     return jsonify(opened_cdbs), 200
@@ -51,27 +54,26 @@ def get_file():
         return jsonify({'error': 'No file part'}), 400
     
     file = request.files['file']
+    file_type = file.content_type
     file_name = file.filename
     
     if file_name == '':
         return jsonify({'error': 'No selected file'}), 400
 
     if file:
-        file_path = f'{cache}/{file_name}'
-
-        if not exists(cache):
-            mkdir(cache)
-            windll.kernel32.SetFileAttributesW(cache, 2)
-
-        i = 1
-        while exists(file_path):
-            file_path = f'{cache}/{file_name[ : file_name.find(".")]}({i}){file_name[file_name.find(".") : ]}'
-            i += 1
-
+        initialize_dir(buffer)
+        file_path = get_only_one_file_path(buffer, file_name)
         file.save(file_path)
 
         if file_name.endswith('.cdb'):
-            return jsonify([file_path[file_path.rfind('/') + 1 : ]]), 200
+            copy_cdb_result = copy_cdb(file_path, buffer, cdb_buffer_folder_path)
+            if copy_cdb_result:
+                return jsonify(file_path[file_path.rfind('/') + 1 : ]), 200
+        elif 'image' in file_type:
+            pic_result = process_pic(file_path, buffer, pics_folder_path)
+            if pic_result:
+                remove(file_path)
+                return jsonify(pic_result), 200
         
     return jsonify([]), 200
 
@@ -79,7 +81,7 @@ def get_file():
 def read_cdb():
     data = request.json
     cdb = data.get('cdb')
-    cdb_list = sql(f'{cache}/{cdb}', 'list')
+    cdb_list = sql(f'{buffer}/{cdb}', 'list')
     if len(cdb_list) == 0:
         return jsonify({'error': '无法读取cdb文件'}), 400
     return jsonify(cdb_list), 200
@@ -93,18 +95,14 @@ def read_card():
     if not exists('./config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
 
-    card_data = sql(f'{cache}/{cdb}', 'data')[int(page)][int(card)]
-    if exists(f'{cache}/pics/{card_data[0]}.jpg'):
-        card_data.append(f'{cache}/pics/{card_data[0]}.jpg')
+    card_data = sql(f'{buffer}/{cdb}', 'data')
+    if exists(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg'):
+        card_data[int(page)][int(card)].append(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg')
     else:
-        card_data.append('/cover.png')
-    return jsonify(card_data), 200
-
-async def start_server():
-    loop = get_running_loop()
-    loop.run_in_executor(None, open_new, 'http://127.0.0.1:8000/')
-
-    await app.run(host = '127.0.0.1', port = 8000)
+        card_data[int(page)][int(card)].append('/cover.png')
+    return jsonify([card_data[0], card_data[int(page)][int(card)]]), 200
 
 if __name__ == '__main__':
-    run(start_server())
+    rmtree(buffer, ignore_errors = True)
+    open_new('http://127.0.0.1:8000/')
+    app.run(host = '127.0.0.1', port = 8000)

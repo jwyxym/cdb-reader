@@ -118,6 +118,7 @@
     let card_hint = ref([]);
     let card_setcard = ref(Array(4).fill('0'));
     let card_link = ref(0);
+    let card_origin_id = ref(0);
 
     let is_type_link = ref(false);
     let is_type_pendulum = ref(false);
@@ -126,8 +127,9 @@
     let unshow_card_box = ref(true);
     let show_links_btn = ref(null);
 
-    let get_select = defineProps(['cdb', 'page', 'card', 'close']);
+    let get_select = defineProps(['cdb', 'page', 'card', 'pic', 'close']);
     let select_card_list = ref([]);
+    let new_pic = ref('');
     let close_card = ref(false);
 
     let emit = defineEmits(['event_close_fixed']);
@@ -140,7 +142,6 @@
         let race_count = race_list.value.find(e => e[1] == card_race.value);
         let attribute_count = attribute_list.value.find(e => e[1] == card_attribute.value);
         let category_count = 0;
-
 
         if (lv_and_p)
             lv_and_p = lv_and_p[0];
@@ -223,10 +224,17 @@
     }, { deep: true, immediate: true });
 
     watch(get_select, (new_value) => {
+        new_pic.value = new_value.pic;
         close_card.value = new_value.close;
         select_card_list.value[0] = new_value.cdb;
         select_card_list.value[1] = new_value.page;
         select_card_list.value[2] = new_value.card;
+    }, { immediate: true });
+
+    watch(new_pic, (n) => {
+        if (n.includes(card_id.value) && card_origin_id.value > 0) {
+            card_pic.value = n;
+        }
     }, { immediate: true });
 
     watch(close_card, (n) => {
@@ -320,6 +328,7 @@
         card_category.value = Array(category_list.value.length).fill(false);
         card_hint.value = Array(16).fill('');
         card_setcard.value = Array(4).fill('0');
+        card_origin_id.value = 0;
     }
 
     async function get_card_info() {
@@ -346,7 +355,8 @@
                 page: select_card_list.value[1],
                 card: select_card_list.value[2]
             });
-            let data = response.data;
+            let data = response.data[1];
+            cdb_title.value = response.data[0]
             card_id.value = data[0];
             card_ot.value = data[1];
             card_alias.value = data[2];
@@ -363,6 +373,7 @@
             card_desc.value = data[13];
             card_hint.value = data[14];
             card_pic.value = data[15];
+            card_origin_id.value = data[0];
         } catch (error) {
             console.error('发送请求失败:', error);
         }

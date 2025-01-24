@@ -8,7 +8,7 @@
                 <div v-if = "unshow_list_page" id = "under_list_page">
                     <div id = "upload_area" @dragenter.prevent="is_uploading = true" @dragover.prevent="is_uploading = true" @dragleave.prevent="is_uploading = false" @drop.prevent="upload_file" @click="() => { upload_file_input.click(); }">
                         <h4>拖拽文件或点击此处上传文件</h4>
-                        <input type = "file" multiple accept="image/*, text/*, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "click_upload_file" style = "display: none;"/>
+                        <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "click_upload_file" style = "display: none;"/>
                     </div>
                     <div id = "cdb_list">
                         <button v-for="(i, v) in (page > 0? Array(cdbs_list.length >= page * 10? 10 : cdbs_list.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ cdbs_list[v + (Math.abs(page) - 1) * 10] }}</button>
@@ -21,7 +21,7 @@
                 </div>
             </transition>
         </div>
-        <card_page :cdb = "select_cdb" :page = "select_page" :card = "select_card" :close = "close_cdb" @event_close_fixed = "() => { close_cdb = false }"/>
+        <card_page :cdb = "select_cdb" :page = "select_page" :card = "select_card" :pic = "upload_new_pic" :close = "close_cdb" @event_close_fixed = "() => { close_cdb = false }"/>
     </div>
 </template>
 
@@ -32,6 +32,7 @@
     import { ref, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
 
+    let upload_new_pic = ref('');
     let select_cdb = ref('');
     let select_page = ref(0);
     let select_card = ref(0);
@@ -61,10 +62,11 @@
     });
 
     watch(opened_cdb_list, (new_list) => {
-        for (let i = 0; i < new_list.length; i++) {
-            if (new_list[i].endsWith('.cdb')) {
-                cdbs_list.value.push(new_list[i]);
-            }
+        if (new_list.endsWith('.cdb')) {
+            cdbs_list.value.push(new_list);
+        }
+        if (new_list.endsWith('.jpg')) {
+            upload_new_pic.value = new_list;
         }
         if (Math.ceil(cdbs_list.value.length / 10) > page.value) {
             page.value = Math.ceil(cdbs_list.value.length / 10);
@@ -117,7 +119,7 @@
     function check_type(type, name) {
         if (type.includes('image') || type.includes('text'))
             return true;
-        else if (name.endsWith('.cdb') || name.endsWith('.ypk') || name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tgz') || name.endsWith('.tar.gz') || name.endsWith('.7z') || name.endsWith('.rar'))
+        else if (name.endsWith('.cdb') || name.endsWith('.ypk') || name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tgz') || name.endsWith('.tar.gz') || name.endsWith('.7z') || name.endsWith('.rar') || name.endsWith('.lua'))
             return true;
         
         return false;
@@ -136,20 +138,6 @@
         if (!btn) return;
         btn.style.backgroundColor = btn_color;
         btn.style.color = text_color;
-    }
-
-    async function remove_cdb_from_list() {
-        cdbs_list.value.splice(cdbs_list.value.indexOf(select_cdb.value), 1);
-        if (Math.ceil(cdbs_list.value.length / 10) < page.value) {
-            page.value = Math.ceil(cdbs_list.value.length / 10);
-        }
-        try {
-            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: select_cdb.value});
-        } catch (error) {
-            console.error('上传文件失败:', error);
-        }
-        whether_show_list_page();
-        close_cdb.value = true;
     }
 
     async function whether_show_list_page(v = -1) { 
@@ -193,6 +181,20 @@
         } catch (error) {
             console.error('上传文件失败:', error);
         }
+    }
+
+    async function remove_cdb_from_list() {
+        cdbs_list.value.splice(cdbs_list.value.indexOf(select_cdb.value), 1);
+        if (Math.ceil(cdbs_list.value.length / 10) < page.value) {
+            page.value = Math.ceil(cdbs_list.value.length / 10);
+        }
+        try {
+            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: select_cdb.value});
+        } catch (error) {
+            console.error('删除文件失败:', error);
+        }
+        whether_show_list_page();
+        close_cdb.value = true;
     }
 
     async function get_cdbs_list() {
