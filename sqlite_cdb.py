@@ -30,25 +30,17 @@ def get_data(rows, file):
         for i in range(len(row)):
             if i == 1:
                 for ot in card_info[1]:
-                    if row[i] == int(ot[0], 16):
+                    if row[i] == ot[0]:
                         card_data[-1][-1].append(ot[1])
             elif i == 3:
-                number = str(hex(row[i])).removeprefix('0x')
-                if len(number) > 16:
-                    number = number[-16 : ]
-                if len(number) < 16:
-                    number = '0' * (16 - (len(number))) + number
-                result = []
-                for a in range(len(number), 0, -4):
-                    setcard = number[a - 4 : a].lstrip('0')
-                    if len(setcard) == 0:
-                        setcard = '0'
-                    result.append(setcard)
-                card_data[-1][-1].append((result))
+                setcard = []
+                for a in range(4):
+                    setcard.append(str(hex((row[i] >> (16 * a)) & 0xffff)).removeprefix('0x'))
+                card_data[-1][-1].append(setcard)
             elif i == 4:
                 type_list = []
-                for type_ in card_info[6]:
-                    if row[i] & int(type_[0], 16) > 0:
+                for type_ in card_info[7]:
+                    if row[i] & type_[0] > 0:
                         type_list.append(True)
                     else:
                         type_list.append(False)
@@ -61,21 +53,21 @@ def get_data(rows, file):
             elif i == 7:
                 level = ''
                 for lv in card_info[3]:
-                    if row[i] & 0xff == int(lv[0], 16):
+                    if row[i] & 0xff == lv[0]:
                         level = lv[1]
                 card_data[-1][-1].append([level, (row[i] >> 16) & 0xff])
             elif i == 8:
-                for race in card_info[5]:
-                    if row[i] == int(race[0], 16):
+                for race in card_info[6]:
+                    if row[i] == race[0]:
                         card_data[-1][-1].append(race[1])
             elif i == 9:
                 for attribute in card_info[2]:
-                    if row[i] == int(attribute[0], 16):
+                    if row[i] == attribute[0]:
                         card_data[-1][-1].append(attribute[1])
             elif i == 10:
                 category_list = []
-                for category in card_info[4]:
-                    if row[i] & int(category[0], 16) > 0:
+                for category in card_info[5]:
+                    if row[i] & category[0] > 0:
                         category_list.append(True)
                     else:
                         category_list.append(False)
@@ -102,3 +94,5 @@ if __name__ == '__main__':
     file = 'd:/YGO/KoishiPro/cards.cdb'
     str_ = 'data'
     result = sql(file, str_)
+    with open('result', 'w', encoding='utf-8') as f:
+        f.write(str(result))

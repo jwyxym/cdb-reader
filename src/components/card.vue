@@ -50,10 +50,10 @@
         <div id = "card_atk">
             <span>攻击力:&nbsp;&nbsp;</span>
             <input @input = "filter_input($event, ['card_atk'])" v-model = "card_atk"/>
-            <span>守备力:&nbsp;&nbsp;</span>
-            <input @input = "filter_input($event, ['card_def'])" v-model = "card_def"/>
-            <span>灵摆刻度:&nbsp;&nbsp;</span>
-            <input @input = "filter_input($event, ['card_pendulum'])" v-model = "card_pendulum"/>
+            <span v-if = "!is_type_link">守备力:&nbsp;&nbsp;</span>
+            <input v-if = "!is_type_link" @input = "filter_input($event, ['card_def'])" v-model = "card_def"/>
+            <span v-if = "is_type_pendulum">灵摆刻度:&nbsp;&nbsp;</span>
+            <input v-if = "is_type_pendulum" @input = "filter_input($event, ['card_pendulum'])" v-model = "card_pendulum"/>
         </div>
         <textarea id = "card_desc" v-model = "card_desc"></textarea>
         <div id = "card_box">
@@ -61,7 +61,7 @@
                 <div v-if = "show_card_box[0][0]" id = "card_type">
                     <button class = "unshow_card_box_btn" @click = "whether_show_card_box(false, 0)" :title = "show_card_box[2][0]">&gt;</button>
                     <h2>卡片类型</h2>
-                    <div v-for = "(i, v) in type_list" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card_category[v]"/> </div>
+                    <div v-for = "(i, v) in type_list" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card_type[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_category">
@@ -88,7 +88,7 @@
 </template>
 
 <script setup name = "card_page">
-    import { ref, onMounted, watch, defineEmits, defineProps } from 'vue';
+    import { ref, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
     import axios from 'axios';
 
     let ot_list = ref([[0x0, '许可 N/A']]);
@@ -100,7 +100,6 @@
     let link_list = ref([]);
 
     let link_list_pics = ref([]);
-    let card_data = ref([]);
     
     let card_name = ref('');
     let card_ot = ref(ot_list.value[0][1]);
@@ -121,6 +120,7 @@
     let card_link = ref(0);
 
     let is_type_link = ref(false)
+    let is_type_pendulum = ref(false)
     let whether_show_links = ref(['点击隐藏连接箭头', true, '&#10003']);
     let show_card_box = ref([[false, false, false], ['显示卡片类型', '显示效果分类', '显示卡片脚本提示文字'], ['隐藏卡片类型', '隐藏效果分类', '隐藏卡片脚本提示文字']]);
     let unshow_card_box = ref(true);
@@ -131,6 +131,84 @@
     let close_card = ref(false);
 
     let emit = defineEmits(['event_close_fixed']);
+
+    let card_data = computed(() => {
+        let def_or_link = card_def.value;
+        let lv_and_p = level_list.value.find(e => e[1] == card_level.value);
+        let setcard_count = parseInt(card_setcard.value.map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
+        let type_count = 0;
+        let race_count = race_list.value.find(e => e[1] == card_race.value);
+        let attribute_count = attribute_list.value.find(e => e[1] == card_attribute.value);
+        let category_count = 0;
+
+
+        if (lv_and_p)
+            lv_and_p = lv_and_p[0];
+
+        if (race_count)
+            race_count = race_count[0];
+        if (attribute_count)
+            attribute_count = attribute_count[0];
+
+        if (card_type.value.length > 0)
+            card_type.value.forEach((e, v) => {
+                if (e) {
+                    type_count += type_list.value[v][0]
+                }
+            });
+        if (card_category.value.length > 0)
+            card_category.value.forEach((e, v) => {
+                if (e)
+                    category_count += category_list.value[v][0]
+            });
+
+        if ((type_count & 0x1000000) > 0) {
+            lv_and_p |= (card_pendulum.value << 16);
+            lv_and_p |= (card_pendulum.value << 24);
+        }
+        
+        if ((type_count & 0x4000000) > 0)
+            def_or_link = card_link.value
+
+        is_type_pendulum.value = (type_count & 0x1000000) > 0;
+        is_type_link.value = (type_count & 0x4000000) > 0;
+
+
+        return [
+            [
+                card_id.value,
+                card_ot.value,
+                card_alias.value,
+                card_setcard.value,
+                card_type.value,
+                card_atk.value,
+                card_def.value,
+                [card_level.value, card_pendulum.value, card_pendulum.value],
+                card_race.value,
+                card_attribute.value,
+                card_category.value,
+                card_id.value,
+                card_name.value,
+                card_desc.value,
+                card_hint.value
+            ], [
+                card_id.value,
+                card_ot.value,
+                card_alias.value,
+                setcard_count,
+                type_count,
+                card_atk.value,
+                def_or_link,
+                lv_and_p,
+                race_count,
+                attribute_count,
+                category_count,
+                card_id.value,
+                card_name.value,
+                card_desc.value
+            ].concat(card_hint.value)
+        ]
+    });
 
     onMounted(() => {
         for (let i = 1; i < 9; i++) {
@@ -166,7 +244,6 @@
             card_link.value -= link_list.value[i]
         else
             card_link.value += link_list.value[i]
-        console.log(card_link.value)
         change_src(i)
     }
 
@@ -185,13 +262,13 @@
     function filter_input(event, t, str_filter = /[^0-9]/) {
         let input_value = event.target.value;
         if (t[0] == 'card_setcard') {
-            let new_value = input_value.replace(str_filter, '').slice(0, 4)
+            let new_value = input_value.replace(str_filter, '').slice(0, 4);
             card_setcard.value[t[1]] = new_value;
         } else if (t[0] == 'card_id') {
-            let new_value = input_value.replace(str_filter, '').slice(0, 19);
+            let new_value = input_value.replace(str_filter, '').slice(0, 9);
             card_id.value = new_value;
         } else if (t[0] == 'card_alias') {
-            let new_value = input_value.replace(str_filter, '').slice(0, 19);
+            let new_value = input_value.replace(str_filter, '').slice(0, 9);
             card_alias.value = new_value;
         } else if (t[0] == 'card_atk') {
             if (input_value.slice(0, 1) == '-' || input_value.slice(0, 1) == '?') {
@@ -209,7 +286,7 @@
             }
         } else if (t[0] == 'card_pendulum') {
             let new_value = input_value.replace(str_filter, '');
-            while (new_value != '' && parseInt(new_value) >= 255)
+            while (new_value != '' && parseInt(new_value) > 15)
                 new_value = new_value.slice(0, -1);
             card_pendulum.value = new_value;
         }
@@ -235,12 +312,12 @@
         card_atk.value = 0;
         card_def.value = 0;
         card_pendulum.value = 0;
+        card_link.value = 0;
         card_desc.value = '';
         card_type.value = Array(type_list.value.length).fill(false);
         card_category.value = Array(category_list.value.length).fill(false);
         card_hint.value = Array(16).fill('');
-        card_setcard.value = Array(4).fill(0);
-        card_link.value = 0;
+        card_setcard.value = Array(4).fill('0');
     }
 
     async function get_card_info() {

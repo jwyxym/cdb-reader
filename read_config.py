@@ -18,7 +18,7 @@ def read_card_info(file):
             if j == 4:
                 card_info[-1].append(int(line[0], 16))
                 continue
-            card_info[-1].append([line[0]])
+            card_info[-1].append([int(line[0], 16)])
             info = ''
             for i in range(1, len(line)):
                 info += line[i]
