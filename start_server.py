@@ -3,6 +3,8 @@ from os.path import exists, join
 from os import mkdir, remove, listdir
 from shutil import rmtree
 from ctypes import windll
+from webbrowser import open_new
+from asyncio import run, get_running_loop
 
 from sqlite_cdb import sql
 from read_config import read_card_info
@@ -98,5 +100,11 @@ def read_card():
         card_data.append('/cover.png')
     return jsonify(card_data), 200
 
+async def start_server():
+    loop = get_running_loop()
+    loop.run_in_executor(None, open_new, 'http://127.0.0.1:8000/')
+
+    await app.run(host = '127.0.0.1', port = 8000)
+
 if __name__ == '__main__':
-    app.run(host = '127.0.0.1', port = 8000)
+    run(start_server())
