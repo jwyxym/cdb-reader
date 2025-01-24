@@ -2,7 +2,7 @@
     <div class = "main_page">
         <div id = "main_page_left">
             <transition name = "slide_list_page">
-                <list_page v-if = "show_list_page" @event_close_cdb = "remove_cdb_from_list" @event_select_card = "get_select_card" @event_unshow_list_page = "whether_show_list_page" :cdb = "select_cdb"/>
+                <list_page v-if = "show_list_page" @event_close_cdb = "remove_cdb_from_list" @event_select_card = "get_select_card" @event_unshow_list_page = "whether_show_list_page" :cdb = "cdb_menu"/>
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "unshow_list_page" id = "under_list_page">
@@ -21,7 +21,7 @@
                 </div>
             </transition>
         </div>
-        <card_page :cdb = "select_cdb" :page = "select_page" :card = "select_card" :pic = "upload_new_pic" :close = "close_cdb" @event_close_fixed = "() => { close_cdb = false }"/>
+        <card_page :cdb = "cdb_menu" :page = "select_page" :card = "select_card" :pic = "upload_new_pic" :close = "close_cdb" @event_close_fixed = "() => { close_cdb = false }"/>
     </div>
 </template>
 
@@ -33,10 +33,10 @@
     import axios from 'axios';
 
     let upload_new_pic = ref('');
-    let select_cdb = ref('');
     let select_page = ref(0);
     let select_card = ref(0);
     let close_cdb = ref(false);
+    let cdb_menu = ref([['暂未打开cdb']]);
 
     let show_list_page = ref(false);
     let unshow_list_page = ref(true);
@@ -149,7 +149,7 @@
             update_button_styles();
         } else {
             if (v >= 0) {
-                select_cdb.value = cdbs_list.value[[v + (Math.abs(page.value) - 1) * 10]];
+                get_cdb_menu(v)
             }
             unshow_list_page.value = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
@@ -171,6 +171,15 @@
         } catch (error) {}
     }
 
+    async function get_cdb_menu(v) {
+        try {
+            let response = await axios.post('http://127.0.0.1:8000/api/read_cdb', {
+                cdb: cdbs_list.value[[v + (Math.abs(page.value) - 1) * 10]]
+            });
+            cdb_menu.value = response.data;
+        } catch (error) {}
+    }
+
     async function send_file(formData) {
         try {
             let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
@@ -179,12 +188,12 @@
     }
 
     async function remove_cdb_from_list() {
-        cdbs_list.value.splice(cdbs_list.value.indexOf(select_cdb.value), 1);
+        cdbs_list.value.splice(cdbs_list.value.indexOf(cdb_menu.value[0][0]), 1);
         if (Math.ceil(cdbs_list.value.length / 10) < page.value) {
             page.value = Math.ceil(cdbs_list.value.length / 10);
         }
         try {
-            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: select_cdb.value});
+            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: cdb_menu.value[0][0]});
         } catch (error) {}
         whether_show_list_page();
         close_cdb.value = true;

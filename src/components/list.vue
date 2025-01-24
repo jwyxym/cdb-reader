@@ -21,7 +21,7 @@
     import axios from 'axios';
 
     let page = ref(0)
-    let title = ref('暂未打开cdb');
+    let title = ref('');
     let cdb_list = ref([]);
     let prev_btn = ref(null);
     let next_btn = ref(null);
@@ -31,16 +31,19 @@
     let selected = -1;
     let list_btns = [];
 
-    let get_select = defineProps(['cdb']);
+    let get_props = defineProps(['cdb']);
 
     onMounted(() => {
         update_button_styles();
     });
 
-    watch(get_select, (new_value) => {
-        if (new_value == '')
+    watch(get_props, (new_value) => {
+        if (new_value.cdb[0][0] == '暂未打开cdb')
             return;
-        get_cdb_list();
+        title.value = new_value.cdb[0][0];
+        cdb_list.value = new_value.cdb;
+        page.value = 1;
+        update_button_styles();
     }, { immediate: true });
 
     watch(page, () => {
@@ -120,18 +123,6 @@
     function set_list_btns(el) {
         if (!el) return;
         list_btns.push(el);
-    }
-
-    async function get_cdb_list() {
-        try {
-            let response = await axios.post('http://127.0.0.1:8000/api/read_cdb', {
-                cdb: get_select.cdb
-            });
-            cdb_list.value = response.data;
-            title.value = response.data[0][0];
-            page.value = 1;
-            update_button_styles();
-        } catch (error) {}
     }
 
 </script>

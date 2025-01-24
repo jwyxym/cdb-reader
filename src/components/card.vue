@@ -128,8 +128,9 @@
     let unshow_card_box = ref(true);
     let show_links_btn = ref(null);
 
-    let get_select = defineProps(['cdb', 'page', 'card', 'pic', 'close']);
+    let get_props = defineProps(['cdb', 'page', 'card', 'pic', 'close']);
     let select_card_list = ref([]);
+    let cdb_menu = ref([]);
     let new_pic = ref('');
     let close_card = ref(false);
 
@@ -224,10 +225,11 @@
         is_type_link.value = (type_count & 0x4000000) > 0;
     }, { deep: true, immediate: true });
 
-    watch(get_select, (new_value) => {
+    watch(get_props, (new_value) => {
         new_pic.value = new_value.pic;
         close_card.value = new_value.close;
-        select_card_list.value[0] = new_value.cdb;
+        cdb_menu.value = new_value.cdb;
+        select_card_list.value[0] = new_value.cdb[0][0];
         select_card_list.value[1] = new_value.page;
         select_card_list.value[2] = new_value.card;
     }, { immediate: true });
