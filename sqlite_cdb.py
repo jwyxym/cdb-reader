@@ -10,6 +10,9 @@ def sql(file, str_):
         rows = cursor.fetchall()
         conn.close()
 
+
+        if str_ == "rows":
+            return rows
         if str_ == "data":
             return get_data(rows, file)
         elif str_ == "list":
@@ -90,9 +93,28 @@ def get_list(rows, file):
         card_list[-1].append(f'{str(row[0])} {row[12]}')
     return card_list
 
+def change_cdb(rows, file):
+    try:
+        conn = connect(file)
+        cursor = conn.cursor()
+    # cursor.execute("CREATE TABLE texts(id integer primary key,name text,desc text,str1 text,str2 text,str3 text,str4 text,str5 text,str6 text,str7 text,str8 text,str9 text,str10 text,str11 text,str12 text,str13 text,str14 text,str15 text,str16 text);")
+    # cursor.execute("CREATE TABLE datas(id integer primary key,ot integer,alias integer,setcode integer,type integer,atk integer,def integer,level integer,race integer,attribute integer,category integer);")
+    # conn.commit()
+        for row in rows:
+            cursor.execute(sql_command(row, 0))
+            cursor.execute(sql_command(row, 1))
+        conn.commit()
+        conn.close()
+    except:
+        conn.close()
+
+def sql_command(row, type_ = 0):
+    if type_ == 0:
+        return f"INSERT OR REPLACE INTO datas VALUES({row[0]}, {row[1]}, {row[2]}, {row[3]}, {row[4]}, {row[5]}, {row[6]}, {row[7]}, {row[8]}, {row[9]}, {row[10]});"
+    else:
+        return f"INSERT OR REPLACE INTO texts VALUES({row[11]}, '{row[12]}', '{row[13]}', '{row[14]}', '{row[15]}', '{row[16]}', '{row[17]}', '{row[18]}', '{row[19]}', '{row[20]}', '{row[21]}', '{row[22]}', '{row[23]}', '{row[24]}', '{row[25]}', '{row[26]}', '{row[27]}', '{row[28]}', '{row[29]}');"
+
 if __name__ == '__main__':
-    file = 'd:/YGO/KoishiPro/cards.cdb'
-    str_ = 'data'
-    result = sql(file, str_)
-    with open('result', 'w', encoding='utf-8') as f:
-        f.write(str(result))
+    rows = sql('d:\YGO\KoishiPro\cards.cdb', 'rows')[0]
+    print(rows)
+    change_cdb([rows], 'cdb_reader_example.cdb')

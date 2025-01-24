@@ -6,12 +6,12 @@ from webbrowser import open_new
 
 from sqlite_cdb import sql
 from read_config import read_card_info
-from file_manager import process_pic, copy_cdb, initialize_dir
+from file_manager import process_pic, copy_cdb, initialize_dir, get_only_one_file_path
 
 app = Flask(__name__, static_folder='dist')
 
 buffer = './dist/buffer'
-cdb_buffer_folder_path = 'cdb_buffer'
+cdb_backup_folder_path = 'cdb_backup'
 pics_folder_path = 'pics'
 script_folder_path = 'script'
 package_folder_path = 'package'
@@ -51,14 +51,14 @@ def initialize():
 @app.route('/api/get_file', methods = ['POST'])
 def get_file():
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+        return jsonify({'error': '没有文件'}), 400
     
     file = request.files['file']
     file_type = file.content_type
     file_name = file.filename
     
     if file_name == '':
-        return jsonify({'error': 'No selected file'}), 400
+        return jsonify({'error': '没有选择文件'}), 400
 
     if file:
         initialize_dir(buffer)
@@ -66,7 +66,7 @@ def get_file():
         file.save(file_path)
 
         if file_name.endswith('.cdb'):
-            copy_cdb_result = copy_cdb(file_path, buffer, cdb_buffer_folder_path)
+            copy_cdb_result = copy_cdb(file_path, buffer, cdb_backup_folder_path)
             if copy_cdb_result:
                 return jsonify(file_path[file_path.rfind('/') + 1 : ]), 200
         elif 'image' in file_type:
@@ -85,6 +85,13 @@ def read_cdb():
     if len(cdb_list) == 0:
         return jsonify({'error': '无法读取cdb文件'}), 400
     return jsonify(cdb_list), 200
+
+@app.route('/api/save_cdb', methods = ['POST'])
+def save_cdb():
+    data = request.json
+    card_data = data.get('data')
+    code = data.get('code')
+    return jsonify(), 200
 
 @app.route('/api/read_card', methods = ['POST'])
 def read_card():

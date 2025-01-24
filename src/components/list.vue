@@ -59,15 +59,16 @@
     }
 
     function set_select_card(v, event) {
-        emit('event_select_card', page.value, v);
         if (selected == v) {
             btn_style_change(event.target, '', '');
+            emit('event_select_card', page.value, -1);
             selected = -1;
         } else {
             if (selected > -1) {
                 btn_style_change(list_btns[selected], '', '');
             }
             btn_style_change(event.target, 'green', 'white');
+            emit('event_select_card', page.value, v);
             selected = v;
         }
     }
@@ -130,9 +131,7 @@
             title.value = response.data[0][0];
             page.value = 1;
             update_button_styles();
-        } catch (error) {
-            console.error('发送请求失败:', error);
-        }
+        } catch (error) {}
     }
 
 </script>

@@ -168,19 +168,14 @@
                     send_file(formData);
                 }
             }
-        } catch (error) {
-            console.error(error);
-        }
+        } catch (error) {}
     }
 
     async function send_file(formData) {
         try {
             let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
             opened_cdb_list.value = response.data;
-
-        } catch (error) {
-            console.error('上传文件失败:', error);
-        }
+        } catch (error) {}
     }
 
     async function remove_cdb_from_list() {
@@ -190,9 +185,7 @@
         }
         try {
             await axios.post('http://127.0.0.1:8000/api/remove_file', {file: select_cdb.value});
-        } catch (error) {
-            console.error('删除文件失败:', error);
-        }
+        } catch (error) {}
         whether_show_list_page();
         close_cdb.value = true;
     }
@@ -202,9 +195,7 @@
             let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
             cdbs_list.value = response.data;
             page.value = 1;
-            } catch (error) {
-                console.error('获取cdb文件列表失败:', error);
-        }
+        } catch (error) {}
     }
     
     // async function saveFile() {

@@ -101,6 +101,7 @@
 
     let link_list_pics = ref([]);
     
+    let cdb_title = ref('');
     let card_name = ref('');
     let card_ot = ref(ot_list.value[0][1]);
     let card_attribute = ref(attribute_list.value[0][1]);
@@ -246,7 +247,11 @@
     watch(select_card_list, (new_value) => {
         if (new_value[0] == '' || new_value[1] == 0)
             return;
-        get_card_data();
+        save_card_data();
+        if (new_value[2] < 0)
+            clear_card();
+        else
+            get_card_data();
     }, { immediate: true, deep: true });
 
     function change_card_link(i) {
@@ -311,6 +316,7 @@
     }
 
     function clear_card() {
+        cdb_title.value = ''
         card_name.value = '';
         card_ot.value = ot_list.value[0][1];
         card_attribute.value = attribute_list.value[0][1];
@@ -329,6 +335,18 @@
         card_hint.value = Array(16).fill('');
         card_setcard.value = Array(4).fill('0');
         card_origin_id.value = 0;
+    }
+
+    async function whether_show_card_box(chk, v) {
+        if (chk) {
+            unshow_card_box.value = false;
+            await(new Promise(resolve => setTimeout(resolve, 500)));
+            show_card_box.value[0][v] = true;
+        } else {
+            show_card_box.value[0][v] = false;
+            await(new Promise(resolve => setTimeout(resolve, 500)));
+            unshow_card_box.value = true;
+        }
     }
 
     async function get_card_info() {
@@ -374,22 +392,18 @@
             card_hint.value = data[14];
             card_pic.value = data[15];
             card_origin_id.value = data[0];
-        } catch (error) {
-            console.error('发送请求失败:', error);
-        }
-    };
-
-    async function whether_show_card_box(chk, v) {
-        if (chk) {
-            unshow_card_box.value = false;
-            await(new Promise(resolve => setTimeout(resolve, 500)));
-            show_card_box.value[0][v] = true;
-        } else {
-            show_card_box.value[0][v] = false;
-            await(new Promise(resolve => setTimeout(resolve, 500)));
-            unshow_card_box.value = true;
-        }
+        } catch (error) {}
     }
+
+    async function save_card_data() {
+        try {
+            await axios.post('http://127.0.0.1:8000/api/save_cdb', {
+                data: card_data[1],
+                code: card_origin_id.value
+            });
+        } catch (error) {}
+    }
+
 </script>
 
 <style scoped>

@@ -17,7 +17,7 @@ def process_pic(pic_path, buffer = './dist/buffer', pics_folder = 'pics'):
     except:
         return None
 
-def copy_cdb(cdb_path, buffer = './dist/buffer', cdb_folder = 'cdb_buffer'):
+def copy_cdb(cdb_path, buffer = './dist/buffer', cdb_folder = 'cdb_backup'):
     if not exists(f'{buffer}/{cdb_folder}'):
         mkdir(f'{buffer}/{cdb_folder}')
     try:
