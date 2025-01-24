@@ -119,8 +119,8 @@
     let card_setcard = ref(Array(4).fill('0'));
     let card_link = ref(0);
 
-    let is_type_link = ref(false)
-    let is_type_pendulum = ref(false)
+    let is_type_link = ref(false);
+    let is_type_pendulum = ref(false);
     let whether_show_links = ref(['点击隐藏连接箭头', true, '&#10003']);
     let show_card_box = ref([[false, false, false], ['显示卡片类型', '显示效果分类', '显示卡片脚本提示文字'], ['隐藏卡片类型', '隐藏效果分类', '隐藏卡片脚本提示文字']]);
     let unshow_card_box = ref(true);
@@ -217,6 +217,8 @@
             }
             link_list_pics.value.push('./link-arrow/arrow' + i + '.png');
         }
+        // is_type_link.value = false;
+        // is_type_pendulum.value = false;
         get_card_info();
     });
 
