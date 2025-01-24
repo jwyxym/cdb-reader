@@ -52,6 +52,7 @@
     let next_btn = ref(null);
 
     onMounted(() => {
+        get_cdbs_list();
         update_button_styles();
     });
 
@@ -191,6 +192,16 @@
 
         } catch (error) {
             console.error('上传文件失败:', error);
+        }
+    }
+
+    async function get_cdbs_list() {
+        try {
+            let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
+            cdbs_list.value = response.data;
+            page.value = 1;
+            } catch (error) {
+                console.error('获取cdb文件列表失败:', error);
         }
     }
     

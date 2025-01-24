@@ -1,6 +1,6 @@
 from flask import Flask, send_from_directory, jsonify, request
 from os.path import exists, join
-from os import mkdir, remove
+from os import mkdir, remove, listdir
 from shutil import rmtree
 from ctypes import windll
 
@@ -9,13 +9,11 @@ from read_config import read_card_info
 
 app = Flask(__name__, static_folder='dist')
 
-cache = './cache'
+cache = './dist/cache'
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if exists(cache):
-        rmtree(cache)
     if path != "" and exists(join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
@@ -28,6 +26,15 @@ def remove_file():
     if exists(f'{cache}/{file}'):
         remove(f'{cache}/{file}')
     return jsonify(), 200
+
+@app.route('/api/get_cdbs', methods = ['GET'])
+def get_cdbs():
+    opened_cdbs = []
+    if exists(cache):
+        for file in listdir(cache):
+            if file.endswith('.cdb'):
+                opened_cdbs.append(file)
+    return jsonify(opened_cdbs), 200
 
 @app.route('/api/initialize', methods = ['GET'])
 def initialize():
@@ -73,7 +80,7 @@ def read_cdb():
     cdb_list = sql(f'{cache}/{cdb}', 'list')
     if len(cdb_list) == 0:
         return jsonify({'error': '无法读取cdb文件'}), 400
-    return jsonify(cdb_list)
+    return jsonify(cdb_list), 200
 
 @app.route('/api/read_card', methods = ['POST'])
 def read_card():
@@ -83,7 +90,13 @@ def read_card():
     cdb = data.get('cdb')
     if not exists('./config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
-    return jsonify(sql(f'{cache}/{cdb}', 'data')[int(page)][int(card)])
+
+    card_data = sql(f'{cache}/{cdb}', 'data')[int(page)][int(card)]
+    if exists(f'{cache}/pics/{card_data[0]}.jpg'):
+        card_data.append(f'{cache}/pics/{card_data[0]}.jpg')
+    else:
+        card_data.append('/cover.png')
+    return jsonify(card_data), 200
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8000)
+    app.run(host = '127.0.0.1', port = 8000)

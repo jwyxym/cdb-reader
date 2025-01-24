@@ -362,6 +362,7 @@
             card_name.value = data[12];
             card_desc.value = data[13];
             card_hint.value = data[14];
+            card_pic.value = data[15];
         } catch (error) {
             console.error('发送请求失败:', error);
         }
