@@ -2,7 +2,7 @@ from sqlite3 import connect
 
 from read_config import read_card_info
 
-def sql(file, str_):
+def read_cdb(file, str_):
     try:
         conn = connect(file)
         cursor = conn.cursor()
@@ -93,16 +93,15 @@ def get_list(rows, file):
         card_list[-1].append(f'{str(row[0])} {row[12]}')
     return card_list
 
-def change_cdb(rows, file):
+def change_cdb(row, file):
     try:
         conn = connect(file)
         cursor = conn.cursor()
-    # cursor.execute("CREATE TABLE texts(id integer primary key,name text,desc text,str1 text,str2 text,str3 text,str4 text,str5 text,str6 text,str7 text,str8 text,str9 text,str10 text,str11 text,str12 text,str13 text,str14 text,str15 text,str16 text);")
-    # cursor.execute("CREATE TABLE datas(id integer primary key,ot integer,alias integer,setcode integer,type integer,atk integer,def integer,level integer,race integer,attribute integer,category integer);")
-    # conn.commit()
-        for row in rows:
-            cursor.execute(sql_command(row, 0))
-            cursor.execute(sql_command(row, 1))
+        # cursor.execute("CREATE TABLE texts(id integer primary key,name text,desc text,str1 text,str2 text,str3 text,str4 text,str5 text,str6 text,str7 text,str8 text,str9 text,str10 text,str11 text,str12 text,str13 text,str14 text,str15 text,str16 text);")
+        # cursor.execute("CREATE TABLE datas(id integer primary key,ot integer,alias integer,setcode integer,type integer,atk integer,def integer,level integer,race integer,attribute integer,category integer);")
+        # conn.commit()
+        cursor.execute(sql_command(row, 0))
+        cursor.execute(sql_command(row, 1))
         conn.commit()
         conn.close()
     except:
@@ -115,6 +114,6 @@ def sql_command(row, type_ = 0):
         return f"INSERT OR REPLACE INTO texts VALUES({row[11]}, '{row[12]}', '{row[13]}', '{row[14]}', '{row[15]}', '{row[16]}', '{row[17]}', '{row[18]}', '{row[19]}', '{row[20]}', '{row[21]}', '{row[22]}', '{row[23]}', '{row[24]}', '{row[25]}', '{row[26]}', '{row[27]}', '{row[28]}', '{row[29]}');"
 
 if __name__ == '__main__':
-    rows = sql('d:\YGO\KoishiPro\cards.cdb', 'rows')[0]
-    print(rows)
-    change_cdb([rows], 'cdb_reader_example.cdb')
+    row = read_cdb('d:\YGO\KoishiPro\cards.cdb', 'rows')[0]
+    print(row)
+    change_cdb(row, 'cdb_reader_example.cdb')

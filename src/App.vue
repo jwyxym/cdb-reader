@@ -173,7 +173,7 @@
 
     async function get_cdb_menu(v) {
         try {
-            let response = await axios.post('http://127.0.0.1:8000/api/read_cdb', {
+            let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
                 cdb: cdbs_list.value[[v + (Math.abs(page.value) - 1) * 10]]
             });
             cdb_menu.value = response.data;

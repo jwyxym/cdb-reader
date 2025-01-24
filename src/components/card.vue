@@ -46,6 +46,7 @@
             <input @input = "filter_input($event, ['card_alias'])" v-model = "card_alias"/>
             <span>卡号:&nbsp;&nbsp;</span>
             <input @input = "filter_input($event, ['card_id'])" v-model = "card_id"/>
+            <strong v-if = "same_id_warn">*卡号已存在</strong>
         </div>
         <div id = "card_atk">
             <span>攻击力:&nbsp;&nbsp;</span>
@@ -133,21 +134,25 @@
     let cdb_menu = ref([]);
     let new_pic = ref('');
     let close_card = ref(false);
+    let same_id_warn = ref(false);
 
     let emit = defineEmits(['event_close_fixed']);
 
     let card_data = computed(() => {
+        let id_count = (same_id_warn.value ? card_origin_id.value : card_id.value);
+        let ot_count = ot_list.value.find(e => e[1] == card_ot.value);
         let def_or_link = card_def.value;
         let lv_and_p = level_list.value.find(e => e[1] == card_level.value);
-        let setcard_count = parseInt(card_setcard.value.map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
+        let setcard_count = parseInt(card_setcard.value.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
         let type_count = 0;
         let race_count = race_list.value.find(e => e[1] == card_race.value);
         let attribute_count = attribute_list.value.find(e => e[1] == card_attribute.value);
         let category_count = 0;
 
+        if (ot_count)
+            ot_count = ot_count[0];
         if (lv_and_p)
             lv_and_p = lv_and_p[0];
-
         if (race_count)
             race_count = race_count[0];
         if (attribute_count)
@@ -175,7 +180,7 @@
 
         return [
             [
-                card_id.value,
+                id_count,
                 card_ot.value,
                 card_alias.value,
                 card_setcard.value,
@@ -186,13 +191,13 @@
                 card_race.value,
                 card_attribute.value,
                 card_category.value,
-                card_id.value,
+                id_count,
                 card_name.value,
                 card_desc.value,
                 card_hint.value
             ], [
-                card_id.value,
-                card_ot.value,
+                id_count,
+                ot_count,
                 card_alias.value,
                 setcard_count,
                 type_count,
@@ -202,7 +207,7 @@
                 race_count,
                 attribute_count,
                 category_count,
-                card_id.value,
+                id_count,
                 card_name.value,
                 card_desc.value
             ].concat(card_hint.value)
@@ -224,6 +229,13 @@
         is_type_pendulum.value = (type_count & 0x1000000) > 0;
         is_type_link.value = (type_count & 0x4000000) > 0;
     }, { deep: true, immediate: true });
+
+    watch(card_id, (new_value) => {
+        if (cdb_menu.value.flat().filter(e => e.split(' ', 1) == new_value).length > 0 && card_origin_id.value != new_value)
+            same_id_warn.value = true;
+        else if (same_id_warn.value)
+            same_id_warn.value = false;
+    });
 
     watch(get_props, (new_value) => {
         new_pic.value = new_value.pic;
@@ -249,7 +261,8 @@
     watch(select_card_list, (new_value) => {
         if (new_value[0] == '' || new_value[1] == 0)
             return;
-        save_card_data();
+        if (cdb_title.value != '' && card_origin_id.value > 0)
+            save_card_data();
         if (new_value[2] < 0)
             clear_card();
         else
@@ -400,8 +413,9 @@
     async function save_card_data() {
         try {
             await axios.post('http://127.0.0.1:8000/api/save_cdb', {
-                data: card_data[1],
-                code: card_origin_id.value
+                data: card_data.value[1],
+                code: card_origin_id.value,
+                cdb: cdb_menu.value[0][0]
             });
         } catch (error) {}
     }
@@ -450,6 +464,12 @@
         grid-column-start: 2;
         grid-column-end: 4;
         width: 80%;
+    }
+
+    #card_id strong {
+        color: red;
+        grid-column-start: 1;
+        grid-column-end: 4;
     }
 
     #card_desc {

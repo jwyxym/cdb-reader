@@ -39,6 +39,13 @@ def get_only_one_file_path(buffer, file_name):
         i += 1
     return file_path
 
+def remove_file(buffer, folder_path, file):
+    if exists(f'{buffer}/{file}'):
+        remove(f'{buffer}/{file}')
+    for path in folder_path:
+        if exists(f'{buffer}/{path}/{file}'):
+            remove(f'{buffer}/{path}/{file}')
+
 if __name__ == '__main__':
     name = '2511'
     process_pic(f'./dist/buffer/{name}.jpg')

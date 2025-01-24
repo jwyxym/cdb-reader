@@ -4,9 +4,9 @@ from os import mkdir, remove, listdir
 from shutil import rmtree, copy
 from webbrowser import open_new
 
-from sqlite_cdb import sql
+from sqlite_cdb import read_cdb, change_cdb
 from read_config import read_card_info
-from file_manager import process_pic, copy_cdb, initialize_dir, get_only_one_file_path
+import file_manager
 
 app = Flask(__name__, static_folder='dist')
 
@@ -28,8 +28,7 @@ def serve(path):
 def remove_file():
     data = request.json
     file = data.get('file')
-    if exists(f'{buffer}/{file}'):
-        remove(f'{buffer}/{file}')
+    file_manager.remove_file(buffer, [pics_folder_path, script_folder_path, package_folder_path, cdb_backup_folder_path], file)
     return jsonify(), 200
 
 @app.route('/api/get_cdbs', methods = ['GET'])
@@ -61,27 +60,27 @@ def get_file():
         return jsonify({'error': '没有选择文件'}), 400
 
     if file:
-        initialize_dir(buffer)
-        file_path = get_only_one_file_path(buffer, file_name)
+        file_manager.initialize_dir(buffer)
+        file_path = file_manager.get_only_one_file_path(buffer, file_name)
         file.save(file_path)
 
         if file_name.endswith('.cdb'):
-            copy_cdb_result = copy_cdb(file_path, buffer, cdb_backup_folder_path)
+            copy_cdb_result = file_manager.copy_cdb(file_path, buffer, cdb_backup_folder_path)
             if copy_cdb_result:
                 return jsonify(file_path[file_path.rfind('/') + 1 : ]), 200
         elif 'image' in file_type:
-            pic_result = process_pic(file_path, buffer, pics_folder_path)
+            pic_result = file_manager.process_pic(file_path, buffer, pics_folder_path)
             if pic_result:
                 remove(file_path)
                 return jsonify(pic_result), 200
         
     return jsonify([]), 200
 
-@app.route('/api/read_cdb', methods = ['POST'])
-def read_cdb():
+@app.route('/api/get_cdb_menu', methods = ['POST'])
+def get_cdb_menu():
     data = request.json
     cdb = data.get('cdb')
-    cdb_list = sql(f'{buffer}/{cdb}', 'list')
+    cdb_list = read_cdb(f'{buffer}/{cdb}', 'list')
     if len(cdb_list) == 0:
         return jsonify({'error': '无法读取cdb文件'}), 400
     return jsonify(cdb_list), 200
@@ -91,6 +90,9 @@ def save_cdb():
     data = request.json
     card_data = data.get('data')
     code = data.get('code')
+    cdb = data.get('cdb')
+    print(card_data)
+    change_cdb(card_data, f'{buffer}/{cdb}')
     return jsonify(), 200
 
 @app.route('/api/read_card', methods = ['POST'])
@@ -102,7 +104,7 @@ def read_card():
     if not exists('./config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
 
-    card_data = sql(f'{buffer}/{cdb}', 'data')
+    card_data = read_cdb(f'{buffer}/{cdb}', 'data')
     if exists(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg'):
         card_data[int(page)][int(card)].append(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg')
     else:
