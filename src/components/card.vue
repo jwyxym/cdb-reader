@@ -412,11 +412,13 @@
 
     async function save_card_data() {
         try {
-            await axios.post('http://127.0.0.1:8000/api/save_cdb', {
+            let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                 data: card_data.value[1],
                 code: card_origin_id.value,
                 cdb: cdb_menu.value[0][0]
             });
+            // if (response.data == 'removed') {
+            // }
         } catch (error) {}
     }
 

@@ -91,8 +91,12 @@ def save_cdb():
     card_data = data.get('data')
     code = data.get('code')
     cdb = data.get('cdb')
+    result = ''
+    if code != card_data[0]:
+        delete_cdb[code, f'{buffer}/{cdb}']
+        result += 'removed'
     change_cdb(card_data, f'{buffer}/{cdb}')
-    return jsonify(), 200
+    return jsonify(result), 200
 
 @app.route('/api/read_card', methods = ['POST'])
 def read_card():
