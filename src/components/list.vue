@@ -1,35 +1,37 @@
 <template>
     <div class = "list_page">
         <div class = "list_header">
-            <h1>{{ title }}</h1>
+            <h1>{{ list_page.title }}</h1>
             <button id = "unshow_list_page_btn" @click = "whether_show_list_page()" title = "上一级目录">&lt;</button>
             <button id = "close_cdb_btn" @click = "close_cdb()" title = "关闭cdb">&times;</button>
         </div>
         <div class = "list_content">
-            <button v-for = "(i,v) in cdb_list[page]" :key = "v" @click = "set_select_card(v, $event)" :ref="set_list_btns">{{ i }}</button>
+            <button v-for = "(i,v) in list_page.cdb_list[list_page.page[0]]" :key = "v" @click = "set_select_card(v, $event)" :ref="set_list_btns">{{ i }}</button>
         </div>
         <div class = "list_btn">
             <button ref = "prev_btn" @click = "previous_page">上一页</button>
-            <span>第<input @input = "filter_input($event)" v-model = "page"/>页<br>共{{ cdb_list.length - 1 }}页</span>
+            <span>第<input @input = "filter_input($event)" v-model = "list_page.page[0]"/>页<br>共{{ list_page.cdb_list.length - 1 }}页</span>
             <button ref = "next_btn" @click = "next_page">下一页</button>
         </div>
     </div>
 </template>
 
-<script setup name="list_page">
-    import { ref, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
+<script setup name="list_page" lang = "ts">
+    import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
     import axios from 'axios';
 
-    let page = ref(0)
-    let title = ref('');
-    let cdb_list = ref([]);
+    let list_page = reactive({
+        page: [0],
+        selected : -1,
+        title: '',
+        cdb_list: [],
+    });
+
     let prev_btn = ref(null);
     let next_btn = ref(null);
+    let list_btns = [];
 
     let emit = defineEmits(['event_close_cdb', 'event_select_card', 'event_unshow_list_page']);
-
-    let selected = -1;
-    let list_btns = [];
 
     let get_props = defineProps(['cdb']);
 
@@ -40,39 +42,39 @@
     watch(get_props, (new_value) => {
         if (new_value.cdb[0][0] == '暂未打开cdb')
             return;
-        title.value = new_value.cdb[0][0];
-        cdb_list.value = new_value.cdb;
-        page.value = 1;
+        list_page.title = new_value.cdb[0][0];
+        list_page.cdb_list = new_value.cdb;
+        list_page.page[0] = 1;
         update_button_styles();
     }, { immediate: true });
 
-    watch(page, () => {
+    watch(list_page.page, () => {
         update_button_styles();
     });
 
     function filter_input(event) {
         let input_value = event.target.value;
         let new_value = input_value.replace(/[^0-9]/, '');
-        while (new_value != '' && parseInt(new_value) >= (cdb_list.value.length - 1))
+        while (new_value != '' && parseInt(new_value) >= (list_page.cdb_list.length - 1))
             new_value = new_value.slice(0, -1);
         if (new_value == '')
             new_value = 0;
-        page.value = new_value;
-        page.value = new_value;
+        list_page.page[0] = new_value;
+        list_page.page[0] = new_value;
     }
 
     function set_select_card(v, event) {
-        if (selected == v) {
+        if (list_page.selected == v) {
             btn_style_change(event.target, '', '');
-            emit('event_select_card', page.value, -1);
-            selected = -1;
+            emit('event_select_card', list_page.page[0], -1);
+            list_page.selected = -1;
         } else {
-            if (selected > -1) {
-                btn_style_change(list_btns[selected], '', '');
+            if (list_page.selected > -1) {
+                btn_style_change(list_btns[list_page.selected], '', '');
             }
             btn_style_change(event.target, 'green', 'white');
-            emit('event_select_card', page.value, v);
-            selected = v;
+            emit('event_select_card', list_page.page[0], v);
+            list_page.selected = v;
         }
     }
 
@@ -86,21 +88,21 @@
     }
 
     function next_page() {
-        if (page.value < cdb_list.value.length - 1) {
-            page.value ++ ;
-            if (selected > -1) {
-                btn_style_change(list_btns[selected], '', '');
-                selected = -1
+        if (list_page.page[0] < list_page.cdb_list.length - 1) {
+            list_page.page[0] ++ ;
+            if (list_page.selected > -1) {
+                btn_style_change(list_btns[list_page.selected], '', '');
+                list_page.selected = -1
             }
         }
     }
 
     function previous_page() {
-        if (page.value > 1) {
-            page.value -- ;
-            if (selected > -1) {
-                btn_style_change(list_btns[selected], '', '');
-                selected = -1
+        if (list_page.page[0] > 1) {
+            list_page.page[0] -- ;
+            if (list_page.selected > -1) {
+                btn_style_change(list_btns[list_page.selected], '', '');
+                list_page.selected = -1
             }
         }
     }
@@ -108,9 +110,9 @@
     function update_button_styles() {
         btn_style_change(prev_btn.value, 'green', 'white');
         btn_style_change(next_btn.value, 'green', 'white');
-        if (page.value <= 1)
+        if (list_page.page[0] <= 1)
             btn_style_change(prev_btn.value, 'gray', 'black');
-        if (page.value >= cdb_list.value.length - 1)
+        if (list_page.page[0] >= list_page.cdb_list.length - 1)
             btn_style_change(next_btn.value, 'gray', 'black');
     }
 

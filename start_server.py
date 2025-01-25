@@ -4,7 +4,7 @@ from os import mkdir, remove, listdir
 from shutil import rmtree, copy
 from webbrowser import open_new
 
-from sqlite_cdb import read_cdb, change_cdb
+from sqlite_cdb import read_cdb, change_cdb, delete_cdb
 from read_config import read_card_info
 import file_manager
 
@@ -93,7 +93,7 @@ def save_cdb():
     cdb = data.get('cdb')
     result = ''
     if code != card_data[0]:
-        delete_cdb[code, f'{buffer}/{cdb}']
+        delete_cdb(code, f'{buffer}/{cdb}')
         result += 'removed'
     change_cdb(card_data, f'{buffer}/{cdb}')
     return jsonify(result), 200

@@ -2,53 +2,60 @@
     <div class = "main_page">
         <div id = "main_page_left">
             <transition name = "slide_list_page">
-                <list_page v-if = "show_list_page" @event_close_cdb = "remove_cdb_from_list" @event_select_card = "get_select_card" @event_unshow_list_page = "whether_show_list_page" :cdb = "cdb_menu"/>
+                <list_page v-if = "main_page.show_list.card" @event_close_cdb = "remove_cdb_from_list" @event_select_card = "get_select_card" @event_unshow_list_page = "whether_show_list_page" :cdb = "send_props.list_page.cdb"/>
             </transition>
             <transition name = "under_list_page">
-                <div v-if = "unshow_list_page" id = "under_list_page">
-                    <div id = "upload_area" @dragenter.prevent="is_uploading = true" @dragover.prevent="is_uploading = true" @dragleave.prevent="is_uploading = false" @drop.prevent="upload_file" @click="() => { upload_file_input.click(); }">
+                <div v-if = "main_page.show_list.cdb" id = "under_list_page">
+                    <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file" @click="() => { upload_file_input.click(); }">
                         <h4>拖拽文件或点击此处上传文件</h4>
                         <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "click_upload_file" style = "display: none;"/>
                     </div>
                     <div id = "cdb_list">
-                        <button v-for="(i, v) in (page > 0? Array(cdbs_list.length >= page * 10? 10 : cdbs_list.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ cdbs_list[v + (Math.abs(page) - 1) * 10] }}</button>
+                        <button v-for="(i, v) in (main_page.page[0] > 0? Array(main_page.cdb.length >= main_page.page[0] * 10? 10 : main_page.cdb.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ main_page.cdb[v + (Math.abs(main_page.page[0]) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
                         <button ref = "prev_btn" @click = "previous_page">上一页</button>
-                        <span>第<input @input = "filter_input($event)" v-model = "page"/>页<br>共{{ Math.ceil(cdbs_list.length / 10) }}页</span>
+                        <span>第<input @input = "filter_input($event)" v-model = "main_page.page[0]"/>页<br>共{{ Math.ceil(main_page.cdb.length / 10) }}页</span>
                         <button ref = "next_btn" @click = "next_page">下一页</button>
                     </div>
                 </div>
             </transition>
         </div>
-        <card_page :cdb = "cdb_menu" :page = "select_page" :card = "select_card" :pic = "upload_new_pic" :close = "close_cdb" @event_close_fixed = "() => { close_cdb = false }"/>
+        <card_page :cdb = "send_props.card_page.cdb" :page = "send_props.card_page.page" :card = "send_props.card_page.card" :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = false }"/>
     </div>
 </template>
 
-<script setup>
+<script setup lang = "ts">
     import list_page from './components/list.vue'
     import card_page from './components/card.vue'
 
-    import { ref, watch, onMounted, computed } from 'vue';
+    import { ref, reactive, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
 
-    let upload_new_pic = ref('');
-    let select_page = ref(0);
-    let select_card = ref(0);
-    let close_cdb = ref(false);
-    let cdb_menu = ref([['暂未打开cdb']]);
+    let send_props = reactive({
+        card_page: {
+            cdb: ['暂未打开cdb'],
+            page: 0,
+            card: 0,
+            pic: '',
+            close: false
+        },
+        list_page: {
+            cdb: ['暂未打开cdb']
+        }
+    });
 
-    let show_list_page = ref(false);
-    let unshow_list_page = ref(true);
+    let main_page = reactive({
+        page : [0],
+        cdb : [] as string[],
+        show_list : {
+            cdb: true,
+            card: false
+        },
+        uploading : false,
+    });
 
-    let is_uploading = ref(false);
     let upload_file_input = ref(null);
-    let cdbs_list = ref([])
-    let opened_cdb_list = ref([])
-
-    let page = ref(0)
-
-
     let prev_btn = ref(null);
     let next_btn = ref(null);
 
@@ -57,46 +64,34 @@
         update_button_styles();
     });
 
-    watch(page, () => {
+    watch(main_page.page, () => {
         update_button_styles();
     });
-
-    watch(opened_cdb_list, (new_list) => {
-        if (new_list.endsWith('.cdb')) {
-            cdbs_list.value.push(new_list);
-        }
-        if (new_list.endsWith('.jpg')) {
-            upload_new_pic.value = new_list;
-        }
-        if (Math.ceil(cdbs_list.value.length / 10) > page.value) {
-            page.value = Math.ceil(cdbs_list.value.length / 10);
-        }
-    })
 
     function filter_input(event) {
         let input_value = event.target.value;
         let new_value = input_value.replace(/[^0-9]/, '');
-        while (new_value != '' && parseInt(new_value) >= Math.ceil(cdbs_list.value.length / 10))
+        while (new_value != '' && parseInt(new_value) >= Math.ceil(main_page.cdb.length / 10))
             new_value = new_value.slice(0, -1);
         if (new_value == '')
             new_value = 0;
-        page.value = new_value;
+        main_page.page[0] = new_value;
     }
 
     function get_select_card(get_page, get_card) {
-        select_page.value = get_page;
-        select_card.value = get_card;
+        send_props.card_page.page = get_page;
+        send_props.card_page.card = get_card;
     }
 
     function next_page() {
-        if (page.value < Math.ceil(cdbs_list.value.length / 10)) {
-            page.value ++ ;
+        if (main_page.page[0] < Math.ceil(main_page.cdb.length / 10)) {
+            main_page.page[0] ++ ;
         }
     }
 
     function previous_page() {
-        if (page.value > 1) {
-            page.value -- ;
+        if (main_page.page[0] > 1) {
+            main_page.page[0] -- ;
         }
     }
 
@@ -113,7 +108,7 @@
                 send_file(formData);
             }
         }
-        is_uploading.value = false;
+        main_page.uploading = false;
     }
 
     function check_type(type, name) {
@@ -128,9 +123,9 @@
     function update_button_styles() {
         btn_style_change(prev_btn.value, 'green', 'white');
         btn_style_change(next_btn.value, 'green', 'white');
-        if (page.value <= 1)
+        if (main_page.page[0] <= 1)
             btn_style_change(prev_btn.value, 'gray', 'black');
-        if (page.value >= Math.ceil(cdbs_list.value.length / 10))
+        if (main_page.page[0] >= Math.ceil(main_page.cdb.length / 10))
             btn_style_change(next_btn.value, 'gray', 'black');
     }
 
@@ -141,19 +136,19 @@
     }
 
     async function whether_show_list_page(v = -1) { 
-        if (show_list_page.value) {
-            show_list_page.value = false;
+        if (main_page.show_list.card) {
+            main_page.show_list.card = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
-            unshow_list_page.value = true;
+            main_page.show_list.cdb = true;
             await(new Promise(resolve => setTimeout(resolve, 5)));
             update_button_styles();
         } else {
             if (v >= 0) {
                 get_cdb_menu(v)
             }
-            unshow_list_page.value = false;
+            main_page.show_list.cdb = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
-            show_list_page.value = true;
+            main_page.show_list.card = true;
         }
     }
 
@@ -174,36 +169,45 @@
     async function get_cdb_menu(v) {
         try {
             let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
-                cdb: cdbs_list.value[[v + (Math.abs(page.value) - 1) * 10]]
+                cdb: main_page.cdb[v + (Math.abs(main_page.page[0]) - 1) * 10]
             });
-            cdb_menu.value = response.data;
+            send_props.list_page.cdb = response.data;
+            send_props.card_page.cdb = response.data;
         } catch (error) {}
     }
 
     async function send_file(formData) {
         try {
             let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
-            opened_cdb_list.value = response.data;
+            if (response.data.endsWith('.cdb')) {
+                main_page.cdb.push(response.data);
+            }
+            if (response.data.endsWith('.jpg')) {
+                send_props.card_page.pic = response.data;
+            }
+            if (Math.ceil(main_page.cdb.length / 10) > main_page.page[0]) {
+                main_page.page[0] = Math.ceil(main_page.cdb.length / 10);
+            }
         } catch (error) {}
     }
 
     async function remove_cdb_from_list() {
-        cdbs_list.value.splice(cdbs_list.value.indexOf(cdb_menu.value[0][0]), 1);
-        if (Math.ceil(cdbs_list.value.length / 10) < page.value) {
-            page.value = Math.ceil(cdbs_list.value.length / 10);
+        main_page.cdb.splice(main_page.cdb.indexOf(send_props.list_page.cdb[0][0]), 1);
+        if (Math.ceil(main_page.cdb.length / 10) < main_page.page[0]) {
+            main_page.page[0] = Math.ceil(main_page.cdb.length / 10);
         }
         try {
-            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: cdb_menu.value[0][0]});
+            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
         } catch (error) {}
         whether_show_list_page();
-        close_cdb.value = true;
+        send_props.card_page.close = true;
     }
 
     async function get_cdbs_list() {
         try {
             let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
-            cdbs_list.value = response.data;
-            page.value = 1;
+            main_page.cdb = response.data;
+            main_page.page[0] = 1;
         } catch (error) {}
     }
     
