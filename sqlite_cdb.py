@@ -94,8 +94,10 @@ def get_list(rows, file):
     return card_list
 
 def change_cdb(row, file):
+    opend = False
     try:
         conn = connect(file)
+        opend = True
         cursor = conn.cursor()
         # cursor.execute("CREATE TABLE texts(id integer primary key,name text,desc text,str1 text,str2 text,str3 text,str4 text,str5 text,str6 text,str7 text,str8 text,str9 text,str10 text,str11 text,str12 text,str13 text,str14 text,str15 text,str16 text);")
         # cursor.execute("CREATE TABLE datas(id integer primary key,ot integer,alias integer,setcode integer,type integer,atk integer,def integer,level integer,race integer,attribute integer,category integer);")
@@ -105,19 +107,20 @@ def change_cdb(row, file):
         conn.commit()
         conn.close()
     except:
-        conn.close()
+        if opend: conn.close()
 
 def delete_cdb(card_id, file):
+    opend = False
     try:
         conn = connect(file)
+        opend = True
         cursor = conn.cursor()
         cursor.execute(f"Delete from datas where id='{card_id}';")
         cursor.execute(f"Delete from texts where id='{card_id}';")
         conn.commit()
         conn.close()
     except:
-        conn.close()
-    
+        if opend: conn.close()
 
 if __name__ == '__main__':
     # row = read_cdb('d:\YGO\KoishiPro\cards.cdb', 'rows')[0]

@@ -108,11 +108,12 @@ def read_card():
         return jsonify({'error': '无法读取卡片信息'}), 400
 
     card_data = read_cdb(f'{buffer}/{cdb}', 'data')
+
     if exists(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg'):
         card_data[int(page)][int(card)].append(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg')
     else:
         card_data[int(page)][int(card)].append('/cover.png')
-    return jsonify([card_data[0], card_data[int(page)][int(card)]]), 200
+    return jsonify([card_data[0][0], card_data[int(page)][int(card)]]), 200
 
 if __name__ == '__main__':
     rmtree(buffer, ignore_errors = True)

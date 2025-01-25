@@ -95,6 +95,7 @@
 <script setup name = "card_page" lang = "ts">
     import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
     import axios from 'axios';
+    import emitter from '@/utils/emitter';
 
     let lists = reactive({
         ot: [[0x0, '许可 N/A']],
@@ -117,6 +118,7 @@
         pendulum : 0,
         link : 0,
         origin_id : 0,
+        origin_name : '',
         ot : 0 as number | string,
         attribute : 0 as number | string,
         level : 0 as number | string,
@@ -131,13 +133,13 @@
 
     let card_count = reactive({
         id : 0,
-        ot : 0,
-        level : 0,
-        atk : 0,
-        def : 0,
+        ot : 0 as number | string,
+        level : 0 as number | string,
+        atk : 0 as number | string,
+        def : 0 as number | string,
         setcard : 0,
-        race : 0,
-        attribute : 0,
+        race : 0 as number | string,
+        attribute : 0 as number | string,
         type : 0,
         category : 0,
     });
@@ -170,23 +172,38 @@
             pendulum : false
         },
         warn : {
-            same_id : false
+            same_id : false,
+            id : ''
         }
     });
 
     let selected_card = reactive({
         title : '',
         page : 0,
-        card : 0
+        card : -1
     });
 
     let show_links_btn = ref(null);
 
     let cdb_menu = ref([]);
 
-    let get_props = defineProps(['cdb', 'page', 'card', 'pic', 'close']);
+    let get_props = defineProps(['pic', 'close']);
 
     let emit = defineEmits(['event_close_fixed']);
+
+    emitter.on('event_select_card', (i : Map<string, any>) => {
+        if (selected_card.card >= 0)
+            save_card_data();
+        cdb_menu.value = i.get('cdb');
+        selected_card.title = i.get('cdb')[0][0];
+        selected_card.page = i.get('page');
+        selected_card.card = i.get('card');
+
+        if (selected_card.card < 0)
+            clear_card();
+        else
+            get_card_data();
+    });
 
     onMounted(() => {
         for (let i = 1; i < 9; i++) {
@@ -199,19 +216,28 @@
     });
 
     watch(card, (n) => {
+        if (cdb_menu.value.flat().filter(e => e.split(' ')[0] == n.id).length > 0 && card.origin_id != n.id) {
+            vif.warn.same_id = true;
+        } else if (vif.warn.same_id) {
+            vif.warn.same_id = false;
+        }
+
         change_card_info_to_count()
+
+        if (n.id + ' ' + n.name != n.origin_id + ' ' + n.origin_name || n.id + ' ' + n.name != vif.warn.id) {
+            vif.warn.id = n.id + ' ' + n.name;
+            emitter.emit('event_card_changed', new Map().set('id', vif.warn.same_id ? card.origin_id : n.id).set('name', card.name));
+        }
+
         vif.is_type.link = (card_count.type & 0x4000000) > 0;
 
         if ((card_count.type & 0x1000000) > 0) {
+            card_count.level = parseInt((card_count.level).toString())
             card_count.level |= (card.pendulum << 16);
             card_count.level |= (card.pendulum << 24);
             vif.is_type.pendulum = true;
         } else { vif.is_type.pendulum = false; }
 
-        if (cdb_menu.value.flat().filter(e => e.split(' ', 1) == n.id).length > 0 && card.origin_id != n.id)
-            vif.warn.same_id = true;
-        else if (vif.warn.same_id)
-            vif.warn.same_id = false;
     }, { deep: true });
 
     watch(get_props, (n) => {
@@ -221,46 +247,28 @@
         if (n.close)
             clear_card();
             emit('event_close_fixed');
-        cdb_menu.value = n.cdb;
-        selected_card.title = n.cdb[0][0];
-        selected_card.page = n.page;
-        selected_card.card = n.card;
     }, { immediate: true });
-
-    watch(selected_card, (new_value) => {
-        if (new_value.title == '' || new_value.page == 0 || new_value.card < 0)
-            return;
-        if (card.title != '' && card.origin_id > 0)
-            save_card_data();
-        if (new_value.card < 0)
-            clear_card();
-        else
-            get_card_data();
-    }, { immediate: true, deep: true });
 
     function change_card_info_to_count() {
         card_count.type = 0;
         if (card.type.length > 0)
             card.type.forEach((e, v) => {
-                if (e) {
-                    card_count.type += lists.type[v][0]
-                }
+                if (e) card_count.type += lists.type[v][0]
             });
 
         card_count.category = 0;
         if (card.category.length > 0)
-        card.category.forEach((e, v) => {
-            if (e)
-            card_count.category += lists.category[v][0]
-        });
+            card.category.forEach((e, v) => {
+                if (e) card_count.category += lists.category[v][0]
+            });
         card_count.id = (vif.warn.same_id ? card.origin_id : card.id);
-        card_count.ot = lists.ot.find(e => e[1] == card.ot) ? parseInt((lists.ot.find(e => e[1] == card.ot)[0]).toString(), 16) : 0;
-        card_count.level = lists.level.find(e => e[1] == card.level) ? parseInt((lists.level.find(e => e[1] == card.level)[0]).toString(), 16) : 0;
-        card_count.race = lists.race.find(e => e[1] == card.race) ? parseInt((lists.race.find(e => e[1] == card.race)[0]).toString(), 16) : 0;
-        card_count.atk = card.atk != '?' ? parseInt(card.atk.toString()) : -2; 
-        card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? parseInt(card.def.toString()) : -2) : card.link; 
+        card_count.ot = lists.ot.find(e => e[1] == card.ot) ? (lists.ot.find(e => e[1] == card.ot)[0]) : 0;
+        card_count.level = lists.level.find(e => e[1] == card.level) ? lists.level.find(e => e[1] == card.level)[0] : 0;
+        card_count.race = lists.race.find(e => e[1] == card.race) ? lists.race.find(e => e[1] == card.race)[0] : 0;
+        card_count.atk = card.atk != '?' ? card.atk.toString() : -2; 
+        card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? card.def : -2) : card.link; 
         card_count.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
-        card_count.attribute = lists.attribute.find(e => e[1] == card.attribute) ? parseInt((lists.attribute.find(e => e[1] == card.attribute)[0]).toString(), 16) : 0;
+        card_count.attribute = lists.attribute.find(e => e[1] == card.attribute) ? lists.attribute.find(e => e[1] == card.attribute)[0] : 0;
     }
 
     function change_card_link(i) {
@@ -346,6 +354,7 @@
         card.hint = Array(16).fill('');
         card.setcard = Array(4).fill('0');
         card.origin_id = 0;
+        card.origin_name = '';
     }
 
     async function whether_show_rpage(chk, v) {
@@ -404,11 +413,6 @@
                 page: selected_card.page,
                 card: selected_card.card
             });
-            console.log({
-                cdb: selected_card.title,
-                page: selected_card.page,
-                card: selected_card.card
-            });
             let data = response.data[1];
             card.title = response.data[0]
             card.origin_id = data[0];
@@ -424,6 +428,7 @@
             card.race = data[8];
             card.attribute = data[9];
             card.category = data[10];
+            card.origin_name = data[12];
             card.name = data[12];
             card.desc = data[13];
             card.hint = data[14];
@@ -440,7 +445,7 @@
                     card.alias,
                     card_count.setcard,
                     card_count.type,
-                    card.atk,
+                    card_count.atk,
                     card_count.def,
                     card_count.level,
                     card_count.race,
@@ -454,6 +459,7 @@
                 cdb: card.title
             });
             // if (response.data == 'removed') {
+            //     emitter.emit('event_change_menu', new Map().set('old', card.origin_id).set('new', card_count.id));
             // }
         } catch (error) {}
     }

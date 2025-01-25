@@ -19,10 +19,15 @@
 <script setup name="list_page" lang = "ts">
     import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
     import axios from 'axios';
+    import emitter from '@/utils/emitter';
 
     let list_page = reactive({
         page: [0],
-        selected : -1,
+        selected : {
+            card: -1,
+            page: -1,
+            cdb : ''
+        },
         title: '',
         cdb_list: [],
     });
@@ -31,22 +36,62 @@
     let next_btn = ref(null);
     let list_btns = [];
 
-    let emit = defineEmits(['event_close_cdb', 'event_select_card', 'event_unshow_list_page']);
+    let time = 0;
 
-    let get_props = defineProps(['cdb']);
+    let emit = defineEmits(['event_close_cdb', 'event_unshow_list_page']);
+
+    let get_props = defineProps(['cdb', 'selected']);
+
+    emitter.on('event_change_menu', (id) => {
+        if (id['old'] == id['new']) return;
+        // list_page.cdb_list.splice(list_page.cdb_list.indexOf(id['old']), 1);
+        // list_page.cdb_list.push(id['new']);
+    });
+
+    emitter.on('event_card_changed', (i : Map<string, any>) => {
+        let n = i.get('id') + ' ' + i.get('name');
+        let o = list_page.cdb_list[list_page.page[0]][list_page.selected.card];
+        list_page.cdb_list[list_page.page[0]][list_page.selected.card] = n;
+        /*
+        if ( n != 0 && i.get('id') != o.split(' ')[0]) {
+            console.log('id changed');
+            let new_list : String[][] = [[list_page.title], []];
+            for (let c of list_page.cdb_list.flat()) {
+                if (c == list_page.title) continue;
+                if (new_list[new_list.length - 1].length == 10)
+                    new_list.push([]);
+                new_list[new_list.length - 1].push(c);
+                if (c == n) {
+                    list_page.page[0] = new_list.length - 1;
+                    list_page.selected.card = new_list[new_list.length - 1].length -1;
+                }
+            }
+            list_page.cdb_list = new_list;
+            update_button_styles();
+        }
+        */
+    });
 
     onMounted(() => {
         update_button_styles();
     });
 
     watch(get_props, (new_value) => {
-        if (new_value.cdb[0][0] == '暂未打开cdb')
-            return;
-        list_page.title = new_value.cdb[0][0];
-        list_page.cdb_list = new_value.cdb;
-        list_page.page[0] = 1;
+        if (new_value.cdb[0][0] != '暂未打开cdb') {
+            list_page.title = new_value.cdb[0][0];
+            list_page.cdb_list = new_value.cdb;
+            list_page.page[0] = 1;
+        }
+
+        if (new_value.selected.get('cdb') != '') {
+            list_page.selected.card = new_value.selected.get('card');
+            list_page.selected.page = new_value.selected.get('page');
+            list_page.selected.cdb = new_value.selected.get('cdb');
+        }
+
         update_button_styles();
-    }, { immediate: true });
+
+    }, { deep: true, immediate: true });
 
     watch(list_page.page, () => {
         update_button_styles();
@@ -64,18 +109,23 @@
     }
 
     function set_select_card(v, event) {
-        if (list_page.selected == v) {
+        if (Date.now() - time < 200) return;
+        time = Date.now();
+        if (list_page.selected.card == v && list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title) {
             btn_style_change(event.target, '', '');
-            emit('event_select_card', list_page.page[0], -1);
-            list_page.selected = -1;
+            list_page.selected.card = -1;
+            list_page.selected.page = -1;
+            list_page.selected.cdb = '';
         } else {
-            if (list_page.selected > -1) {
-                btn_style_change(list_btns[list_page.selected], '', '');
+            if (list_page.selected.card > -1 && list_page.selected.page == list_page.page[0]) {
+                btn_style_change(list_btns[list_page.selected.card], '', '');
             }
             btn_style_change(event.target, 'green', 'white');
-            emit('event_select_card', list_page.page[0], v);
-            list_page.selected = v;
+            list_page.selected.card = v;
+            list_page.selected.page = list_page.page[0];
+            list_page.selected.cdb = list_page.title;
         }
+    emitter.emit('event_select_card', new Map().set('card', list_page.selected.card).set('page', list_page.page[0]).set('cdb', get_props.cdb));
     }
 
     function close_cdb() {
@@ -84,26 +134,18 @@
     }
 
     function whether_show_list_page() {
-        emit('event_unshow_list_page');
+        emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card));
     }
 
     function next_page() {
         if (list_page.page[0] < list_page.cdb_list.length - 1) {
             list_page.page[0] ++ ;
-            if (list_page.selected > -1) {
-                btn_style_change(list_btns[list_page.selected], '', '');
-                list_page.selected = -1
-            }
         }
     }
 
     function previous_page() {
         if (list_page.page[0] > 1) {
             list_page.page[0] -- ;
-            if (list_page.selected > -1) {
-                btn_style_change(list_btns[list_page.selected], '', '');
-                list_page.selected = -1
-            }
         }
     }
 
@@ -114,6 +156,10 @@
             btn_style_change(prev_btn.value, 'gray', 'black');
         if (list_page.page[0] >= list_page.cdb_list.length - 1)
             btn_style_change(next_btn.value, 'gray', 'black');
+        if (list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title)
+            btn_style_change(list_btns[list_page.selected.card], 'green', 'white')
+        else
+            btn_style_change(list_btns[list_page.selected.card], '', '');
     }
 
     function btn_style_change(btn, btn_color, text_color) {

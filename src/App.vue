@@ -2,7 +2,7 @@
     <div class = "main_page">
         <div id = "main_page_left">
             <transition name = "slide_list_page">
-                <list_page v-if = "main_page.show_list.card" @event_close_cdb = "remove_cdb_from_list" @event_select_card = "get_select_card" @event_unshow_list_page = "whether_show_list_page" :cdb = "send_props.list_page.cdb"/>
+                <list_page v-if = "main_page.show_list.card" @event_close_cdb = "remove_cdb_from_list" @event_unshow_list_page = "whether_show_list_page" :cdb = "send_props.list_page.cdb" :selected = "send_props.list_page.select"/>
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "main_page.show_list.cdb" id = "under_list_page">
@@ -21,7 +21,7 @@
                 </div>
             </transition>
         </div>
-        <card_page :cdb = "send_props.card_page.cdb" :page = "send_props.card_page.page" :card = "send_props.card_page.card" :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = false }"/>
+        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = false }"/>
     </div>
 </template>
 
@@ -31,6 +31,7 @@
 
     import { ref, reactive, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
+    import emitter from '@/utils/emitter';
 
     let send_props = reactive({
         card_page: {
@@ -41,7 +42,8 @@
             close: false
         },
         list_page: {
-            cdb: ['暂未打开cdb']
+            cdb: ['暂未打开cdb'],
+            select : new Map().set('cdb', '').set('page', -1).set('card', -1).set('btns', [])
         }
     });
 
@@ -76,11 +78,6 @@
         if (new_value == '')
             new_value = 0;
         main_page.page[0] = new_value;
-    }
-
-    function get_select_card(get_page, get_card) {
-        send_props.card_page.page = get_page;
-        send_props.card_page.card = get_card;
     }
 
     function next_page() {
@@ -135,9 +132,10 @@
         btn.style.color = text_color;
     }
 
-    async function whether_show_list_page(v = -1) { 
+    async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('btns', [])) { 
         if (main_page.show_list.card) {
             main_page.show_list.card = false;
+            send_props.list_page.select = i;
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.cdb = true;
             await(new Promise(resolve => setTimeout(resolve, 5)));
@@ -172,7 +170,6 @@
                 cdb: main_page.cdb[v + (Math.abs(main_page.page[0]) - 1) * 10]
             });
             send_props.list_page.cdb = response.data;
-            send_props.card_page.cdb = response.data;
         } catch (error) {}
     }
 
