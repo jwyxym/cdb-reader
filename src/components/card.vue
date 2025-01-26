@@ -193,9 +193,9 @@
 
     let emit = defineEmits(['event_close_fixed', 'event_change_menu']);
 
-    emitter.on('event_select_card', (i : Map<string, any>) => {
+    emitter.on('event_select_card', async (i : Map<string, any>) => {
         if (selected_card.card >= 0)
-            save_card_data(i);
+            await save_card_data(i);
         cdb_menu.value = i.get('cdb');
         selected_card.title = i.get('cdb')[0][0];
         selected_card.page = i.get('page');
@@ -205,7 +205,7 @@
         if (selected_card.card < 0)
             clear_card();
         else
-            get_card_data();
+            await get_card_data();
 
         emitter.emit('event_get_over');
     });
