@@ -181,8 +181,7 @@
     let selected_card = reactive({
         title : '',
         page : 0,
-        card : -1,
-        id : ''
+        card : -1
     });
 
     let show_links_btn = ref(null);
@@ -200,7 +199,6 @@
         selected_card.title = i.get('cdb')[0][0];
         selected_card.page = i.get('page');
         selected_card.card = i.get('card');
-        selected_card.id = i.get('id');
 
         if (selected_card.card < 0)
             clear_card();
@@ -246,12 +244,13 @@
     }, { deep: true });
 
     watch(get_props, (n) => {
-        if (n.pic.includes((card.origin_id).toString()) && card.pic != n.pic && card.origin_id > 0) {
+        if (n.pic.includes((card.origin_id).toString()) && card.pic != n.pic && card.origin_id > 0)
             card.pic = n.pic;
-        }
-        if (n.close)
+
+        if (n.close != '' && n.close == card.title) {
             clear_card();
             emit('event_close_fixed');
+        }
     }, { immediate: true });
 
     function change_card_info_to_count() {
@@ -360,6 +359,9 @@
         card.setcard = Array(4).fill('0');
         card.origin_id = 0;
         card.origin_name = '';
+        selected_card.title = '';
+        selected_card.page = -1;
+        selected_card.card = -1;
     }
 
     async function whether_show_rpage(chk, v) {

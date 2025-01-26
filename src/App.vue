@@ -21,7 +21,7 @@
                 </div>
             </transition>
         </div>
-        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = false }" @event_change_menu = "get_new_cdb_menu"/>
+        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = '' }" @event_change_menu = "get_new_cdb_menu"/>
     </div>
 </template>
 
@@ -39,7 +39,7 @@
             page: 0,
             card: 0,
             pic: '',
-            close: false
+            close: ''
         },
         list_page: {
             cdb: ['暂未打开cdb'],
@@ -73,10 +73,12 @@
     function filter_input(event) {
         let input_value = event.target.value;
         let new_value = input_value.replace(/[^0-9]/, '');
-        while (new_value != '' && parseInt(new_value) >= Math.ceil(main_page.cdb.length / 10))
+        while (parseInt(new_value) >= Math.ceil(main_page.cdb.length / 10))
             new_value = new_value.slice(0, -1);
         if (new_value == '')
             new_value = 0;
+        if (parseInt(new_value) < 1 && Math.ceil(main_page.cdb.length / 10) > 0)
+            new_value = 1;
         main_page.page[0] = new_value;
     }
 
@@ -203,23 +205,22 @@
         } catch (error) {}
     }
 
-    async function remove_cdb_from_list() {
+    async function remove_cdb_from_list(i) {
         main_page.cdb.splice(main_page.cdb.indexOf(send_props.list_page.cdb[0][0]), 1);
-        if (Math.ceil(main_page.cdb.length / 10) < main_page.page[0]) {
+        if (Math.ceil(main_page.cdb.length / 10) < main_page.page[0])
             main_page.page[0] = Math.ceil(main_page.cdb.length / 10);
-        }
         try {
             await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
         } catch (error) {}
         whether_show_list_page();
-        send_props.card_page.close = true;
+        send_props.card_page.close = i;
     }
 
     async function get_cdbs_list() {
         try {
             let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
             main_page.cdb = response.data;
-            main_page.page[0] = 1;
+            main_page.page[0] = main_page.cdb.length > 0 ? 1 : 0;
         } catch (error) {}
     }
     

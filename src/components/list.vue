@@ -24,10 +24,7 @@
     let list_page = reactive({
         page: [0],
         selected : {
-            card: {
-                id: -1,
-                seq: -1
-            },
+            card: -1,
             page: -1,
             cdb : ''
         },
@@ -60,7 +57,7 @@
         if (list_page.page[0] == 0) return;
         let n = i.get('id') + ' ' + i.get('name');
         entrust.card_name = true;
-        list_page.cdb_list[list_page.page[0]][list_page.selected.card.seq] = n;
+        list_page.cdb_list[list_page.page[0]][list_page.selected.card] = n;
     });
 
     onMounted(() => {
@@ -72,7 +69,7 @@
 
         if (new_value.selected.get('cdb') != '' && !entrust.select) {
             entrust.select = true;
-            list_page.selected.card.seq = new_value.selected.get('card');
+            list_page.selected.card = new_value.selected.get('card');
             list_page.selected.page = new_value.selected.get('page');
             list_page.selected.cdb = new_value.selected.get('cdb');
         }
@@ -82,21 +79,17 @@
                 entrust.cdb = true;
                 list_page.title = new_value.cdb[0][0];
                 list_page.cdb_list = new_value.cdb;
-                list_page.page[0] = 1;
+                list_page.page[0] = list_page.selected.page > 0 ? list_page.selected.page : 1;
+                emitter.emit('event_select_card', new Map().set('card', list_page.selected.card).set('page', list_page.page[0]).set('cdb', get_props.cdb));
             } else if (entrust.cdb && !entrust.card_name) {
                 list_page.selected.page = new_value.selected.get('page');
-                list_page.selected.card.seq = new_value.selected.get('card');
+                list_page.selected.card = new_value.selected.get('card');
                 list_page.selected.cdb = new_value.cdb[0][0];
                 list_page.title = new_value.cdb[0][0];
                 list_page.cdb_list = new_value.cdb;
                 list_page.page[0] = list_page.selected.page;
-                for (let i = 0; i < list_btns.length; i++) {
-                    btn_style_change(list_btns[i], '', '')
-                }
             }
         }
-
-        console.log(list_page.selected)
 
         if (entrust.card_name)
             entrust.card_name = false;
@@ -112,43 +105,39 @@
     function filter_input(event) {
         let input_value = event.target.value;
         let new_value = input_value.replace(/[^0-9]/, '');
-        while (new_value != '' && parseInt(new_value) >= (list_page.cdb_list.length - 1))
+        while (parseInt(new_value) >= (list_page.cdb_list.length - 1))
             new_value = new_value.slice(0, -1);
         if (new_value == '')
             new_value = 0;
-        list_page.page[0] = new_value;
+        if (parseInt(new_value) < 1 && list_page.cdb_list.length > 1)
+            new_value = 1;
         list_page.page[0] = new_value;
     }
 
     function set_select_card(v, event) {
         if (!wait.save_get) return;
         wait.save_get = false;
-        if (list_page.selected.card.seq == v && list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title) {
-            btn_style_change(event.target, '', '');
-            list_page.selected.card.seq = -1;
-            list_page.selected.card.id = -1;
+        if (list_page.selected.card == v && list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title) {
+            list_page.selected.card = -1;
             list_page.selected.page = -1;
             list_page.selected.cdb = '';
         } else {
-            if (list_page.selected.card.seq > -1 && list_page.selected.page == list_page.page[0]) {
-                btn_style_change(list_btns[list_page.selected.card.seq], '', '');
-            }
-            btn_style_change(event.target, 'green', 'white');
-            list_page.selected.card.seq = v;
-            list_page.selected.card.id = list_page.cdb_list[list_page.page[0]][v];
+            list_page.selected.card = v;
             list_page.selected.page = list_page.page[0];
             list_page.selected.cdb = list_page.title;
         }
-        emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page[0]).set('cdb', get_props.cdb));
+        update_button_styles();
+        emitter.emit('event_select_card', new Map().set('card', list_page.selected.card).set('page', list_page.page[0]).set('cdb', get_props.cdb));
     }
 
     function close_cdb() {
         if (confirm('确认关闭cdb吗，此操作可能导致数据丢失'))
-            emit('event_close_cdb');
+            emit('event_close_cdb', list_page.selected.cdb);
     }
 
     function whether_show_list_page() {
-        emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card.seq));
+        emitter.emit('event_select_card', new Map().set('card', -1).set('page', list_page.page[0]).set('cdb', get_props.cdb));
+        emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card));
     }
 
     function next_page() {
@@ -170,10 +159,13 @@
             btn_style_change(prev_btn.value, 'gray', 'black');
         if (list_page.page[0] >= list_page.cdb_list.length - 1)
             btn_style_change(next_btn.value, 'gray', 'black');
-        if (list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title)
-            btn_style_change(list_btns[list_page.selected.card.seq], 'green', 'white')
-        else
-            btn_style_change(list_btns[list_page.selected.card.seq], '', '');
+        for (let i = 0; i < list_btns.length; i++) {
+            if (list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title && list_page.selected.card == i) {
+                btn_style_change(list_btns[i], 'green', 'white');
+            } else {
+                btn_style_change(list_btns[i], '', '');
+            }
+        }
     }
 
     function btn_style_change(btn, btn_color, text_color) {
