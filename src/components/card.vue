@@ -82,7 +82,7 @@
                 </div>
             </transition>
             <transition name = "card_box_btn">
-                <div v-if = "!vif.unshow.btn" id = "card_box_btn">
+                <div v-if = "vif.unshow.btn" id = "card_box_btn">
                     <button @click = "whether_show_rpage(true, 'type')" :title = "vif.show.type.title[0]">&lt;</button>
                     <button @click = "whether_show_rpage(true, 'category')" :title = "vif.show.category.title[0]">&lt;</button>
                     <button @click = "whether_show_rpage(true, 'hint')" :title = "vif.show.hint.title[0]">&lt;</button>
@@ -133,6 +133,7 @@
 
     let card_count = reactive({
         id : 0,
+        alias : 0,
         ot : 0,
         level : 0,
         atk : 0,
@@ -165,7 +166,7 @@
             },
         },
         unshow : {
-            btn : false
+            btn : true
         },
         is_type : {
             link : false,
@@ -263,7 +264,8 @@
         card.category.forEach((e, v) => {
             if (e) card_count.category += lists.category[v][0]
         });
-        card_count.id = (vif.warn.same_id ? card.origin_id : card.id);
+        card_count.id = (vif.warn.same_id || card.id.toString().length == 0 ? card.origin_id : card.id);
+        card_count.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
         card_count.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
         card_count.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
         card_count.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
@@ -389,6 +391,7 @@
             }
             await(new Promise(resolve => setTimeout(resolve, 500)));
             vif.unshow.btn = true;
+            console.log('unshow')
         }
     }
 
@@ -445,7 +448,7 @@
                 data: [
                     card_count.id,
                     card_count.ot,
-                    card.alias,
+                    card_count.alias,
                     card_count.setcard,
                     card_count.type,
                     card_count.atk,
