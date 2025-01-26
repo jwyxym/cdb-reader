@@ -1,8 +1,9 @@
-from flask import Flask, send_from_directory, jsonify, request
+from flask import Flask, send_from_directory, jsonify, request, send_file, Response
 from os.path import exists, join
 from os import mkdir, remove, listdir
 from shutil import rmtree, copy
 from webbrowser import open_new
+from io import BytesIO
 
 from sqlite_cdb import read_cdb, change_cdb, delete_cdb
 from read_config import read_card_info
@@ -85,6 +86,21 @@ def get_cdb_menu():
         return jsonify({'error': '无法读取cdb文件'}), 400
     return jsonify(cdb_list), 200
 
+@app.route('/api/download_cdb', methods = ['POST'])
+def download_cdb():
+    data = request.json
+    cdb = data.get('cdb')
+
+#没改完
+    # download, down_name = package_zip(f'{buffer}/{cdb}')
+    download, down_name = '1.ypk', '1'
+    with open(f'{buffer}/{download}', 'rb') as f:
+        file_obj = BytesIO(f.read())
+        response = Response(file_obj, mimetype = 'application/octet-stream')
+        response.headers['Content-Disposition'] = f'attachment; filename = {down_name}.ypk'
+        
+        return response
+
 @app.route('/api/save_cdb', methods = ['POST'])
 def save_cdb():
     data = request.json
@@ -119,3 +135,4 @@ if __name__ == '__main__':
     rmtree(buffer, ignore_errors = True)
     open_new('http://127.0.0.1:8000/')
     app.run(host = '127.0.0.1', port = 8000)
+

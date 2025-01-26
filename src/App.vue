@@ -73,7 +73,7 @@
     function filter_input(event) {
         let input_value = event.target.value;
         let new_value = input_value.replace(/[^0-9]/, '');
-        while (parseInt(new_value) >= Math.ceil(main_page.cdb.length / 10))
+        while (parseInt(new_value) > Math.ceil(main_page.cdb.length / 10))
             new_value = new_value.slice(0, -1);
         if (new_value == '')
             new_value = 0;
@@ -149,10 +149,11 @@
         send_props.list_page.select.set('card', c);
         send_props.list_page.select.set('entrust', true);
     }
-    async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('btns', [])) { 
+    async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) { 
         if (main_page.show_list.card) {
             main_page.show_list.card = false;
             send_props.list_page.select = i;
+            emitter.emit('event_select_or_leave_cdb');
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.cdb = true;
             await(new Promise(resolve => setTimeout(resolve, 5)));
@@ -164,6 +165,7 @@
             main_page.show_list.cdb = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.card = true;
+            emitter.emit('event_select_or_leave_cdb', send_props.list_page.cdb[0][0]);
         }
     }
 
@@ -223,35 +225,6 @@
             main_page.page[0] = main_page.cdb.length > 0 ? 1 : 0;
         } catch (error) {}
     }
-    
-    // async function saveFile() {
-    //     try {
-    //         const opts = {
-    //             types: [{
-    //                 description: '文件',
-    //                 accept: {
-    //                     'text/plain': ['.txt'],
-    //                     'application/pdf': ['.pdf'],
-    //                     'image/jpeg': ['.jpg', '.jpeg'],
-    //                     'image/png': ['.png']
-    //                 }
-    //             }],
-    //             excludeAcceptAllOption: true
-    //         };
-
-    //         const handle = await window.showSaveFilePicker(opts); // 打开保存文件对话框
-    //         const writable = await handle.createWritable(); // 创建可写入的文件对象
-
-    //         // 在这里写入文件内容
-    //         await writable.write('这是文件的内容');
-    //         await writable.close();
-
-    //         console.log('文件保存成功');
-    //         windows.alert('success');
-    //     } catch (error) {
-    //         console.error('文件保存失败:', error);
-    //     }
-    // }
 
 </script>
 

@@ -86,6 +86,11 @@
                     <button @click = "whether_show_rpage(true, 'type')" :title = "vif.show.type.title[0]">&lt;</button>
                     <button @click = "whether_show_rpage(true, 'category')" :title = "vif.show.category.title[0]">&lt;</button>
                     <button @click = "whether_show_rpage(true, 'hint')" :title = "vif.show.hint.title[0]">&lt;</button>
+                    <button :style = "{ 'background-color': selected_card.card >= 0 ? 'red' : 'gray' }" @click = "del_card()">删除</button>
+                    <button :style = "{ 'background-color': selected_card.card >= 0 ? 'cornflowerblue' : 'gray' }" @click = "() => { if (selected_card.card < 0) return; copy.chk = true; }">复制</button>
+                    <button :style = "{ 'background-color': copy.chk ? 'cornflowerblue' : 'gray' }" @click = "() => { copy.chk = false; }">黏贴</button>
+                    <button style = "background-color: cornflowerblue;">设置&lt;</button>
+                    <download/>
                 </div>
             </transition>
         </div>
@@ -96,6 +101,8 @@
     import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
+
+    import download from './download.vue'
 
     let lists = reactive({
         ot: [[0x0, '许可 N/A']],
@@ -184,6 +191,11 @@
         card : -1
     });
 
+    let copy = reactive({
+        content : [],
+        chk : false
+    });
+
     let show_links_btn = ref(null);
 
     let cdb_menu = ref([]);
@@ -192,9 +204,15 @@
 
     let emit = defineEmits(['event_close_fixed', 'event_change_menu']);
 
-    emitter.on('event_select_card', async (i : Map<string, any>) => {
+    emitter.on('event_save_before_download', async () => {
+        if (card.origin_id > 0)
+            await save_card_data();
+        emitter.emit('event_save_over');
+    });
+
+    emitter.on('event_select_card', async (i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) => {
         if (selected_card.card >= 0)
-            await save_card_data(i);
+            await save_card_data(i.get('id'));
         cdb_menu.value = i.get('cdb');
         selected_card.title = i.get('cdb')[0][0];
         selected_card.page = i.get('page');
@@ -364,6 +382,12 @@
         selected_card.card = -1;
     }
 
+    async function del_card() {
+        await del_card_data();
+        emit('event_change_menu', card.title, card.origin_id)
+        clear_card();
+    }
+
     async function whether_show_rpage(chk, v) {
         if (chk) {
             vif.unshow.btn = false;
@@ -393,7 +417,6 @@
             }
             await(new Promise(resolve => setTimeout(resolve, 500)));
             vif.unshow.btn = true;
-            console.log('unshow')
         }
     }
 
@@ -444,7 +467,16 @@
         } catch (error) { console.error('获取卡片数据失败:', error); }
     }
 
-    async function save_card_data(i : Map<string, any>) {
+    async function del_card_data() {
+        try {
+            let response = await axios.post('http://127.0.0.1:8000/api/del_cdb', {
+                id: card.origin_id,
+                cdb: card.title
+            });
+        } catch (error) {}
+    }
+
+    async function save_card_data(i = -1) {
         try {
             let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                 data: [
@@ -466,11 +498,12 @@
                 code: card.origin_id,
                 cdb: selected_card.title
             });
-            if (response.data == 'removed' && i.get('cdb')[0][0] == selected_card.title) {
-                emit('event_change_menu', i.get('cdb')[0][0], i.get('id'))
+            if (response.data == 'removed' && i > 0) {
+                emit('event_change_menu', card.title, i)
             }
         } catch (error) {}
     }
+
 
 </script>
 
