@@ -20,7 +20,6 @@
                     </div>
                 </div>
             </transition>
-            <div v-if = "main_page.show_list.none" id = "none_list_page" style="background-color: black;"></div>
         </div>
         <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = false }" @event_change_menu = "get_new_cdb_menu"/>
     </div>
@@ -53,8 +52,7 @@
         cdb : [] as string[],
         show_list : {
             cdb: true,
-            card: false,
-            none: false
+            card: false
         },
         uploading : false,
     });
@@ -136,9 +134,6 @@
 
     async function get_new_cdb_menu(v, id) {
         await get_cdb_menu(v);
-        // main_page.show_list.card = false;
-        // await(new Promise(resolve => setTimeout(resolve, 500)));
-        // main_page.show_list.none = true;
         let c = -1;
         let p = 1;
         for (let i = 0; i < send_props.list_page.cdb.length; i++) {
@@ -151,9 +146,6 @@
         send_props.list_page.select.set('page', p);
         send_props.list_page.select.set('card', c);
         send_props.list_page.select.set('entrust', true);
-        // main_page.show_list.none = false;
-        // await(new Promise(resolve => setTimeout(resolve, 500)));
-        // main_page.show_list.card = true;
     }
     async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('btns', [])) { 
         if (main_page.show_list.card) {
@@ -276,11 +268,6 @@
     #under_list_page {
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-
-    /* #none_list_page {
-        width: 30vw;
-        height: 100vh;
-    } */
 
     #cdb_list {
         width: 30vw;
