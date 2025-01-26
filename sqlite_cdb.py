@@ -3,8 +3,8 @@ from sqlite3 import connect
 from read_config import read_card_info
 
 def read_cdb(file, str_):
+    conn = connect(file)
     try:
-        conn = connect(file)
         cursor = conn.cursor()
         cursor.execute("select * from datas,texts where datas.id=texts.id")
         rows = cursor.fetchall()

@@ -119,10 +119,10 @@
         link : 0,
         origin_id : 0,
         origin_name : '',
-        ot : 0 as number | string,
-        attribute : 0 as number | string,
-        level : 0 as number | string,
-        race : 0 as number | string,
+        ot : '',
+        attribute : '',
+        level : '',
+        race : '',
         atk : 0 as number | string,
         def : 0 as number | string,
         type : [false],
@@ -133,13 +133,13 @@
 
     let card_count = reactive({
         id : 0,
-        ot : 0 as number | string,
-        level : 0 as number | string,
-        atk : 0 as number | string,
-        def : 0 as number | string,
+        ot : 0,
+        level : 0,
+        atk : 0,
+        def : 0,
         setcard : 0,
-        race : 0 as number | string,
-        attribute : 0 as number | string,
+        race : 0,
+        attribute : 0,
         type : 0,
         category : 0,
     });
@@ -180,7 +180,8 @@
     let selected_card = reactive({
         title : '',
         page : 0,
-        card : -1
+        card : -1,
+        id : ''
     });
 
     let show_links_btn = ref(null);
@@ -189,20 +190,23 @@
 
     let get_props = defineProps(['pic', 'close']);
 
-    let emit = defineEmits(['event_close_fixed']);
+    let emit = defineEmits(['event_close_fixed', 'event_change_menu']);
 
     emitter.on('event_select_card', (i : Map<string, any>) => {
         if (selected_card.card >= 0)
-            save_card_data();
+            save_card_data(i);
         cdb_menu.value = i.get('cdb');
         selected_card.title = i.get('cdb')[0][0];
         selected_card.page = i.get('page');
         selected_card.card = i.get('card');
+        selected_card.id = i.get('id');
 
         if (selected_card.card < 0)
             clear_card();
         else
             get_card_data();
+
+        emitter.emit('event_get_over');
     });
 
     onMounted(() => {
@@ -251,24 +255,23 @@
 
     function change_card_info_to_count() {
         card_count.type = 0;
-        if (card.type.length > 0)
-            card.type.forEach((e, v) => {
-                if (e) card_count.type += lists.type[v][0]
-            });
+        card.type.forEach((e, v) => {
+            if (e) card_count.type += lists.type[v][0]
+        });
 
         card_count.category = 0;
-        if (card.category.length > 0)
-            card.category.forEach((e, v) => {
-                if (e) card_count.category += lists.category[v][0]
-            });
+        card.category.forEach((e, v) => {
+            if (e) card_count.category += lists.category[v][0]
+        });
         card_count.id = (vif.warn.same_id ? card.origin_id : card.id);
-        card_count.ot = lists.ot.find(e => e[1] == card.ot) ? (lists.ot.find(e => e[1] == card.ot)[0]) : 0;
-        card_count.level = lists.level.find(e => e[1] == card.level) ? lists.level.find(e => e[1] == card.level)[0] : 0;
-        card_count.race = lists.race.find(e => e[1] == card.race) ? lists.race.find(e => e[1] == card.race)[0] : 0;
-        card_count.atk = card.atk != '?' ? card.atk.toString() : -2; 
-        card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? card.def : -2) : card.link; 
+        card_count.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
+        card_count.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
+        card_count.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
+        card_count.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
+        card_count.atk = card.atk != '?' ? card.atk as number : -2; 
+        card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
         card_count.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
-        card_count.attribute = lists.attribute.find(e => e[1] == card.attribute) ? lists.attribute.find(e => e[1] == card.attribute)[0] : 0;
+
     }
 
     function change_card_link(i) {
@@ -337,10 +340,10 @@
     function clear_card() {
         card.title = ''
         card.name = '';
-        card.ot = lists.ot[0][1];
-        card.attribute = lists.attribute[0][1];
-        card.level = lists.level[0][1];
-        card.race = lists.race[0][1];
+        card.ot = lists.ot[0][1] as string;
+        card.attribute = lists.attribute[0][1] as string;
+        card.level = lists.level[0][1] as string;
+        card.race = lists.race[0][1] as string;
         card.id = 0;
         card.alias = 0;
         card.pic = '/cover.png';
@@ -436,7 +439,7 @@
         } catch (error) { console.error('获取卡片数据失败:', error); }
     }
 
-    async function save_card_data() {
+    async function save_card_data(i : Map<string, any>) {
         try {
             let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                 data: [
@@ -456,11 +459,11 @@
                     card.desc
                 ].concat(card.hint),
                 code: card.origin_id,
-                cdb: card.title
+                cdb: selected_card.title
             });
-            // if (response.data == 'removed') {
-            //     emitter.emit('event_change_menu', new Map().set('old', card.origin_id).set('new', card_count.id));
-            // }
+            if (response.data == 'removed' && i.get('cdb')[0][0] == selected_card.title) {
+                emit('event_change_menu', i.get('cdb')[0][0], i.get('id'))
+            }
         } catch (error) {}
     }
 
