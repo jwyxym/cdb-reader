@@ -6,7 +6,13 @@
             <button id = "close_cdb_btn" @click = "close_cdb()" title = "关闭cdb">&times;</button>
         </div>
         <div class = "list_content">
-            <button v-for = "(i,v) in list_page.cdb_list[list_page.page[0]]" :key = "v" @click = "set_select_card(v, $event)" :ref = "set_list_btns">{{ i }}</button>
+            <button v-for = "(i,v) in list_page.cdb_list[list_page.page[0]]":key = "v"
+                @click = "set_select_card(v, $event)"
+                :style="{
+                    'background-color': list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'green' : '',
+                    'color': list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'white' : ''
+                    }"
+            >{{ i }}</button>
         </div>
         <div class = "list_btn">
             <button ref = "prev_btn" @click = "previous_page">上一页</button>
@@ -73,9 +79,9 @@
         if (new_value.selected.get('cdb') != '' && !entrust.select) {
             entrust.select = true;
             list_page.selected.card.seq = new_value.selected.get('card');
-            list_page.selected.card.id = list_page.selected.card.seq >= 0 ? list_page.cdb_list[list_page.page[0]][list_page.selected.card.seq] : -1;
             list_page.selected.page = new_value.selected.get('page');
             list_page.selected.cdb = new_value.selected.get('cdb');
+            list_page.selected.card.id = list_page.selected.card.seq >= 0 ? new_value.cdb[list_page.selected.page][list_page.selected.card.seq] : -1;
         }
 
         if (new_value.cdb[0][0] != '暂未打开cdb') {
@@ -144,7 +150,7 @@
 
     function whether_show_list_page() {
         emitter.emit('event_select_card', new Map().set('card', -1).set('id', -1).set('page', list_page.page[0]).set('cdb', get_props.cdb));
-        emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card.seq));
+        emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id));
     }
 
     function next_page() {
@@ -166,13 +172,6 @@
             btn_style_change(prev_btn.value, 'gray', 'black');
         if (list_page.page[0] >= list_page.cdb_list.length - 1)
             btn_style_change(next_btn.value, 'gray', 'black');
-        for (let i = 0; i < list_btns.length; i++) {
-            if (list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == i) {
-                btn_style_change(list_btns[i], 'green', 'white');
-            } else {
-                btn_style_change(list_btns[i], '', '');
-            }
-        }
     }
 
     function btn_style_change(btn, btn_color, text_color) {
