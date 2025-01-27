@@ -93,8 +93,8 @@
                     <button @click = "whether_show_rpage(true, 'category')">{{ vif.show.category.title[0] }}</button>
                     <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
                     <button :style = "{ 'background-color': card.origin_id > 0 ? 'red' : 'gray' }" @click = "card.del()">删除</button>
-                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from">复制</button>
-                    <button :style = "{ 'background-color': copy.content.length > 0 && copy.content[0][0] != opening_cdb && opening_cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to">黏贴</button>
+                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
+                    <button :style = "{ 'background-color': copy.content.length > 0 && copy.content[0][0] != opening_cdb && opening_cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
                     <button style = "background-color: cornflowerblue;">设置</button>
                 </div>
             </transition>

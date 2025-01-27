@@ -46,7 +46,8 @@ import { send } from 'vite';
         },
         list_page: {
             cdb: ['暂未打开cdb'],
-            select : new Map().set('cdb', '').set('page', -1).set('card', -1).set('entrust', false)
+            select : new Map().set('cdb', '').set('page', -1).set('card', -1).set('entrust', false),
+            select_buffer_group : []
         }
     });
 
@@ -111,9 +112,7 @@ import { send } from 'vite';
             main_page.cdb.content.splice(main_page.cdb.content.indexOf(send_props.list_page.cdb[0][0]), 1);
             if (Math.ceil(main_page.cdb.content.length / 10) < main_page.page.count[0])
                 main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
-            try {
-                await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
-            } catch (error) {}
+            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
             whether_show_list_page();
             send_props.card_page.close = i;
         } as (i: string) => Promise<void>
@@ -193,17 +192,24 @@ import { send } from 'vite';
         if (main_page.show_list.card) {
             main_page.show_list.card = false;
             send_props.card_page.cdb = '';
-            send_props.list_page.select = i;
+            if (!send_props.list_page.select_buffer_group.find((select) => select.get('cdb') == i.get('cdb')) && i.get('cdb') != '')
+                send_props.list_page.select_buffer_group.push(i);
             emitter.emit('event_select_or_leave_cdb');
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.cdb = true;
-            await(new Promise(resolve => setTimeout(resolve, 5)));
         } else {
             if (v >= 0)
-                main_page.cdb.get(v);
+                await main_page.cdb.get(v);
             main_page.show_list.cdb = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.card = true;
+            let j = send_props.list_page.select_buffer_group.findIndex(select => select.get('cdb') == send_props.list_page.cdb[0][0]);
+            if ( j > -1 ) {
+                send_props.list_page.select = send_props.list_page.select_buffer_group[j];
+                send_props.list_page.select_buffer_group.splice(j, 1);
+            } else {
+                send_props.list_page.select = i;
+            }
             emitter.emit('event_select_or_leave_cdb', send_props.list_page.cdb[0][0]);
         }
     }
