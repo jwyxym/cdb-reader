@@ -2,30 +2,30 @@
     <div class = "main_page">
         <div id = "main_page_left">
             <transition name = "slide_list_page">
-                <list_page v-if = "main_page.show_list.card" @event_close_cdb = "remove_cdb_from_list" @event_unshow_list_page = "whether_show_list_page" :cdb = "send_props.list_page.cdb" :selected = "send_props.list_page.select"/>
+                <list_page v-if = "main_page.show_list.card" @event_close_cdb = " main_page.remove" @event_unshow_list_page = "whether_show_list_page" :cdb = "send_props.list_page.cdb" :selected = "send_props.list_page.select"/>
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "main_page.show_list.cdb" id = "under_list_page">
-                    <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file" @click="() => { upload_file_input.click(); }">
+                    <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
                         <h4>拖拽文件或点击此处上传文件</h4>
-                        <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "click_upload_file" style = "display: none;"/>
+                        <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
                     </div>
                     <div id = "cdb_list">
-                        <button v-for="(i, v) in (main_page.page[0] > 0? Array(main_page.cdb.length >= main_page.page[0] * 10? 10 : main_page.cdb.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ main_page.cdb[v + (Math.abs(main_page.page[0]) - 1) * 10] }}</button>
+                        <button v-for="(i, v) in (main_page.page.count[0] > 0? Array(main_page.cdb.content.length >= main_page.page.count[0] * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
-                        <button @click = "previous_page"
-                            :style = "{ 'background-color': main_page.page[0] <= 1 ? 'gray' : 'green', 'color': main_page.page[0] <= 1 ? 'black' : 'white' }"
+                        <button @click = "main_page.page.previous"
+                            :style = "{ 'background-color': main_page.page.count[0] <= 1 ? 'gray' : 'green', 'color': main_page.page.count[0] <= 1 ? 'black' : 'white' }"
                         >上一页</button>
-                        <span>第<input @input = "filter_input($event)" v-model = "main_page.page[0]"/>页<br>共{{ Math.ceil(main_page.cdb.length / 10) }}页</span>
-                        <button @click = "next_page"
-                            :style = "{ 'background-color': main_page.page[0] >= Math.ceil(main_page.cdb.length / 10) ? 'gray' : 'green', 'color': main_page.page[0] >= Math.ceil(main_page.cdb.length / 10) ? 'black' : 'white' }"
+                        <span>第<input @input = "filter_input($event)" v-model = "main_page.page.count[0]"/>页<br>共{{ Math.ceil(main_page.cdb.content.length / 10) }}页</span>
+                        <button @click = "main_page.page.next"
+                            :style = "{ 'background-color': main_page.page.count[0] >= Math.ceil(main_page.cdb.content.length / 10) ? 'gray' : 'green', 'color': main_page.page.count[0] >= Math.ceil(main_page.cdb.content.length / 10) ? 'black' : 'white' }"
                         >下一页</button>
                     </div>
                 </div>
             </transition>
         </div>
-        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = '' }" @event_change_menu = "get_new_cdb_menu"/>
+        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = '' }" @event_change_menu = "main_page.cdb.get_new"/>
     </div>
 </template>
 
@@ -36,6 +36,7 @@
     import { ref, reactive, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
+import { send } from 'vite';
 
     let send_props = reactive({
         card_page: {
@@ -52,85 +53,137 @@
     });
 
     let main_page = reactive({
-        page : [0],
-        cdb : [] as string[],
+        page : {
+            count : [0],
+            next : function () {
+                if (main_page.page.count[0] < Math.ceil(main_page.cdb.content.length / 10))
+                    main_page.page.count[0] ++ ;
+            } as () => void,
+            previous : function () {
+                if (main_page.page.count[0] > 1)
+                    main_page.page.count[0] -- ;
+            } as () => void
+        },
+        cdb : {
+            content : [] as string[],
+            get :  async function (v) {
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
+                        cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] : v)
+                    });
+                    send_props.list_page.cdb = response.data;
+                } catch (error) {}
+            } as (v : string | number) => Promise<void>,
+            get_new : async function (v, id) {
+                await main_page.cdb.get(v);
+                let c = -1;
+                let p = 1;
+                for (let i = 0; i < send_props.list_page.cdb.length; i++) {
+                    if (send_props.list_page.cdb[i].includes(id)) {
+                        p = i;
+                        c = send_props.list_page.cdb[i].indexOf(id);
+                        break;
+                    }
+                }
+                send_props.list_page.select.set('page', p);
+                send_props.list_page.select.set('card', c);
+                send_props.list_page.select.set('entrust', true);
+            } as (v : string | number, id : string) => Promise<void>,
+        },
         show_list : {
             cdb: true,
             card: false
         },
         uploading : false,
+        get : async function () {
+            try {
+                let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
+                main_page.cdb.content = response.data;
+                main_page.page.count[0] = main_page.cdb.content.length > 0 ? 1 : 0;
+            } catch (error) {}
+        } as () => Promise<void>,
+        remove : async function (i) {
+            main_page.cdb.content.splice(main_page.cdb.content.indexOf(send_props.list_page.cdb[0][0]), 1);
+            if (Math.ceil(main_page.cdb.content.length / 10) < main_page.page.count[0])
+                main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
+            try {
+                await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
+            } catch (error) {}
+            whether_show_list_page();
+            send_props.card_page.close = i;
+        } as (i: string) => Promise<void>
     });
 
     let upload_file_input = ref(null);
+    let upload_file = {
+        click : function (e) {
+            try {
+                let files = e.target.files;
+                if (files.length) {
+                    for (let i = 0; i < files.length; i++) {
+                        let file = files[i];
+                        let formData = new FormData();
+                        formData.append('file', file);
+                        upload_file.send(formData);
+                    }
+                }
+            } catch (error) {}
+        } as (e: any) => void,
+        drag : function (e) {
+            let files = e.dataTransfer.files;
+            if (files.length) {
+                for (let i = 0; i < files.length; i++) {
+                    let file = files[i];
+                    if (!upload_file.check(file.type, file.name)) {
+                        continue;
+                    }
+                    let formData = new FormData();
+                    formData.append('file', file);
+                    upload_file.send(formData);
+                }
+            }
+            main_page.uploading = false;
+        } as (e: any) => void,
+        check : function (type, name) {
+            if (type.includes('image') || type.includes('text'))
+                return true;
+            else if (name.endsWith('.cdb') || name.endsWith('.ypk') || name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tgz') || name.endsWith('.tar.gz') || name.endsWith('.7z') || name.endsWith('.rar') || name.endsWith('.lua'))
+                return true;
+            
+            return false;
+        } as (type: string, name: string) => boolean,
+        send : async function (formData) {
+            try {
+                let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
+                if (response.data.endsWith('.cdb')) {
+                    main_page.cdb.content.push(response.data);
+                }
+                if (response.data.endsWith('.jpg')) {
+                    send_props.card_page.pic = response.data;
+                }
+                if (Math.ceil(main_page.cdb.content.length / 10) > main_page.page.count[0]) {
+                    main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
+                }
+            } catch (error) {}
+        } as (formData: FormData) => Promise<void>
+    }
 
     onMounted(() => {
-        get_cdbs_list();
+        main_page.get();
     });
 
     function filter_input(event) {
         let input_value = event.target.value;
         let new_value = input_value.replace(/[^0-9]/, '');
-        while (parseInt(new_value) > Math.ceil(main_page.cdb.length / 10))
+        while (parseInt(new_value) > Math.ceil(main_page.cdb.content.length / 10))
             new_value = new_value.slice(0, -1);
         if (new_value == '')
             new_value = 0;
-        if (parseInt(new_value) < 1 && Math.ceil(main_page.cdb.length / 10) > 0)
+        if (parseInt(new_value) < 1 && Math.ceil(main_page.cdb.content.length / 10) > 0)
             new_value = 1;
-        main_page.page[0] = new_value;
+        main_page.page.count[0] = new_value;
     }
 
-    function next_page() {
-        if (main_page.page[0] < Math.ceil(main_page.cdb.length / 10)) {
-            main_page.page[0] ++ ;
-        }
-    }
-
-    function previous_page() {
-        if (main_page.page[0] > 1) {
-            main_page.page[0] -- ;
-        }
-    }
-
-    function upload_file(e) {
-        let files = e.dataTransfer.files;
-        if (files.length) {
-            for (let i = 0; i < files.length; i++) {
-                let file = files[i];
-                if (!check_type(file.type, file.name)) {
-                    continue;
-                }
-                let formData = new FormData();
-                formData.append('file', file);
-                send_file(formData);
-            }
-        }
-        main_page.uploading = false;
-    }
-
-    function check_type(type, name) {
-        if (type.includes('image') || type.includes('text'))
-            return true;
-        else if (name.endsWith('.cdb') || name.endsWith('.ypk') || name.endsWith('.zip') || name.endsWith('.tar') || name.endsWith('.tgz') || name.endsWith('.tar.gz') || name.endsWith('.7z') || name.endsWith('.rar') || name.endsWith('.lua'))
-            return true;
-        
-        return false;
-    }
-
-    async function get_new_cdb_menu(v, id) {
-        await get_cdb_menu(v);
-        let c = -1;
-        let p = 1;
-        for (let i = 0; i < send_props.list_page.cdb.length; i++) {
-            if (send_props.list_page.cdb[i].includes(id)) {
-                p = i;
-                c = send_props.list_page.cdb[i].indexOf(id);
-                break;
-            }
-        }
-        send_props.list_page.select.set('page', p);
-        send_props.list_page.select.set('card', c);
-        send_props.list_page.select.set('entrust', true);
-    }
     async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) { 
         if (main_page.show_list.card) {
             main_page.show_list.card = false;
@@ -141,7 +194,7 @@
             await(new Promise(resolve => setTimeout(resolve, 5)));
         } else {
             if (v >= 0) {
-                get_cdb_menu(v);
+                main_page.cdb.get(v);
             }
             main_page.show_list.cdb = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
@@ -149,64 +202,6 @@
             emitter.emit('event_select_or_leave_cdb', send_props.list_page.cdb[0][0]);
         }
     }
-
-    async function click_upload_file(e) {
-        try {
-            let files = e.target.files;
-            if (files.length) {
-                for (let i = 0; i < files.length; i++) {
-                    let file = files[i];
-                    let formData = new FormData();
-                    formData.append('file', file);
-                    send_file(formData);
-                }
-            }
-        } catch (error) {}
-    }
-
-    async function get_cdb_menu(v : string | number) {
-        try {
-            let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
-                cdb: ( typeof v === 'number' ? main_page.cdb[v + (Math.abs(main_page.page[0]) - 1) * 10] : v)
-            });
-            send_props.list_page.cdb = response.data;
-        } catch (error) {}
-    }
-
-    async function send_file(formData) {
-        try {
-            let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
-            if (response.data.endsWith('.cdb')) {
-                main_page.cdb.push(response.data);
-            }
-            if (response.data.endsWith('.jpg')) {
-                send_props.card_page.pic = response.data;
-            }
-            if (Math.ceil(main_page.cdb.length / 10) > main_page.page[0]) {
-                main_page.page[0] = Math.ceil(main_page.cdb.length / 10);
-            }
-        } catch (error) {}
-    }
-
-    async function remove_cdb_from_list(i) {
-        main_page.cdb.splice(main_page.cdb.indexOf(send_props.list_page.cdb[0][0]), 1);
-        if (Math.ceil(main_page.cdb.length / 10) < main_page.page[0])
-            main_page.page[0] = Math.ceil(main_page.cdb.length / 10);
-        try {
-            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
-        } catch (error) {}
-        whether_show_list_page();
-        send_props.card_page.close = i;
-    }
-
-    async function get_cdbs_list() {
-        try {
-            let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
-            main_page.cdb = response.data;
-            main_page.page[0] = main_page.cdb.length > 0 ? 1 : 0;
-        } catch (error) {}
-    }
-
 </script>
 
 <style scoped>

@@ -6,21 +6,21 @@
             <button id = "close_cdb_btn" @click = "close_cdb()" title = "关闭cdb">&times;</button>
         </div>
         <div class = "list_content">
-            <button v-for = "(i,v) in list_page.cdb_list[list_page.page[0]]":key = "v"
-                @click = "set_select_card(v, $event)"
+            <button v-for = "(i,v) in list_page.cdb_list[list_page.page.count[0]]":key = "v"
+                @click = "list_page.selected.card.set(v)"
                 :style="{
-                    'background-color': list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'green' : '',
-                    'color': list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'white' : ''
+                    'background-color': list_page.selected.page == list_page.page.count[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'green' : '',
+                    'color': list_page.selected.page == list_page.page.count[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'white' : ''
                     }"
             >{{ i }}</button>
         </div>
         <div class = "list_btn">
-            <button @click = "previous_page"
-                :style = "{ 'background-color': list_page.page[0] <= 1 ? 'gray' : 'green', 'color': list_page.page[0] <= 1 ? 'black' : 'white' }"
+            <button @click = "list_page.page.previous"
+                :style = "{ 'background-color': list_page.page.count[0] <= 1 ? 'gray' : 'green', 'color': list_page.page.count[0] <= 1 ? 'black' : 'white' }"
             >上一页</button>
-            <span>第<input @input = "filter_input($event)" v-model = "list_page.page[0]"/>页<br>共{{ list_page.cdb_list.length - 1 }}页</span>
-            <button @click = "next_page"
-                :style = "{ 'background-color': list_page.page[0] >= list_page.cdb_list.length - 1 ? 'gray' : 'green', 'color': list_page.page[0] >= list_page.cdb_list.length - 1 ? 'black' : 'white' }"
+            <span>第<input @input = "filter_input($event)" v-model = "list_page.page.count[0]"/>页<br>共{{ list_page.cdb_list.length - 1 }}页</span>
+            <button @click = "list_page.page.next()"
+                :style = "{ 'background-color': list_page.page.count[0] >= list_page.cdb_list.length - 1 ? 'gray' : 'green', 'color': list_page.page.count[0] >= list_page.cdb_list.length - 1 ? 'black' : 'white' }"
             >下一页</button>
         </div>
     </div>
@@ -32,17 +32,43 @@
     import emitter from '@/utils/emitter';
 
     let list_page = reactive({
-        page: [0],
+        page: {
+            count : [0],
+            next : function () {
+                if (list_page.page.count[0] < list_page.cdb_list.length - 1)
+                    list_page.page.count[0] ++ ;
+            } as () => void,
+            previous : function () {
+                if (list_page.page.count[0] > 1)
+                    list_page.page.count[0] -- ;
+            } as () => void
+        },
         selected : {
-            card: {
-                id: -1,
-                seq: -1
+            card : {
+                id : -1,
+                seq : -1,
+                set : function (v) {
+                    if (!wait.save_get) return;
+                    wait.save_get = false;
+                    if (list_page.selected.card.seq == v && list_page.selected.page == list_page.page.count[0] && list_page.selected.cdb == list_page.title) {
+                        list_page.selected.card.seq = -1;
+                        list_page.selected.card.id = -1;
+                        list_page.selected.page = -1;
+                        list_page.selected.cdb = '';
+                    } else {
+                        list_page.selected.card.seq = v;
+                        list_page.selected.card.id = list_page.cdb_list[list_page.page.count[0]][v];
+                        list_page.selected.page = list_page.page.count[0];
+                        list_page.selected.cdb = list_page.title;
+                    }
+                    emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page.count[0]).set('cdb', get_props.cdb));
+                } as (v: number) => void
             },
-            page: -1,
+            page : -1,
             cdb : ''
         },
-        title: '',
-        cdb_list: [],
+        title : '',
+        cdb_list : []
     });
 
     let wait = {
@@ -63,10 +89,10 @@
     });
 
     emitter.on('event_card_changed', (i : Map<string, any>) => {
-        if (list_page.page[0] == 0) return;
+        if (list_page.page.count[0] == 0) return;
         let n = i.get('id') + ' ' + i.get('name');
         entrust.card_name = true;
-        list_page.cdb_list[list_page.page[0]][list_page.selected.card.seq] = n;
+        list_page.cdb_list[list_page.page.count[0]][list_page.selected.card.seq] = n;
     });
 
     watch(get_props, (new_value) => {
@@ -85,17 +111,17 @@
                 entrust.cdb = true;
                 list_page.title = new_value.cdb[0][0];
                 list_page.cdb_list = new_value.cdb;
-                list_page.page[0] = list_page.selected.page > 0 ? list_page.selected.page : 1;
+                list_page.page.count[0] = list_page.selected.page > 0 ? list_page.selected.page : 1;
                 if (!entrust.card_name)
-                    emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page[0]).set('cdb', get_props.cdb));
+                    emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page.count[0]).set('cdb', get_props.cdb));
             } else if (entrust.cdb && !entrust.card_name) {
                 list_page.selected.page = new_value.selected.get('page');
                 list_page.selected.card.seq = new_value.selected.get('card');
-                list_page.selected.card.id = list_page.selected.card.seq >= 0 ? list_page.cdb_list[list_page.page[0]][list_page.selected.card.seq] : -1;
+                list_page.selected.card.id = list_page.selected.card.seq >= 0 ? list_page.cdb_list[list_page.page.count[0]][list_page.selected.card.seq] : -1;
                 list_page.selected.cdb = new_value.cdb[0][0];
                 list_page.title = new_value.cdb[0][0];
                 list_page.cdb_list = new_value.cdb;
-                list_page.page[0] = list_page.selected.page;
+                list_page.page.count[0] = list_page.selected.page;
             }
         }
         if (entrust.card_name)
@@ -112,24 +138,7 @@
             new_value = 0;
         if (parseInt(new_value) < 1 && list_page.cdb_list.length > 1)
             new_value = 1;
-        list_page.page[0] = new_value;
-    }
-
-    function set_select_card(v, event) {
-        if (!wait.save_get) return;
-        wait.save_get = false;
-        if (list_page.selected.card.seq == v && list_page.selected.page == list_page.page[0] && list_page.selected.cdb == list_page.title) {
-            list_page.selected.card.seq = -1;
-            list_page.selected.card.id = -1;
-            list_page.selected.page = -1;
-            list_page.selected.cdb = '';
-        } else {
-            list_page.selected.card.seq = v;
-            list_page.selected.card.id = list_page.cdb_list[list_page.page[0]][v];
-            list_page.selected.page = list_page.page[0];
-            list_page.selected.cdb = list_page.title;
-        }
-        emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page[0]).set('cdb', get_props.cdb));
+        list_page.page.count[0] = new_value;
     }
 
     function close_cdb() {
@@ -138,22 +147,9 @@
     }
 
     function whether_show_list_page() {
-        emitter.emit('event_select_card', new Map().set('card', -1).set('id', -1).set('page', list_page.page[0]).set('cdb', get_props.cdb));
+        emitter.emit('event_select_card', new Map().set('card', -1).set('id', -1).set('page', list_page.page.count[0]).set('cdb', get_props.cdb));
         emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id));
     }
-
-    function next_page() {
-        if (list_page.page[0] < list_page.cdb_list.length - 1) {
-            list_page.page[0] ++ ;
-        }
-    }
-
-    function previous_page() {
-        if (list_page.page[0] > 1) {
-            list_page.page[0] -- ;
-        }
-    }
-
 </script>
 
 <style scoped>
