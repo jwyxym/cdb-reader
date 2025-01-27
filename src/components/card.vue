@@ -234,17 +234,17 @@
                     card.pic = data[15];
                 } catch (error) {}
             } as () => Promise<void>,
-            paste : async function(i) {
+            paste : async function(i, v) {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
-                        data: copy.content[0],
-                        code: copy.content[1],
-                        cdb: copy.content[2]
+                        data: copy.content[v][0],
+                        code: copy.content[v][1],
+                        cdb: copy.content[v][2]
                     });
-                    if (i != '0 ')
+                    if (i != '0 ' && v == copy.content.length - 1)
                         emit('event_change_menu', opening_cdb, i)
                 } catch (error) {}
-            } as (i : string) => Promise<void>,
+            } as (i : string, v: number) => Promise<void>,
             save : async function(i) {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
@@ -361,7 +361,7 @@
         from : async function() {
             if (card.origin_id <= 0) return;
             await card.data.save(card.id + ' ' + card.name);
-            copy.content = [
+            copy.content = [[
                 [
                     card_count.id,
                     card_count.ot,
@@ -400,16 +400,17 @@
                         card.pic
                     ]
                 ]
-            ];
+            ]];
             window.alert('已复制:   ' + card.id + ' ' + card.name);
         } as () => void,
         to : async function() {
             if (copy.content.length == 0 || copy.content[0][0] == opening_cdb || opening_cdb == '') return;
             selected_card.card = -1;
-            await card.data.paste(copy.content[0][0] + ' ' + copy.content[0][12]);
+            for (let i = 0; i < copy.content.length; i++)
+                await card.data.paste(copy.content[0][0][0] + ' ' + copy.content[0][0][12], i);
             entrust.copy = true;
-            let data = copy.content[3][1];
-            card.title = copy.content[3][0];
+            let data = copy.content[0][3][1];
+            card.title = copy.content[0][3][0];
             card.origin_id = data[0];
             card.id = data[0];
             card.ot = data[1];
@@ -429,7 +430,7 @@
             card.hint = data[14];
             card.pic = data[15];
             copy.content = [];
-        } as () => void,
+        } as () => void
     });
 
     let entrust = reactive({
