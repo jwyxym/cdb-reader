@@ -15,9 +15,13 @@
             >{{ i }}</button>
         </div>
         <div class = "list_btn">
-            <button ref = "prev_btn" @click = "previous_page">上一页</button>
+            <button @click = "previous_page"
+                :style = "{ 'background-color': list_page.page[0] <= 1 ? 'gray' : 'green', 'color': list_page.page[0] <= 1 ? 'black' : 'white' }"
+            >上一页</button>
             <span>第<input @input = "filter_input($event)" v-model = "list_page.page[0]"/>页<br>共{{ list_page.cdb_list.length - 1 }}页</span>
-            <button ref = "next_btn" @click = "next_page">下一页</button>
+            <button @click = "next_page"
+                :style = "{ 'background-color': list_page.page[0] >= list_page.cdb_list.length - 1 ? 'gray' : 'green', 'color': list_page.page[0] >= list_page.cdb_list.length - 1 ? 'black' : 'white' }"
+            >下一页</button>
         </div>
     </div>
 </template>
@@ -50,10 +54,6 @@
         card_name : false
     }
 
-    let prev_btn = ref(null);
-    let next_btn = ref(null);
-    let list_btns = [];
-
     let emit = defineEmits(['event_close_cdb', 'event_unshow_list_page']);
 
     let get_props = defineProps(['cdb', 'selected']);
@@ -67,10 +67,6 @@
         let n = i.get('id') + ' ' + i.get('name');
         entrust.card_name = true;
         list_page.cdb_list[list_page.page[0]][list_page.selected.card.seq] = n;
-    });
-
-    onMounted(() => {
-        update_button_styles();
     });
 
     watch(get_props, (new_value) => {
@@ -104,14 +100,8 @@
         }
         if (entrust.card_name)
             entrust.card_name = false;
-        else
-            update_button_styles();
 
     }, { deep: true, immediate: true });
-
-    watch(list_page.page, () => {
-        update_button_styles();
-    });
 
     function filter_input(event) {
         let input_value = event.target.value;
@@ -139,7 +129,6 @@
             list_page.selected.page = list_page.page[0];
             list_page.selected.cdb = list_page.title;
         }
-        update_button_styles();
         emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page[0]).set('cdb', get_props.cdb));
     }
 
@@ -163,26 +152,6 @@
         if (list_page.page[0] > 1) {
             list_page.page[0] -- ;
         }
-    }
-
-    function update_button_styles() {
-        btn_style_change(prev_btn.value, 'green', 'white');
-        btn_style_change(next_btn.value, 'green', 'white');
-        if (list_page.page[0] <= 1)
-            btn_style_change(prev_btn.value, 'gray', 'black');
-        if (list_page.page[0] >= list_page.cdb_list.length - 1)
-            btn_style_change(next_btn.value, 'gray', 'black');
-    }
-
-    function btn_style_change(btn, btn_color, text_color) {
-        if (!btn) return;
-        btn.style.backgroundColor = btn_color;
-        btn.style.color = text_color;
-    }
-
-    function set_list_btns(el) {
-        if (!el || list_btns.includes(el)) return;
-        list_btns.push(el);
     }
 
 </script>

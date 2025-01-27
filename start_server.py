@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, jsonify, request, send_file, Response
+from flask import Flask, send_from_directory, jsonify, request, Response
 from os.path import exists, join
 from os import mkdir, remove, listdir
 from shutil import rmtree, copy
@@ -83,7 +83,7 @@ def get_cdb_menu():
     cdb = data.get('cdb')
     cdb_list = read_cdb(f'{buffer}/{cdb}', 'list')
     if len(cdb_list) == 0:
-        return jsonify({'error': '无法读取cdb文件'}), 400
+        return jsonify({'message': '无cdb'}), 200
     return jsonify(cdb_list), 200
 
 @app.route('/api/download_cdb', methods = ['POST'])
@@ -134,5 +134,5 @@ def read_card():
 if __name__ == '__main__':
     rmtree(buffer, ignore_errors = True)
     open_new('http://127.0.0.1:8000/')
-    app.run(host = '127.0.0.1', port = 8000)
+    app.run(host = '0.0.0.0', port = 8000)
 

@@ -14,9 +14,13 @@
                         <button v-for="(i, v) in (main_page.page[0] > 0? Array(main_page.cdb.length >= main_page.page[0] * 10? 10 : main_page.cdb.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ main_page.cdb[v + (Math.abs(main_page.page[0]) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
-                        <button ref = "prev_btn" @click = "previous_page">上一页</button>
+                        <button @click = "previous_page"
+                            :style = "{ 'background-color': main_page.page[0] <= 1 ? 'gray' : 'green', 'color': main_page.page[0] <= 1 ? 'black' : 'white' }"
+                        >上一页</button>
                         <span>第<input @input = "filter_input($event)" v-model = "main_page.page[0]"/>页<br>共{{ Math.ceil(main_page.cdb.length / 10) }}页</span>
-                        <button ref = "next_btn" @click = "next_page">下一页</button>
+                        <button @click = "next_page"
+                            :style = "{ 'background-color': main_page.page[0] >= Math.ceil(main_page.cdb.length / 10) ? 'gray' : 'green', 'color': main_page.page[0] >= Math.ceil(main_page.cdb.length / 10) ? 'black' : 'white' }"
+                        >下一页</button>
                     </div>
                 </div>
             </transition>
@@ -58,16 +62,9 @@
     });
 
     let upload_file_input = ref(null);
-    let prev_btn = ref(null);
-    let next_btn = ref(null);
 
     onMounted(() => {
         get_cdbs_list();
-        update_button_styles();
-    });
-
-    watch(main_page.page, () => {
-        update_button_styles();
     });
 
     function filter_input(event) {
@@ -119,21 +116,6 @@
         return false;
     }
 
-    function update_button_styles() {
-        btn_style_change(prev_btn.value, 'green', 'white');
-        btn_style_change(next_btn.value, 'green', 'white');
-        if (main_page.page[0] <= 1)
-            btn_style_change(prev_btn.value, 'gray', 'black');
-        if (main_page.page[0] >= Math.ceil(main_page.cdb.length / 10))
-            btn_style_change(next_btn.value, 'gray', 'black');
-    }
-
-    function btn_style_change(btn, btn_color, text_color) {
-        if (!btn) return;
-        btn.style.backgroundColor = btn_color;
-        btn.style.color = text_color;
-    }
-
     async function get_new_cdb_menu(v, id) {
         await get_cdb_menu(v);
         let c = -1;
@@ -157,7 +139,6 @@
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.cdb = true;
             await(new Promise(resolve => setTimeout(resolve, 5)));
-            update_button_styles();
         } else {
             if (v >= 0) {
                 get_cdb_menu(v);

@@ -7,10 +7,15 @@
         <div id = "card_pic">
             <img :src = "card.pic"/>
             <div id = "card_link">
-                <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 }" v-if = "vif.show.link.chk && vif.is_type.link" @mouseover = "change_src(i)" @mouseleave = "reset_src(i)" @click = "change_card_link(i)"/>
+                <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 }" v-if = "vif.show.link.chk && vif.is_type.link" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
             </div>
             <div>
-                <button ref = "show_links_btn" @click = "whether_show_or_not_links" :title = "vif.show.link.title" v-html = "vif.show.link.content" v-if = "vif.is_type.link"></button>
+                <button ref = "show_links_btn"
+                @click = "() => { vif.show.link.chk = !vif.show.link.chk; }"
+                :title = "vif.show.link.chk ? '点击隐藏连接箭头' : '点击显示连接箭头'"
+                v-html = "vif.show.link.chk ? '&#10003' : '&times'"
+                :style = "{ 'background-color': vif.show.link.chk ? 'green' : 'red' }"
+                v-if = "vif.is_type.link"></button>
             </div>
         </div>
         <div id = "card_ot">
@@ -83,14 +88,14 @@
             </transition>
             <transition name = "card_box_btn">
                 <div v-if = "vif.unshow.btn" id = "card_box_btn">
-                    <button @click = "whether_show_rpage(true, 'type')" :title = "vif.show.type.title[0]">&lt;</button>
-                    <button @click = "whether_show_rpage(true, 'category')" :title = "vif.show.category.title[0]">&lt;</button>
-                    <button @click = "whether_show_rpage(true, 'hint')" :title = "vif.show.hint.title[0]">&lt;</button>
-                    <button :style = "{ 'background-color': selected_card.card >= 0 ? 'red' : 'gray' }" @click = "del_card()">删除</button>
-                    <button :style = "{ 'background-color': selected_card.card >= 0 ? 'cornflowerblue' : 'gray' }" @click = "() => { if (selected_card.card < 0) return; copy.chk = true; }">复制</button>
-                    <button :style = "{ 'background-color': copy.chk ? 'cornflowerblue' : 'gray' }" @click = "() => { copy.chk = false; }">黏贴</button>
-                    <button style = "background-color: cornflowerblue;">设置&lt;</button>
                     <download/>
+                    <button @click = "whether_show_rpage(true, 'type')">{{ vif.show.type.title[0] }}</button>
+                    <button @click = "whether_show_rpage(true, 'category')">{{ vif.show.category.title[0] }}</button>
+                    <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
+                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'red' : 'gray' }" @click = "card.del()">删除</button>
+                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
+                    <button :style = "{ 'background-color': copy.content.length > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
+                    <button style = "background-color: cornflowerblue;">设置</button>
                 </div>
             </transition>
         </div>
@@ -112,7 +117,23 @@
         type: [] as [number , string][],
         category: [] as [number , string][],
         link: [] as number[],
-        link_pics: [] as string[]
+        link_pics: [] as string[],
+        get : async function() {
+            await axios.get('http://127.0.0.1:8000/api/initialize')
+                .then(get => {
+                    lists.ot = get.data[1];
+                    lists.attribute = get.data[2];
+                    lists.level = get.data[3];
+                    lists.link = get.data[4];
+                    lists.category = get.data[5];
+                    lists.race = get.data[6];
+                    lists.type = get.data[7];
+                    card.clear()
+                })
+                .catch(error => {
+                console.error('获取数据失败:', error);
+            });
+        }
     });
     
     let card = reactive({
@@ -135,7 +156,123 @@
         type : [false],
         category : [false],
         hint : [''],
-        setcard : Array(4).fill('0')
+        setcard : Array(4).fill('0'),
+        get_link : {
+            link : function(i) {
+                if ((card.link & lists.link[i]) > 0)
+                    card.link -= lists.link[i]
+                else
+                    card.link += lists.link[i]
+                card.get_link.src.get(i);
+            } as (i: number) => void,
+            src : {
+                get : function(i) {
+                    if (lists.link_pics[i].endsWith('-I.png'))
+                        return;
+                    lists.link_pics[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '-I.png'
+                } as (i: number) => void,
+                reset : function (i) {
+                    if ((card.link & lists.link[i]) == 0)
+                        lists.link_pics[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '.png'
+                } as (i: number) => void
+            }
+        },
+        clear : function() {
+            card.title = ''
+            card.name = '';
+            card.ot = lists.ot[0][1] as string;
+            card.attribute = lists.attribute[0][1] as string;
+            card.level = lists.level[0][1] as string;
+            card.race = lists.race[0][1] as string;
+            card.id = 0;
+            card.alias = 0;
+            card.pic = '/cover.png';
+            card.atk = 0;
+            card.def = 0;
+            card.pendulum = 0;
+            card.link = 0;
+            card.desc = '';
+            card.type = Array(lists.type.length).fill(false);
+            card.category = Array(lists.category.length).fill(false);
+            card.hint = Array(16).fill('');
+            card.setcard = Array(4).fill('0');
+            card.origin_id = 0;
+            card.origin_name = '';
+            selected_card.title = '';
+            selected_card.page = -1;
+            selected_card.card = -1;
+        } as () => void,
+        del : async function() {
+            await card.data.del();
+            emit('event_change_menu', card.title, card.origin_id)
+            card.clear();
+        } as () => void,
+        data : {
+            get : async function () {
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/read_card', {
+                        cdb: selected_card.title,
+                        page: selected_card.page,
+                        card: selected_card.card
+                    });
+                    let data = response.data[1];
+                    card.title = response.data[0]
+                    card.origin_id = data[0];
+                    card.id = data[0];
+                    card.ot = data[1];
+                    card.alias = data[2];
+                    card.setcard = data[3];
+                    card.type = data[4];
+                    card.atk = data[5];
+                    card.def = data[6];
+                    card.level = data[7][0];
+                    card.pendulum = data[7][1];
+                    card.race = data[8];
+                    card.attribute = data[9];
+                    card.category = data[10];
+                    card.origin_name = data[12];
+                    card.name = data[12];
+                    card.desc = data[13];
+                    card.hint = data[14];
+                    card.pic = data[15];
+                } catch (error) { console.error('获取卡片数据失败:', error); }
+            } as () => Promise<void>,
+            save : async function(i = -1) {
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
+                        data: [
+                            card_count.id,
+                            card_count.ot,
+                            card_count.alias,
+                            card_count.setcard,
+                            card_count.type,
+                            card_count.atk,
+                            card_count.def,
+                            card_count.level,
+                            card_count.race,
+                            card_count.attribute,
+                            card_count.category,
+                            card_count.id,
+                            card.name,
+                            card.desc
+                        ].concat(card.hint),
+                        code: card.origin_id,
+                        cdb: selected_card.title
+                    });
+                    if (response.data == 'removed' && i > 0) {
+                        emit('event_change_menu', card.title, i)
+                    }
+                } catch (error) {}
+            } as (i : number) => Promise<void>,
+            del : async function() {
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/del_cdb', {
+                        id: card.origin_id,
+                        cdb: card.title
+                    });
+                } catch (error) {}
+            } as () => Promise<void>
+        }
     });
 
     let card_count = reactive({
@@ -150,21 +287,41 @@
         attribute : 0,
         type : 0,
         category : 0,
+        get : function() {
+            card_count.type = 0;
+            card.type.forEach((e, v) => {
+                if (e) card_count.type += lists.type[v][0]
+            });
+
+            card_count.category = 0;
+            card.category.forEach((e, v) => {
+                if (e) card_count.category += lists.category[v][0]
+            });
+            card_count.id = (vif.warn.same_id || card.id.toString().length == 0 ? card.origin_id : card.id);
+            card_count.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
+            card_count.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
+            card_count.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
+            card_count.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
+            card_count.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
+            card_count.atk = card.atk != '?' ? card.atk as number : -2; 
+            card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
+            card_count.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
+        } as () => void
     });
 
     let vif = reactive({
         show : {
             category : {
                 chk : false,
-                title : ['显示效果分类', '隐藏效果分类']
+                title : ['效果分类', '隐藏效果分类']
             },
             type : {
                 chk : false,
-                title : ['显示卡片类型', '隐藏卡片类型']
+                title : ['卡片类型', '隐藏卡片类型']
             },
             hint : {
                 chk : false,
-                title : ['显示卡片脚本提示文字', '隐藏卡片脚本提示文字']
+                title : ['提示文字', '隐藏卡片脚本提示文字']
             },
             link : {
                 chk : false,
@@ -193,7 +350,30 @@
 
     let copy = reactive({
         content : [],
-        chk : false
+        from : function() {
+            copy.content = [[card.title], [
+                card.id,
+                card.ot,
+                card.alias,
+                card.setcard,
+                card.type,
+                card.atk,
+                card.def,
+                [card.level, card.pendulum],
+                card.race,
+                card.attribute,
+                card.category,
+                card.id,
+                card.name,
+                card.desc,
+                card.hint,
+                card.pic
+            ]];
+        } as () => void,
+        to : function() {
+            if (copy.content.length == 0) return;
+            copy.content = []
+        } as () => void,
     });
 
     let show_links_btn = ref(null);
@@ -206,22 +386,22 @@
 
     emitter.on('event_save_before_download', async () => {
         if (card.origin_id > 0)
-            await save_card_data();
+            await card.data.save(-1);
         emitter.emit('event_save_over');
     });
 
     emitter.on('event_select_card', async (i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) => {
         if (selected_card.card >= 0)
-            await save_card_data(i.get('id'));
+            await card.data.save(i.get('id'));
         cdb_menu.value = i.get('cdb');
         selected_card.title = i.get('cdb')[0][0];
         selected_card.page = i.get('page');
         selected_card.card = i.get('card');
 
         if (selected_card.card < 0)
-            clear_card();
+            card.clear();
         else
-            await get_card_data();
+            await card.data.get();
 
         emitter.emit('event_get_over');
     });
@@ -233,7 +413,7 @@
             }
             lists.link_pics.push('./link-arrow/arrow' + i + '.png');
         }
-        get_card_info();
+        lists.get();
     });
 
     watch(card, (n) => {
@@ -243,7 +423,7 @@
             vif.warn.same_id = false;
         }
 
-        change_card_info_to_count()
+        card_count.get();
 
         if (n.id + ' ' + n.name != n.origin_id + ' ' + n.origin_name || n.id + ' ' + n.name != vif.warn.id) {
             vif.warn.id = n.id + ' ' + n.name;
@@ -266,52 +446,10 @@
             card.pic = n.pic;
 
         if (n.close != '' && n.close == card.title) {
-            clear_card();
+            card.clear();
             emit('event_close_fixed');
         }
     }, { immediate: true });
-
-    function change_card_info_to_count() {
-        card_count.type = 0;
-        card.type.forEach((e, v) => {
-            if (e) card_count.type += lists.type[v][0]
-        });
-
-        card_count.category = 0;
-        card.category.forEach((e, v) => {
-            if (e) card_count.category += lists.category[v][0]
-        });
-        card_count.id = (vif.warn.same_id || card.id.toString().length == 0 ? card.origin_id : card.id);
-        card_count.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
-        card_count.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
-        card_count.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
-        card_count.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
-        card_count.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
-        card_count.atk = card.atk != '?' ? card.atk as number : -2; 
-        card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
-        card_count.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
-
-    }
-
-    function change_card_link(i) {
-        if ((card.link & lists.link[i]) > 0)
-            card.link -= lists.link[i]
-        else
-            card.link += lists.link[i]
-        change_src(i)
-    }
-
-    function change_src(i) {
-        if (lists.link_pics[i].endsWith('-I.png'))
-            return;
-        lists.link_pics[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '-I.png'
-    }
-
-    
-    function reset_src(i) {
-        if ((card.link & lists.link[i]) == 0)
-            lists.link_pics[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '.png'
-    }
 
     function filter_input(event, t, str_filter = /[^0-9]/) {
         let input_value = event.target.value;
@@ -348,46 +486,6 @@
         }
     }
 
-    function whether_show_or_not_links() {
-        vif.show.link.chk = !vif.show.link.chk;
-        vif.show.link.title = vif.show.link.chk ? '点击隐藏连接箭头' : '点击显示连接箭头';
-        vif.show.link.content = vif.show.link.chk ? '&#10003' : '&times';
-        if (show_links_btn.value)
-            show_links_btn.value.style.backgroundColor = vif.show.link.chk ? 'green' : 'red';
-    }
-
-    function clear_card() {
-        card.title = ''
-        card.name = '';
-        card.ot = lists.ot[0][1] as string;
-        card.attribute = lists.attribute[0][1] as string;
-        card.level = lists.level[0][1] as string;
-        card.race = lists.race[0][1] as string;
-        card.id = 0;
-        card.alias = 0;
-        card.pic = '/cover.png';
-        card.atk = 0;
-        card.def = 0;
-        card.pendulum = 0;
-        card.link = 0;
-        card.desc = '';
-        card.type = Array(lists.type.length).fill(false);
-        card.category = Array(lists.category.length).fill(false);
-        card.hint = Array(16).fill('');
-        card.setcard = Array(4).fill('0');
-        card.origin_id = 0;
-        card.origin_name = '';
-        selected_card.title = '';
-        selected_card.page = -1;
-        selected_card.card = -1;
-    }
-
-    async function del_card() {
-        await del_card_data();
-        emit('event_change_menu', card.title, card.origin_id)
-        clear_card();
-    }
-
     async function whether_show_rpage(chk, v) {
         if (chk) {
             vif.unshow.btn = false;
@@ -419,92 +517,6 @@
             vif.unshow.btn = true;
         }
     }
-
-    async function get_card_info() {
-        await axios.get('http://127.0.0.1:8000/api/initialize')
-            .then(get => {
-                lists.ot = get.data[1];
-                lists.attribute = get.data[2];
-                lists.level = get.data[3];
-                lists.link = get.data[4];
-                lists.category = get.data[5];
-                lists.race = get.data[6];
-                lists.type = get.data[7];
-                clear_card()
-            })
-            .catch(error => {
-            console.error('获取数据失败:', error);
-        });
-    }
-
-    async function get_card_data() {
-        try {
-            let response = await axios.post('http://127.0.0.1:8000/api/read_card', {
-                cdb: selected_card.title,
-                page: selected_card.page,
-                card: selected_card.card
-            });
-            let data = response.data[1];
-            card.title = response.data[0]
-            card.origin_id = data[0];
-            card.id = data[0];
-            card.ot = data[1];
-            card.alias = data[2];
-            card.setcard = data[3];
-            card.type = data[4];
-            card.atk = data[5];
-            card.def = data[6];
-            card.level = data[7][0];
-            card.pendulum = data[7][1];
-            card.race = data[8];
-            card.attribute = data[9];
-            card.category = data[10];
-            card.origin_name = data[12];
-            card.name = data[12];
-            card.desc = data[13];
-            card.hint = data[14];
-            card.pic = data[15];
-        } catch (error) { console.error('获取卡片数据失败:', error); }
-    }
-
-    async function del_card_data() {
-        try {
-            let response = await axios.post('http://127.0.0.1:8000/api/del_cdb', {
-                id: card.origin_id,
-                cdb: card.title
-            });
-        } catch (error) {}
-    }
-
-    async function save_card_data(i = -1) {
-        try {
-            let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
-                data: [
-                    card_count.id,
-                    card_count.ot,
-                    card_count.alias,
-                    card_count.setcard,
-                    card_count.type,
-                    card_count.atk,
-                    card_count.def,
-                    card_count.level,
-                    card_count.race,
-                    card_count.attribute,
-                    card_count.category,
-                    card_count.id,
-                    card.name,
-                    card.desc
-                ].concat(card.hint),
-                code: card.origin_id,
-                cdb: selected_card.title
-            });
-            if (response.data == 'removed' && i > 0) {
-                emit('event_change_menu', card.title, i)
-            }
-        } catch (error) {}
-    }
-
-
 </script>
 
 <style scoped>
@@ -600,6 +612,7 @@
     }
 
     #card_pic img {
+        max-width: 17.5vw;
         height: 100%;
         width: auto;
         display: block;
