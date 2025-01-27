@@ -9,8 +9,12 @@
     npm install
 ```
 
-运行方法:
+编译vue
 ```bash
     npm run build
+```
+
+运行:
+```bash
     py start_server.py
 ```
