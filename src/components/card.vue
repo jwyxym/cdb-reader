@@ -93,8 +93,8 @@
                     <button @click = "whether_show_rpage(true, 'category')">{{ vif.show.category.title[0] }}</button>
                     <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
                     <button :style = "{ 'background-color': card.origin_id > 0 ? 'red' : 'gray' }" @click = "card.del()">删除</button>
-                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
-                    <button :style = "{ 'background-color': copy.content.length > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
+                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from">复制</button>
+                    <button :style = "{ 'background-color': copy.content.length > 0 && copy.content[0][0] != opening_cdb && opening_cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to">黏贴</button>
                     <button style = "background-color: cornflowerblue;">设置</button>
                 </div>
             </transition>
@@ -119,20 +119,17 @@
         link: [] as number[],
         link_pics: [] as string[],
         get : async function() {
-            await axios.get('http://127.0.0.1:8000/api/initialize')
-                .then(get => {
-                    lists.ot = get.data[1];
-                    lists.attribute = get.data[2];
-                    lists.level = get.data[3];
-                    lists.link = get.data[4];
-                    lists.category = get.data[5];
-                    lists.race = get.data[6];
-                    lists.type = get.data[7];
-                    card.clear()
-                })
-                .catch(error => {
-                console.error('获取数据失败:', error);
-            });
+            try {
+                let response = await axios.get('http://127.0.0.1:8000/api/initialize')
+                    lists.ot = response.data[1];
+                    lists.attribute = response.data[2];
+                    lists.level = response.data[3];
+                    lists.link = response.data[4];
+                    lists.category = response.data[5];
+                    lists.race = response.data[6];
+                    lists.type = response.data[7];
+                    card.clear();
+            } catch(error) {};
         }
     });
     
@@ -235,9 +232,20 @@
                     card.desc = data[13];
                     card.hint = data[14];
                     card.pic = data[15];
-                } catch (error) { console.error('获取卡片数据失败:', error); }
+                } catch (error) {}
             } as () => Promise<void>,
-            save : async function(i = -1) {
+            paste : async function(i) {
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
+                        data: copy.content[0],
+                        code: copy.content[1],
+                        cdb: copy.content[2]
+                    });
+                    if (i != '0 ')
+                        emit('event_change_menu', opening_cdb, i)
+                } catch (error) {}
+            } as (i : string) => Promise<void>,
+            save : async function(i) {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                         data: [
@@ -259,15 +267,15 @@
                         code: card.origin_id,
                         cdb: selected_card.title
                     });
-                    if (response.data == 'removed' && i > 0) {
+                    if (response.data == 'removed' && i != '0 ') {
                         emit('event_change_menu', card.title, i)
                     }
                 } catch (error) {}
-            } as (i : number) => Promise<void>,
+            } as (i : string) => Promise<void>,
             del : async function() {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/del_cdb', {
-                        id: card.origin_id,
+                        code: card.origin_id,
                         cdb: card.title
                     });
                 } catch (error) {}
@@ -350,43 +358,97 @@
 
     let copy = reactive({
         content : [],
-        from : function() {
-            copy.content = [[card.title], [
-                card.id,
-                card.ot,
-                card.alias,
-                card.setcard,
-                card.type,
-                card.atk,
-                card.def,
-                [card.level, card.pendulum],
-                card.race,
-                card.attribute,
-                card.category,
-                card.id,
-                card.name,
-                card.desc,
-                card.hint,
-                card.pic
-            ]];
+        from : async function() {
+            if (card.origin_id <= 0) return;
+            await card.data.save(card.id + ' ' + card.name);
+            copy.content = [
+                [
+                    card_count.id,
+                    card_count.ot,
+                    card_count.alias,
+                    card_count.setcard,
+                    card_count.type,
+                    card_count.atk,
+                    card_count.def,
+                    card_count.level,
+                    card_count.race,
+                    card_count.attribute,
+                    card_count.category,
+                    card_count.id,
+                    card.name,
+                    card.desc
+                ].concat(card.hint),
+                card.origin_id,
+                opening_cdb,
+                [
+                    [card.title], [
+                        card.id,
+                        card.ot,
+                        card.alias,
+                        card.setcard,
+                        card.type,
+                        card.atk,
+                        card.def,
+                        [card.level, card.pendulum],
+                        card.race,
+                        card.attribute,
+                        card.category,
+                        card.id,
+                        card.name,
+                        card.desc,
+                        card.hint,
+                        card.pic
+                    ]
+                ]
+            ];
+            window.alert('已复制:   ' + card.id + ' ' + card.name);
         } as () => void,
-        to : function() {
-            if (copy.content.length == 0) return;
-            copy.content = []
+        to : async function() {
+            if (copy.content.length == 0 || copy.content[0][0] == opening_cdb || opening_cdb == '') return;
+            selected_card.card = -1;
+            await card.data.paste(copy.content[0][0] + ' ' + copy.content[0][12]);
+            entrust.copy = true;
+            let data = copy.content[3][1];
+            card.title = copy.content[3][0];
+            card.origin_id = data[0];
+            card.id = data[0];
+            card.ot = data[1];
+            card.alias = data[2];
+            card.setcard = data[3];
+            card.type = data[4];
+            card.atk = data[5];
+            card.def = data[6];
+            card.level = data[7][0];
+            card.pendulum = data[7][1];
+            card.race = data[8];
+            card.attribute = data[9];
+            card.category = data[10];
+            card.origin_name = data[12];
+            card.name = data[12];
+            card.desc = data[13];
+            card.hint = data[14];
+            card.pic = data[15];
+            copy.content = [];
         } as () => void,
+    });
+
+    let entrust = reactive({
+        copy : false
     });
 
     let show_links_btn = ref(null);
 
     let cdb_menu = ref([]);
 
-    let get_props = defineProps(['pic', 'close']);
+    let get_props = defineProps(['pic', 'close', 'cdb']);
 
     let emit = defineEmits(['event_close_fixed', 'event_change_menu']);
 
-    emitter.on('event_save_before_download', async () => {
+    let opening_cdb = '暂未打开cdb';
+
+    emitter.on('event_save_before', async () => {
         if (card.origin_id > 0)
-            await card.data.save(-1);
+            await card.data.save(card.id + ' ' + card.name);
         emitter.emit('event_save_over');
     });
 
@@ -427,7 +489,9 @@
 
         if (n.id + ' ' + n.name != n.origin_id + ' ' + n.origin_name || n.id + ' ' + n.name != vif.warn.id) {
             vif.warn.id = n.id + ' ' + n.name;
-            emitter.emit('event_card_changed', new Map().set('id', vif.warn.same_id ? card.origin_id : n.id).set('name', card.name));
+            if (!entrust.copy)
+                emitter.emit('event_card_changed', new Map().set('id', vif.warn.same_id ? card.origin_id : n.id).set('name', card.name));
+            else entrust.copy = false;
         }
 
         vif.is_type.link = (card_count.type & 0x4000000) > 0;
@@ -449,6 +513,8 @@
             card.clear();
             emit('event_close_fixed');
         }
+
+        opening_cdb = n.cdb;
     }, { immediate: true });
 
     function filter_input(event, t, str_filter = /[^0-9]/) {

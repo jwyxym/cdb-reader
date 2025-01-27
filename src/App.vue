@@ -25,7 +25,7 @@
                 </div>
             </transition>
         </div>
-        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" @event_close_fixed = "() => { send_props.card_page.close = '' }" @event_change_menu = "main_page.cdb.get_new"/>
+        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" :cdb = "send_props.card_page.cdb" @event_close_fixed = "() => { send_props.card_page.close = '' }" @event_change_menu = "main_page.cdb.get_new"/>
     </div>
 </template>
 
@@ -40,9 +40,7 @@ import { send } from 'vite';
 
     let send_props = reactive({
         card_page: {
-            cdb: ['暂未打开cdb'],
-            page: 0,
-            card: 0,
+            cdb: '',
             pic: '',
             close: ''
         },
@@ -72,22 +70,29 @@ import { send } from 'vite';
                         cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] : v)
                     });
                     send_props.list_page.cdb = response.data;
+                    send_props.card_page.cdb = response.data[0][0];
                 } catch (error) {}
             } as (v : string | number) => Promise<void>,
             get_new : async function (v, id) {
-                await main_page.cdb.get(v);
-                let c = -1;
-                let p = 1;
-                for (let i = 0; i < send_props.list_page.cdb.length; i++) {
-                    if (send_props.list_page.cdb[i].includes(id)) {
-                        p = i;
-                        c = send_props.list_page.cdb[i].indexOf(id);
-                        break;
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
+                        cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] : v)
+                    });
+                    let c = -1;
+                    let p = 1;
+                    for (let i = 0; i < response.data.length; i++) {
+                        if (response.data[i].includes(id)) {
+                            p = i;
+                            c = response.data[i].indexOf(id);
+                            break;
+                        }
                     }
-                }
-                send_props.list_page.select.set('page', p);
-                send_props.list_page.select.set('card', c);
-                send_props.list_page.select.set('entrust', true);
+                    send_props.list_page.select.set('page', p);
+                    send_props.list_page.select.set('card', c);
+                    send_props.list_page.select.set('entrust', true);
+                    send_props.list_page.cdb = response.data;
+                    send_props.card_page.cdb = response.data[0][0];
+                } catch (error) {}
             } as (v : string | number, id : string) => Promise<void>,
         },
         show_list : {
@@ -187,15 +192,15 @@ import { send } from 'vite';
     async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) { 
         if (main_page.show_list.card) {
             main_page.show_list.card = false;
+            send_props.card_page.cdb = '';
             send_props.list_page.select = i;
             emitter.emit('event_select_or_leave_cdb');
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.cdb = true;
             await(new Promise(resolve => setTimeout(resolve, 5)));
         } else {
-            if (v >= 0) {
+            if (v >= 0)
                 main_page.cdb.get(v);
-            }
             main_page.show_list.cdb = false;
             await(new Promise(resolve => setTimeout(resolve, 500)));
             main_page.show_list.card = true;

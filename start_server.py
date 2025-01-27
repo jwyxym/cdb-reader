@@ -101,6 +101,14 @@ def download_cdb():
         
         return response
 
+@app.route('/api/del_cdb', methods = ['POST'])
+def del_cdb():
+    data = request.json
+    code = data.get('code')
+    cdb = data.get('cdb')
+    delete_cdb(code, f'{buffer}/{cdb}')
+    return jsonify(), 200
+
 @app.route('/api/save_cdb', methods = ['POST'])
 def save_cdb():
     data = request.json

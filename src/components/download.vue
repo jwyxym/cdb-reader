@@ -1,5 +1,5 @@
 <template>
-    <button class = "download" :style = "{ 'background-color': selected.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "() => { emitter.emit('event_save_before_download'); } ">保存</button>
+    <button class = "download" :style = "{ 'background-color': selected.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "() => { emitter.emit('event_save_before'); } ">保存</button>
 </template>
 
 <script setup name="download" lang="js">

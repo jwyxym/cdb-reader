@@ -97,7 +97,6 @@
 
     watch(get_props, (new_value) => {
         entrust.cdb = new_value.selected.get('entrust');
-
         if (new_value.selected.get('cdb') != '' && !entrust.select) {
             entrust.select = true;
             list_page.selected.card.seq = new_value.selected.get('card');
@@ -105,7 +104,6 @@
             list_page.selected.cdb = new_value.selected.get('cdb');
             list_page.selected.card.id = list_page.selected.card.seq >= 0 ? new_value.cdb[list_page.selected.page][list_page.selected.card.seq] : -1;
         }
-
         if (new_value.cdb[0][0] != '暂未打开cdb') {
             if (!entrust.cdb) {
                 entrust.cdb = true;
