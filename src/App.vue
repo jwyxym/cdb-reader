@@ -6,9 +6,12 @@
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "main_page.show_list.cdb" id = "under_list_page">
-                    <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
-                        <h4>拖拽文件或点击此处上传文件</h4>
-                        <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
+                    <div style = "display: flex; width: 30vw; height: 10vh;">
+                        <div id = "add_area" @click = "main_page.add()"><h4>新建</h4></div>
+                        <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
+                            <h4>拖拽文件或点击此处上传文件</h4>
+                            <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
+                        </div>
                     </div>
                     <div id = "cdb_list">
                         <button v-for="(i, v) in (main_page.page.count[0] > 0? Array(main_page.cdb.content.length >= main_page.page.count[0] * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] }}</button>
@@ -105,7 +108,13 @@ import { send } from 'vite';
             try {
                 let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
                 main_page.cdb.content = response.data;
-                main_page.page.count[0] = main_page.cdb.content.length > 0 ? 1 : 0;
+                main_page.page.count[0] = main_page.cdb.content.length > 0 ? Math.ceil(main_page.cdb.content.length / 10) : 0;
+            } catch (error) {}
+        } as () => Promise<void>,
+        add : async function () {
+            try {
+                let response = await axios.post('http://127.0.0.1:8000/api/create_new_cdb');
+                main_page.get();
             } catch (error) {}
         } as () => Promise<void>,
         remove : async function (i) {
@@ -255,20 +264,27 @@ import { send } from 'vite';
         background-color: green;
     }
 
-    #upload_area {
-        width: 25vw;
-        height: 10vh;
+    #upload_area, #add_area {
         border: 2px dashed #bbbbbb;
 
         color: #bbbbbb;
 
         text-align: center;
-        justify-self: center;
 
         cursor: pointer;
     }
 
-    #upload_area:hover {
+    #upload_area {
+        width: 25vw;
+        height: 10vh;
+    }
+
+    #add_area {
+        width: 5vw;
+        height: 10vh;
+    }
+
+    #upload_area:hover, #add_area:hover {
         border: 2px dashed black;
         color: black;
     }

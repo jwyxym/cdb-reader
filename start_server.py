@@ -4,8 +4,8 @@ from os import mkdir, remove, listdir
 from shutil import rmtree, copy
 from webbrowser import open_new
 from io import BytesIO
-
-from sqlite_cdb import read_cdb, change_cdb, delete_cdb
+from time import ctime
+from sqlite_cdb import read_cdb, change_cdb, delete_cdb, create_cdb
 from read_config import read_card_info
 import file_manager
 
@@ -40,6 +40,13 @@ def get_cdbs():
             if file.endswith('.cdb'):
                 opened_cdbs.append(file)
     return jsonify(opened_cdbs), 200
+
+@app.route('/api/create_new_cdb', methods = ['POST'])
+def create_new_cdb():
+    file_manager.initialize_dir(buffer)
+    file = file_manager.get_only_one_file_path(buffer, f'cards-{str(ctime()).replace(" ", "-").replace(":", "-")}.cdb')
+    create_cdb(file)
+    return jsonify(), 200
 
 @app.route('/api/initialize', methods = ['GET'])
 def initialize():
