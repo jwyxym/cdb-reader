@@ -44,7 +44,7 @@ def get_cdbs():
 @app.route('/api/create_new_cdb', methods = ['POST'])
 def create_new_cdb():
     file_manager.initialize_dir(buffer)
-    file = file_manager.get_only_one_file_path(buffer, f'cards-{str(ctime()).replace(" ", "-").replace(":", "-")}.cdb')
+    file = file_manager.get_only_one_file_path(buffer, f'{str(ctime()).replace(" ", "-").replace(":", "-")}.cdb')
     create_cdb(file)
     return jsonify(), 200
 
