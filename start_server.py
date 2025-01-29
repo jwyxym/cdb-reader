@@ -1,22 +1,33 @@
 from flask import Flask, send_from_directory, jsonify, request, Response
+from flask_socketio import SocketIO
 from os.path import exists, join
 from os import mkdir, remove, listdir
 from shutil import rmtree, copy
 from webbrowser import open_new
 from io import BytesIO
 from time import ctime
+
 from read_config import read_card_info
 import file_manager
 import sqlite_cdb
 import unpackage
 
-app = Flask(__name__, static_folder='dist')
+app = Flask(__name__, static_folder = 'dist')
+socketio = SocketIO(app, async_mode = 'gevent')
 
 buffer = './dist/buffer'
 cdb_backup_folder_path = 'cdb_backup'
 pics_folder_path = 'pics'
 script_folder_path = 'script'
 package_folder_path = 'package'
+
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -154,5 +165,5 @@ def read_card():
 if __name__ == '__main__':
     rmtree(buffer, ignore_errors = True)
     open_new('http://127.0.0.1:8000/')
-    app.run(host = '0.0.0.0', port = 8000)
+    socketio.run(app, host='0.0.0.0', port = 8000)
 
