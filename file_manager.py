@@ -26,10 +26,14 @@ def copy_cdb(cdb_path, buffer = './dist/buffer', cdb_folder = 'cdb_backup'):
     except:
         return None
 
-def initialize_dir(dir_path):
+def initialize_dir_conceal(dir_path):
     if not exists(dir_path):
         mkdir(dir_path)
         windll.kernel32.SetFileAttributesW(dir_path, 2)
+
+def initialize_dir(dir_path):
+    if not exists(dir_path):
+        mkdir(dir_path)
 
 def get_only_one_file_path(buffer, file_name):
     file_path = f'{buffer}/{file_name}'
@@ -46,6 +50,18 @@ def remove_file(buffer, folder_path, file):
         if exists(f'{buffer}/{path}/{file}'):
             remove(f'{buffer}/{path}/{file}')
 
-if __name__ == '__main__':
-    name = '2511'
-    process_pic(f'./dist/buffer/{name}.jpg')
+def package_file(lists, buffer = './dist/buffer', path = 'package', pics = 'pics', script = 'script', cdb = 'cards.cdb'):
+    if exists(f'{buffer}/{path}'): rmtree(f'{buffer}/{path}')
+    initialize_dir(f'{buffer}/{pics}')
+    initialize_dir(f'{buffer}/{script}')
+    initialize_dir(f'{buffer}/{path}')
+    initialize_dir(f'{buffer}/{path}/{pics}')
+    initialize_dir(f'{buffer}/{path}/{script}')
+    copy(f'{buffer}/{cdb}', f'{buffer}/{path}/{cdb}')
+    for files in lists:
+        for file in files:
+            f = file.split(' ')[0]
+            if exists(f'{buffer}/{pics}/{f}.jpg'):
+                copy(f'{buffer}/{pics}/{f}.jpg', f'{buffer}/{path}/{pics}/{f}.jpg')
+            if exists(f'{buffer}/{script}/c{f}.lua'):
+                copy(f'{buffer}/{script}/c{f}.lua', f'{buffer}/{path}/{script}/c{f}.lua')

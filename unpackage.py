@@ -3,7 +3,8 @@ from zipfile import ZIP_DEFLATED
 from rarfile import RarFile as RarOpen
 from tarfile import open as TarOpen
 from py7zr import SevenZipFile as SevenZipOpen
-import os
+from os import walk
+from os.path import join, isfile, isdir, dirname, basename, dirname, relpath
 
 def unzip_file(zip_path, extract_to):
     with ZipOpen(zip_path, 'r') as zip_ref:
@@ -34,16 +35,15 @@ def start_unpackage(file_path, extract_to):
 def zip_files(zip_path, files_to_zip):
     with ZipOpen(zip_path, 'w', ZIP_DEFLATED) as zip_ref:
         for file in files_to_zip:
-            if os.path.isfile(file):
-                zip_ref.write(file, os.path.basename(file))
-            elif os.path.isdir(file):
-                for root, dirs, files in os.walk(file):
+            if isfile(file):
+                zip_ref.write(file, basename(file))
+            elif isdir(file):
+                for root, dirs, files in walk(file):
                     for f in files:
-                        file_path = os.path.join(root, f)
-                        arcname = os.path.relpath(file_path, start=os.path.dirname(file))
+                        file_path = join(root, f)
+                        arcname = relpath(file_path, start = dirname(file))
                         zip_ref.write(file_path, arcname)
-            else:
-                print(f"文件或目录 {file} 不存在")
 
-def start_package(file_path, package_to):
-    zip_files(package_to, file_path)
+def start_package(buffer, package = 'package', cdb = 'cards.cdb', pics = 'pics', script = 'script'):
+    zip_files(f'{buffer}/{cdb.split(".")[0]}.ypk', [f'{buffer}/{package}/{cdb}', f'{buffer}/{package}/{pics}', f'{buffer}/{package}/{script}'])
+    return f'{cdb.split(".")[0]}.ypk'

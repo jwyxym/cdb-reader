@@ -8,6 +8,7 @@ from time import ctime
 from read_config import read_card_info
 import file_manager
 import sqlite_cdb
+import unpackage
 
 app = Flask(__name__, static_folder='dist')
 
@@ -43,7 +44,7 @@ def get_cdbs():
 
 @app.route('/api/create_new_cdb', methods = ['POST'])
 def create_new_cdb():
-    file_manager.initialize_dir(buffer)
+    file_manager.initialize_dir_conceal(buffer)
     file = file_manager.get_only_one_file_path(buffer, f'{str(ctime()).replace(" ", "-").replace(":", "-")}.cdb')
     sqlite_cdb.create_cdb(file)
     return jsonify(), 200
@@ -68,7 +69,7 @@ def get_file():
         return jsonify({'error': '没有选择文件'}), 400
 
     if file:
-        file_manager.initialize_dir(buffer)
+        file_manager.initialize_dir_conceal(buffer)
         file_path = file_manager.get_only_one_file_path(buffer, file_name)
         file.save(file_path)
 
@@ -97,14 +98,12 @@ def get_cdb_menu():
 def download_cdb():
     data = request.json
     cdb = data.get('cdb')
-
-#没改完
-    # download, down_name = package_zip(f'{buffer}/{cdb}')
-    download, down_name = '1.ypk', '1'
+    file_manager.package_file(sqlite_cdb.read_cdb(f'{buffer}/{cdb}', 'list'), buffer, package_folder_path, pics_folder_path, script_folder_path, cdb)
+    download = unpackage.start_package(buffer, package_folder_path, cdb, pics_folder_path, script_folder_path)
     with open(f'{buffer}/{download}', 'rb') as f:
         file_obj = BytesIO(f.read())
         response = Response(file_obj, mimetype = 'application/octet-stream')
-        response.headers['Content-Disposition'] = f'attachment; filename = {down_name}.ypk'
+        response.headers['Content-Disposition'] = f'attachment; filename = {download}'
         
         return response
 

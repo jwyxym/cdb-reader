@@ -509,6 +509,17 @@
                     emitter.emit('to_lpage_get_over');
                 }
             }
+        },
+        download_page : {
+            save : {
+                on : async function() {
+                    await card.data.save();
+                    emit.download_page.save.to();
+                } as () => Promise<void>,
+                to : function() {
+                    emitter.emit('to_dpage_save');
+                } as () => void
+            }
         }
     }
 
@@ -517,6 +528,7 @@
     emitter.on('to_cpage_new_pic', emit.main_page.new_pic.on);
     emitter.on('to_cpage_cdb_changed', emit.list_page.cdb_changed.on);
     emitter.on('to_cpage_send_select', emit.list_page.select_card.on);
+    emitter.on('to_cpage_save', emit.download_page.save.on);
 
     function filter_input(event, t, str_filter = /[^0-9]/) {
         let input_value = event.target.value;
