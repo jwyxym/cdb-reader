@@ -92,10 +92,10 @@
                     <button @click = "whether_show_rpage(true, 'type')">{{ vif.show.type.title[0] }}</button>
                     <button @click = "whether_show_rpage(true, 'category')">{{ vif.show.category.title[0] }}</button>
                     <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
-                    <button :style = "{ 'background-color': opening_cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.add()">新建</button>
+                    <button :style = "{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.add()">新建</button>
                     <button :style = "{ 'background-color': card.origin_id > 0 ? 'red' : 'gray' }" @click = "card.del()">删除</button>
-                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
-                    <button :style = "{ 'background-color': copy.content.length > 0 && copy.content[0][0] != opening_cdb && opening_cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
+                    <button :style = "{ 'background-color': card.origin_id > 0 && card_count.id < 100000000 && card_count.id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
+                    <button :style = "{ 'background-color': copy.content.length > 0 && open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
                     <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
                 </div>
             </transition>
@@ -104,7 +104,7 @@
 </template>
 
 <script setup name = "card_page" lang = "ts">
-    import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed } from 'vue';
+    import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed, TrackOpTypes } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
 
@@ -196,24 +196,26 @@
             card.setcard = Array(4).fill('0');
             card.origin_id = 0;
             card.origin_name = '';
-            selected_card.title = '';
-            selected_card.page = -1;
-            selected_card.card = -1;
+            select.page = -1;
+            select.card = -1;
         } as () => void,
         del : async function() {
             await card.data.del();
-            emit('event_change_menu', card.title, card.origin_id)
             card.clear();
+            emit.list_page.cdb_changed.to();
         } as () => void,
         add: async function() {
+            let response = await card.data.add();
+            await card.data.save();
+            emit.list_page.cdb_changed.to(response);
         } as () => void,
         data : {
             get : async function () {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/read_card', {
-                        cdb: selected_card.title,
-                        page: selected_card.page,
-                        card: selected_card.card
+                        cdb: open.cdb,
+                        page: select.page,
+                        card: select.card
                     });
                     let data = response.data[1];
                     card.title = response.data[0]
@@ -237,18 +239,17 @@
                     card.pic = data[15];
                 } catch (error) {}
             } as () => Promise<void>,
-            paste : async function(i, v) {
+            paste : async function(i) {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
-                        data: copy.content[v][0],
-                        code: copy.content[v][1],
-                        cdb: copy.content[v][2]
+                        data: copy.content[i][0],
+                        code: copy.content[i][1],
+                        cdb: open.cdb
                     });
-                    if (i != '0 ' && v == copy.content.length - 1)
-                        emit('event_change_menu', opening_cdb, i)
                 } catch (error) {}
-            } as (i : string, v: number) => Promise<void>,
-            save : async function(i) {
+            } as (i : number) => Promise<void>,
+            save : async function() {
+                if (select.page < 0 || select.card < 0) return;
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                         data: [
@@ -268,18 +269,28 @@
                             card.desc
                         ].concat(card.hint),
                         code: card.origin_id,
-                        cdb: selected_card.title
+                        cdb: open.cdb
                     });
-                    if (response.data == 'removed' && i != '0 ') {
-                        emit('event_change_menu', card.title, i)
+                    if (response.data == 'removed') {
+                        emit.list_page.cdb_changed.to();
                     }
                 } catch (error) {}
-            } as (i : string) => Promise<void>,
+            } as () => Promise<void>,
+            add : async function() {
+                let id = -1;
+                try {
+                    let response = await axios.post('http://127.0.0.1:8000/api/add_cdb', {
+                        cdb: open.cdb
+                    });
+                    id = response.data;
+                } catch (error) {}
+                return id;
+            } as () => Promise<number>,
             del : async function() {
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/del_cdb', {
                         code: card.origin_id,
-                        cdb: card.title
+                        cdb: open.cdb
                     });
                 } catch (error) {}
             } as () => Promise<void>
@@ -308,7 +319,7 @@
             card.category.forEach((e, v) => {
                 if (e) card_count.category += lists.category[v][0]
             });
-            card_count.id = (vif.warn.same_id || card.id.toString().length == 0 ? card.origin_id : card.id);
+            card_count.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
             card_count.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
             card_count.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
             card_count.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
@@ -353,17 +364,11 @@
         }
     });
 
-    let selected_card = reactive({
-        title : '',
-        page : 0,
-        card : -1
-    });
-
     let copy = reactive({
         content : [],
         from : async function() {
-            if (card.origin_id <= 0) return;
-            await card.data.save(card.id + ' ' + card.name);
+            if (card.origin_id <= 0 || card_count.id >= 100000000 || card_count.id == 0) return;
+            await card.data.save();
             copy.content = [[
                 [
                     card_count.id,
@@ -382,95 +387,26 @@
                     card.desc
                 ].concat(card.hint),
                 card.origin_id,
-                opening_cdb,
-                [
-                    [card.title], [
-                        card.id,
-                        card.ot,
-                        card.alias,
-                        card.setcard,
-                        card.type,
-                        card.atk,
-                        card.def,
-                        [card.level, card.pendulum],
-                        card.race,
-                        card.attribute,
-                        card.category,
-                        card.id,
-                        card.name,
-                        card.desc,
-                        card.hint,
-                        card.pic
-                    ]
-                ]
+                open.cdb,
             ]];
             window.alert('已复制:   ' + card.id + ' ' + card.name);
         } as () => void,
         to : async function() {
-            if (copy.content.length == 0 || copy.content[0][0] == opening_cdb || opening_cdb == '') return;
-            selected_card.card = -1;
+            if (copy.content.length == 0 || open.cdb == '') return;
+            let same_group = [];
             for (let i = 0; i < copy.content.length; i++)
-                await card.data.paste(copy.content[0][0][0] + ' ' + copy.content[0][0][12], i);
-            entrust.copy = true;
-            let data = copy.content[0][3][1];
-            card.title = copy.content[0][3][0];
-            card.origin_id = data[0];
-            card.id = data[0];
-            card.ot = data[1];
-            card.alias = data[2];
-            card.setcard = data[3];
-            card.type = data[4];
-            card.atk = data[5];
-            card.def = data[6];
-            card.level = data[7][0];
-            card.pendulum = data[7][1];
-            card.race = data[8];
-            card.attribute = data[9];
-            card.category = data[10];
-            card.origin_name = data[12];
-            card.name = data[12];
-            card.desc = data[13];
-            card.hint = data[14];
-            card.pic = data[15];
+                if (open.list.flat().filter(e => e.split(' ')[0] == copy.content[i][0][0]).length > 0)
+                    same_group.push(copy.content[i][0][0] + ' ' + copy.content[i][0][12]);
+            if (same_group.length > 0 && !window.confirm('存在卡片冲突，是否仍要复制？\n' + same_group)) return;
+            for (let i = 0; i < copy.content.length; i++)
+                await card.data.paste(i);
+            await card.data.save();
+            emit.list_page.cdb_changed.to(copy.content[0][1]);
             copy.content = [];
         } as () => void
     });
 
-    let entrust = reactive({
-        copy : false
-    });
-
     let show_links_btn = ref(null);
-
-    let cdb_menu = ref([]);
-
-    let get_props = defineProps(['pic', 'close', 'cdb']);
-
-    let emit = defineEmits(['event_close_fixed', 'event_change_menu']);
-
-    let opening_cdb = '暂未打开cdb';
-
-    emitter.on('event_save_before', async () => {
-        if (card.origin_id > 0)
-            await card.data.save(card.id + ' ' + card.name);
-        emitter.emit('event_save_over');
-    });
-
-    emitter.on('event_select_card', async (i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) => {
-        if (selected_card.card >= 0)
-            await card.data.save(i.get('id'));
-        cdb_menu.value = i.get('cdb');
-        selected_card.title = i.get('cdb')[0][0];
-        selected_card.page = i.get('page');
-        selected_card.card = i.get('card');
-
-        if (selected_card.card < 0)
-            card.clear();
-        else
-            await card.data.get();
-
-        emitter.emit('event_get_over');
-    });
 
     onMounted(() => {
         for (let i = 1; i < 9; i++) {
@@ -483,20 +419,13 @@
     });
 
     watch(card, (n) => {
-        if (cdb_menu.value.flat().filter(e => e.split(' ')[0] == n.id).length > 0 && card.origin_id != n.id) {
+        if (open.list.flat().filter(e => e.split(' ')[0] == n.id).length > 0 && card.origin_id != n.id) {
             vif.warn.same_id = true;
         } else if (vif.warn.same_id) {
             vif.warn.same_id = false;
         }
 
         card_count.get();
-
-        if (n.id + ' ' + n.name != n.origin_id + ' ' + n.origin_name || n.id + ' ' + n.name != vif.warn.id) {
-            vif.warn.id = n.id + ' ' + n.name;
-            if (!entrust.copy)
-                emitter.emit('event_card_changed', new Map().set('id', vif.warn.same_id ? card.origin_id : n.id).set('name', card.name));
-            else entrust.copy = false;
-        }
 
         vif.is_type.link = (card_count.type & 0x4000000) > 0;
 
@@ -507,19 +436,87 @@
             vif.is_type.pendulum = true;
         } else { vif.is_type.pendulum = false; }
 
+        emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
+        
     }, { deep: true });
 
-    watch(get_props, (n) => {
-        if (n.pic.includes((card.origin_id).toString()) && card.pic != n.pic && card.origin_id > 0)
-            card.pic = n.pic;
+    let open = reactive({
+        cdb : '',
+        list : []
+    });
 
-        if (n.close != '' && n.close == card.title) {
-            card.clear();
-            emit('event_close_fixed');
+    let select = reactive({
+        page : -1,
+        card : -1
+    });
+
+    let emit = {
+        main_page : {
+            cdb_closed : {
+                on : function() {
+                    card.data.save();
+                    card.clear();
+                    open.cdb = '';
+                    open.list = [];
+                } as () => void
+            },
+            cdb_opened  : {
+                on : function(cdb) {
+                    open.cdb = cdb[0][0];
+                    open.list = cdb;
+                } as () => void
+            },
+            new_pic: {
+                on : function(pic) {
+                    if (pic != '' && card.pic != pic && card.origin_id > 0
+                        && pic.split('/').pop().split('.')[0] == card.origin_id.toString()
+                    )
+                        card.pic = pic;
+                } as (pic: string) => void
+            }
+        },
+        list_page : {
+            select_card : {
+                on : async function (i : Map<string, any> = new Map().set('page', -1).set('card', -1)) {
+                    if (select.card >= 0)
+                        await card.data.save();
+                    select.page = i.get('page');
+                    select.card = i.get('card');
+
+                    if (select.card < 0)
+                        card.clear();
+                    else
+                        await card.data.get();
+
+                    emit.list_page.get_over.to();
+                } as (i : Map<string, any>) => Promise<void>
+            },
+            card_changed : {
+                to : function (id, name) {
+                    emitter.emit('to_lpage_card_changed', id.toString() + ' ' + name);
+                } as (id: number, name: string) => void
+            },
+            cdb_changed : {
+                to : function (id = -1) {
+                    emitter.emit('to_lpage_cdb_changed', id);
+                } as (id ?: number) => void,
+                on : function (cdb) {
+                    open.list = cdb;
+                } as (cdb: any[]) => void
+            },
+            get_over : {
+                to : function() {
+                    emitter.emit('to_lpage_get_over');
+                }
+            }
         }
+    }
 
-        opening_cdb = n.cdb;
-    }, { immediate: true });
+    emitter.on('to_cpage_cdb_closed', emit.main_page.cdb_closed.on);
+    emitter.on('to_cpage_cdb_opened', emit.main_page.cdb_opened.on);
+    emitter.on('to_cpage_new_pic', emit.main_page.new_pic.on);
+    emitter.on('to_cpage_cdb_changed', emit.list_page.cdb_changed.on);
+    emitter.on('to_cpage_send_select', emit.list_page.select_card.on);
 
     function filter_input(event, t, str_filter = /[^0-9]/) {
         let input_value = event.target.value;

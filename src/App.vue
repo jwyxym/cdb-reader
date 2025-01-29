@@ -2,7 +2,7 @@
     <div class = "main_page">
         <div id = "main_page_left">
             <transition name = "slide_list_page">
-                <list_page v-if = "main_page.show_list.card" @event_close_cdb = " main_page.remove" @event_unshow_list_page = "whether_show_list_page" :cdb = "send_props.list_page.cdb" :selected = "send_props.list_page.select"/>
+                <list_page v-if = "main_page.show_list.card" @event_close_cdb = "main_page.remove" @event_unshow_list_page = "main_page.show" />
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "main_page.show_list.cdb" id = "under_list_page">
@@ -14,13 +14,13 @@
                         </div>
                     </div>
                     <div id = "cdb_list">
-                        <button v-for="(i, v) in (main_page.page.count[0] > 0? Array(main_page.cdb.content.length >= main_page.page.count[0] * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "whether_show_list_page(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] }}</button>
+                        <button v-for="(i, v) in (main_page.page.count[0] > 0? Array(main_page.cdb.content.length >= main_page.page.count[0] * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "main_page.show(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
                         <button @click = "main_page.page.previous"
                             :style = "{ 'background-color': main_page.page.count[0] <= 1 ? 'gray' : 'green', 'color': main_page.page.count[0] <= 1 ? 'black' : 'white' }"
                         >上一页</button>
-                        <span>第<input @input = "filter_input($event)" v-model = "main_page.page.count[0]"/>页<br>共{{ Math.ceil(main_page.cdb.content.length / 10) }}页</span>
+                        <span>第<input @input = "main_page.page.filter($event)" v-model = "main_page.page.count[0]"/>页<br>共{{ Math.ceil(main_page.cdb.content.length / 10) }}页</span>
                         <button @click = "main_page.page.next"
                             :style = "{ 'background-color': main_page.page.count[0] >= Math.ceil(main_page.cdb.content.length / 10) ? 'gray' : 'green', 'color': main_page.page.count[0] >= Math.ceil(main_page.cdb.content.length / 10) ? 'black' : 'white' }"
                         >下一页</button>
@@ -28,7 +28,7 @@
                 </div>
             </transition>
         </div>
-        <card_page :pic = "send_props.card_page.pic" :close = "send_props.card_page.close" :cdb = "send_props.card_page.cdb" @event_close_fixed = "() => { send_props.card_page.close = '' }" @event_change_menu = "main_page.cdb.get_new"/>
+        <card_page/>
     </div>
 </template>
 
@@ -39,20 +39,8 @@
     import { ref, reactive, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
-import { send } from 'vite';
 
-    let send_props = reactive({
-        card_page: {
-            cdb: '',
-            pic: '',
-            close: ''
-        },
-        list_page: {
-            cdb: ['暂未打开cdb'],
-            select : new Map().set('cdb', '').set('page', -1).set('card', -1).set('entrust', false),
-            select_buffer_group : []
-        }
-    });
+    let opening_cdb = ref('');
 
     let main_page = reactive({
         page : {
@@ -64,40 +52,33 @@ import { send } from 'vite';
             previous : function () {
                 if (main_page.page.count[0] > 1)
                     main_page.page.count[0] -- ;
-            } as () => void
+            } as () => void,
+            filter : function (event) {
+                let input_value = event.target.value;
+                let new_value = input_value.replace(/[^0-9]/, '');
+                while (parseInt(new_value) > Math.ceil(main_page.cdb.content.length / 10))
+                    new_value = new_value.slice(0, -1);
+                if (new_value == '')
+                    new_value = 0;
+                if (parseInt(new_value) < 1 && Math.ceil(main_page.cdb.content.length / 10) > 0)
+                    new_value = 1;
+                main_page.page.count[0] = new_value;
+            } as (event: any) => void
         },
         cdb : {
             content : [] as string[],
-            get :  async function (v) {
+            get : async function (v) {
+                let data = [[''], []];
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
                         cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] : v)
                     });
-                    send_props.list_page.cdb = response.data;
-                    send_props.card_page.cdb = response.data[0][0];
+                    opening_cdb.value = response.data[0][0];
+                    emit.card_page.cdb_opened.to(response.data);
+                    data = response.data;
                 } catch (error) {}
-            } as (v : string | number) => Promise<void>,
-            get_new : async function (v, id) {
-                try {
-                    let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
-                        cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] : v)
-                    });
-                    let c = -1;
-                    let p = 1;
-                    for (let i = 0; i < response.data.length; i++) {
-                        if (response.data[i].includes(id)) {
-                            p = i;
-                            c = response.data[i].indexOf(id);
-                            break;
-                        }
-                    }
-                    send_props.list_page.select.set('page', p);
-                    send_props.list_page.select.set('card', c);
-                    send_props.list_page.select.set('entrust', true);
-                    send_props.list_page.cdb = response.data;
-                    send_props.card_page.cdb = response.data[0][0];
-                } catch (error) {}
-            } as (v : string | number, id : string) => Promise<void>,
+                return data;
+            } as (v : string | number) => Promise<any[]>
         },
         show_list : {
             cdb: true,
@@ -117,14 +98,29 @@ import { send } from 'vite';
                 main_page.get();
             } catch (error) {}
         } as () => Promise<void>,
-        remove : async function (i) {
-            main_page.cdb.content.splice(main_page.cdb.content.indexOf(send_props.list_page.cdb[0][0]), 1);
+        remove : async function (cdb) {
+            main_page.cdb.content.splice(main_page.cdb.content.indexOf(cdb), 1);
             if (Math.ceil(main_page.cdb.content.length / 10) < main_page.page.count[0])
                 main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
-            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: send_props.list_page.cdb[0][0]});
-            whether_show_list_page();
-            send_props.card_page.close = i;
-        } as (i: string) => Promise<void>
+            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: cdb});
+            main_page.show();
+        } as (i: string) => Promise<void>,
+        show : async function (v = -1, i = new Map().set('cdb', '')) { 
+            if (main_page.show_list.card) {
+                main_page.show_list.card = false;
+                emit.card_page.cdb_closed.to();
+                await(new Promise(resolve => setTimeout(resolve, 500)));
+                main_page.show_list.cdb = true;
+            } else {
+                let data = await main_page.cdb.get(v);
+                main_page.show_list.cdb = false;
+                await(new Promise(resolve => setTimeout(resolve, 500)));
+                main_page.show_list.card = true;
+                await(new Promise(resolve => setTimeout(resolve, 5)));
+                emit.list_page.cdb_opened.to(data);
+                emit.list_page.send_select.to();
+            }
+        } as (v ?: number, i ?: Map<string, any>) => Promise<void>
     });
 
     let upload_file_input = ref(null);
@@ -172,7 +168,7 @@ import { send } from 'vite';
                     main_page.cdb.content.push(response.data);
                 }
                 if (response.data.endsWith('.jpg')) {
-                    send_props.card_page.pic = response.data;
+                    emit.card_page.new_pic.to(response.data);
                 }
                 if (Math.ceil(main_page.cdb.content.length / 10) > main_page.page.count[0]) {
                     main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
@@ -185,43 +181,61 @@ import { send } from 'vite';
         main_page.get();
     });
 
-    function filter_input(event) {
-        let input_value = event.target.value;
-        let new_value = input_value.replace(/[^0-9]/, '');
-        while (parseInt(new_value) > Math.ceil(main_page.cdb.content.length / 10))
-            new_value = new_value.slice(0, -1);
-        if (new_value == '')
-            new_value = 0;
-        if (parseInt(new_value) < 1 && Math.ceil(main_page.cdb.content.length / 10) > 0)
-            new_value = 1;
-        main_page.page.count[0] = new_value;
-    }
-
-    async function whether_show_list_page(v = -1, i : Map<string, any> = new Map().set('cdb', '').set('page', -1).set('card', -1).set('id', -1)) { 
-        if (main_page.show_list.card) {
-            main_page.show_list.card = false;
-            send_props.card_page.cdb = '';
-            if (!send_props.list_page.select_buffer_group.find((select) => select.get('cdb') == i.get('cdb')) && i.get('cdb') != '')
-                send_props.list_page.select_buffer_group.push(i);
-            emitter.emit('event_select_or_leave_cdb');
-            await(new Promise(resolve => setTimeout(resolve, 500)));
-            main_page.show_list.cdb = true;
-        } else {
-            if (v >= 0)
-                await main_page.cdb.get(v);
-            main_page.show_list.cdb = false;
-            await(new Promise(resolve => setTimeout(resolve, 500)));
-            main_page.show_list.card = true;
-            let j = send_props.list_page.select_buffer_group.findIndex(select => select.get('cdb') == send_props.list_page.cdb[0][0]);
-            if ( j > -1 ) {
-                send_props.list_page.select = send_props.list_page.select_buffer_group[j];
-                send_props.list_page.select_buffer_group.splice(j, 1);
-            } else {
-                send_props.list_page.select = i;
+    let emit = {
+        card_page: {
+            cdb_closed: {
+                to : function () {
+                    emitter.emit('to_cpage_cdb_closed');
+                } as () => void
+            },
+            cdb_opened: {
+                to : function (cdb) {
+                    emitter.emit('to_cpage_cdb_opened', cdb);
+                } as (cdb: any[]) => void
+            },
+            new_pic: {
+                to : function (pic) {
+                    emitter.emit('to_cpage_new_pic', pic);
+                } as (pic: string) => void
             }
-            emitter.emit('event_select_or_leave_cdb', send_props.list_page.cdb[0][0]);
+        },
+        list_page: {
+            send_select: {
+                group : [],
+                to : function () {
+                    let j = emit.list_page.send_select.group.findIndex(select => select.get('cdb') == opening_cdb.value);
+                    if ( j > -1 ) {
+                        emitter.emit('to_lpage_send_select', emit.list_page.send_select.group[j]);
+                        emit.list_page.send_select.group.splice(j, 1);
+                    } else {
+                        emitter.emit('to_lpage_send_select', new Map().set('page', -1).set('card', -1));
+                    }
+                },
+                on : function (i) {
+                    let j = emit.list_page.send_select.group.findIndex(select => select.get('cdb') == i.get('cdb'));
+                    if ( j > -1 ) {
+                        emit.list_page.send_select.group[j] = i;
+                    } else {
+                        emit.list_page.send_select.group.push(i);
+                    }
+                },
+                remove : function (i) {
+                    let j = emit.list_page.send_select.group.findIndex(select => select.get('cdb') == i);
+                    if ( j > -1 ) {
+                        emit.list_page.send_select.group.splice(j, 1);
+                    }
+                }
+            },
+            cdb_opened: {
+                to : function (cdb) {
+                    emitter.emit('to_lpage_cdb_opened', cdb);
+                } as (cdb: any[]) => void
+            }
         }
     }
+
+    emitter.on('to_mpage_send_select', emit.list_page.send_select.on);
+    emitter.on('to_mpage_remove_select', emit.list_page.send_select.remove);
 </script>
 
 <style scoped>

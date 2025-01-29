@@ -1,26 +1,26 @@
 <template>
     <div class = "list_page">
         <div class = "list_header">
-            <h1>{{ list_page.title }}</h1>
-            <button id = "unshow_list_page_btn" @click = "whether_show_list_page()" title = "上一级目录">&lt;</button>
-            <button id = "close_cdb_btn" @click = "close_cdb()" title = "关闭cdb">&times;</button>
+            <h1>{{ select.cdb }}</h1>
+            <button id = "unshow_list_page_btn" @click = "show.unshow()" title = "上一级目录">&lt;</button>
+            <button id = "close_cdb_btn" @click = "show.close()" title = "关闭cdb">&times;</button>
         </div>
         <div class = "list_content">
-            <button v-for = "(i,v) in list_page.cdb_list[list_page.page.count[0]]":key = "v"
-                @click = "list_page.selected.card.set(v)"
+            <button v-for = "(i,v) in cdb.list[page.count]":key = "v"
+                @click = "select.set(v)"
                 :style="{
-                    'background-color': list_page.selected.page == list_page.page.count[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'green' : '',
-                    'color': list_page.selected.page == list_page.page.count[0] && list_page.selected.cdb == list_page.title && list_page.selected.card.seq == v? 'white' : ''
+                    'background-color': select.page == page.count && select.card == v ? 'green' : '',
+                    'color': select.page == page.count && select.card == v ? 'white' : ''
                     }"
             >{{ i }}</button>
         </div>
         <div class = "list_btn">
-            <button @click = "list_page.page.previous"
-                :style = "{ 'background-color': list_page.page.count[0] <= 1 ? 'gray' : 'green', 'color': list_page.page.count[0] <= 1 ? 'black' : 'white' }"
+            <button @click = "page.previous"
+                :style = "{ 'background-color': page.count <= 1 ? 'gray' : 'green', 'color': page.count <= 1 ? 'black' : 'white' }"
             >上一页</button>
-            <span>第<input @input = "filter_input($event)" v-model = "list_page.page.count[0]"/>页<br>共{{ list_page.cdb_list.length - 1 }}页</span>
-            <button @click = "list_page.page.next()"
-                :style = "{ 'background-color': list_page.page.count[0] >= list_page.cdb_list.length - 1 ? 'gray' : 'green', 'color': list_page.page.count[0] >= list_page.cdb_list.length - 1 ? 'black' : 'white' }"
+            <span>第<input @input = "page.filter($event)" v-model = "page.count" ref = "page.btn"/>页<br>共{{ cdb.list.length - 1 }}页</span>
+            <button @click = "page.next()"
+                :style = "{ 'background-color': page.count >= cdb.list.length - 1 ? 'gray' : 'green', 'color': page.count >= cdb.list.length - 1 ? 'black' : 'white' }"
             >下一页</button>
         </div>
     </div>
@@ -31,123 +31,181 @@
     import axios from 'axios';
     import emitter from '@/utils/emitter';
 
-    let list_page = reactive({
-        page: {
-            count : [0],
-            next : function () {
-                if (list_page.page.count[0] < list_page.cdb_list.length - 1)
-                    list_page.page.count[0] ++ ;
-            } as () => void,
-            previous : function () {
-                if (list_page.page.count[0] > 1)
-                    list_page.page.count[0] -- ;
-            } as () => void
-        },
-        selected : {
-            card : {
-                id : -1,
-                seq : -1,
-                set : function (v) {
-                    if (!wait.save_get) return;
-                    wait.save_get = false;
-                    if (list_page.selected.card.seq == v && list_page.selected.page == list_page.page.count[0] && list_page.selected.cdb == list_page.title) {
-                        list_page.selected.card.seq = -1;
-                        list_page.selected.card.id = -1;
-                        list_page.selected.page = -1;
-                        list_page.selected.cdb = '';
-                    } else {
-                        list_page.selected.card.seq = v;
-                        list_page.selected.card.id = list_page.cdb_list[list_page.page.count[0]][v];
-                        list_page.selected.page = list_page.page.count[0];
-                        list_page.selected.cdb = list_page.title;
-                    }
-                    emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page.count[0]).set('cdb', get_props.cdb));
-                } as (v: number) => void
-            },
-            page : -1,
-            cdb : ''
-        },
-        title : '',
-        cdb_list : []
+    let cdb = reactive({
+        list : []
     });
 
     let wait = {
         save_get : true
     }
-    let entrust = {
-        select : false,
-        cdb : false,
-        card_name : false
-    }
 
-    let emit = defineEmits(['event_close_cdb', 'event_unshow_list_page']);
-
-    let get_props = defineProps(['cdb', 'selected']);
-
-    emitter.on('event_get_over', () => {
-        wait.save_get = true;
-    });
-
-    emitter.on('event_card_changed', (i : Map<string, any>) => {
-        if (list_page.page.count[0] == 0) return;
-        let n = i.get('id') + ' ' + i.get('name');
-        entrust.card_name = true;
-        list_page.cdb_list[list_page.page.count[0]][list_page.selected.card.seq] = n;
-    });
-
-    watch(get_props, (new_value) => {
-        entrust.cdb = new_value.selected.get('entrust');
-        if (new_value.selected.get('cdb') != '' && !entrust.select) {
-            entrust.select = true;
-            list_page.selected.card.seq = new_value.selected.get('card');
-            list_page.selected.page = new_value.selected.get('page');
-            list_page.selected.cdb = new_value.selected.get('cdb');
-            list_page.selected.card.id = list_page.selected.card.seq >= 0 ? new_value.cdb[list_page.selected.page][list_page.selected.card.seq] : -1;
-        }
-        if (new_value.cdb[0][0] != '暂未打开cdb') {
-            if (!entrust.cdb) {
-                entrust.cdb = true;
-                list_page.title = new_value.cdb[0][0];
-                list_page.cdb_list = new_value.cdb;
-                list_page.page.count[0] = list_page.selected.page > 0 ? list_page.selected.page : 1;
-                if (!entrust.card_name)
-                    emitter.emit('event_select_card', new Map().set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id).set('page', list_page.page.count[0]).set('cdb', get_props.cdb));
-            } else if (entrust.cdb && !entrust.card_name) {
-                list_page.selected.page = new_value.selected.get('page');
-                list_page.selected.card.seq = new_value.selected.get('card');
-                list_page.selected.card.id = list_page.selected.card.seq >= 0 ? list_page.cdb_list[list_page.page.count[0]][list_page.selected.card.seq] : -1;
-                list_page.selected.cdb = new_value.cdb[0][0];
-                list_page.title = new_value.cdb[0][0];
-                list_page.cdb_list = new_value.cdb;
-                list_page.page.count[0] = list_page.selected.page;
+    let select = reactive({
+        cdb : '',
+        id : -1,
+        page : -1,
+        card : -1,
+        set : function (v) {
+            if (!wait.save_get) return;
+            wait.save_get = false;
+            if (select.page != page.count || select.card != v) {
+                select.page = page.count;
+                select.card = v;
+                select.id = cdb.list[page.count][v].split(' ')[0];
+            } else {
+                select.page = -1;
+                select.card = -1;
+                select.id = -1;
             }
+            emit.card_page.select_card.to(v);
+        } as (v: number) => void
+    });
+
+    let show = reactive({
+        unshow : function () {
+            emit.remove();
+            emit.mainpage.send_select.to();
+            emit.mainpage.cdb_unshow.to();
+        } as () => void,
+        close : function () {
+            if (confirm('确认关闭cdb吗，此操作可能导致数据丢失')) {
+                emit.remove();
+                emit.mainpage.send_select.remove(select.cdb);
+                emit.mainpage.cdb_closed.to();
+            }
+        } as () => void
+    });
+
+    let page = reactive({
+        count : 0,
+        btn : ref(null),
+        next : function () {
+            if (page.count < cdb.list.length - 1)
+                page.count ++ ;
+        } as () => void,
+        previous : function () {
+            if (page.count > 1)
+                page.count -- ;
+        } as () => void,
+        filter : function (event) {
+            let input_value = event.target.value;
+            let new_value = input_value.replace(/[^0-9]/, '');
+            while (parseInt(new_value) > (cdb.list.length - 1))
+                new_value = new_value.slice(0, -1);
+            if (new_value == '')
+                new_value = 0;
+            if (parseInt(new_value) < 1 && cdb.list.length > 1)
+                new_value = 1;
+            page.count = new_value;
         }
-        if (entrust.card_name)
-            entrust.card_name = false;
+    });
 
-    }, { deep: true, immediate: true });
+    let em = defineEmits(['event_close_cdb', 'event_unshow_list_page'])
 
-    function filter_input(event) {
-        let input_value = event.target.value;
-        let new_value = input_value.replace(/[^0-9]/, '');
-        while (parseInt(new_value) > (list_page.cdb_list.length - 1))
-            new_value = new_value.slice(0, -1);
-        if (new_value == '')
-            new_value = 0;
-        if (parseInt(new_value) < 1 && list_page.cdb_list.length > 1)
-            new_value = 1;
-        list_page.page.count[0] = new_value;
+    let emit = {
+        mainpage : {
+            cdb_unshow : {
+                to : function () {
+                    em('event_unshow_list_page');
+                }
+            },
+            cdb_closed : {
+                to : function () {
+                    em('event_close_cdb');
+                }
+            },
+            cdb_opened : {
+                on : function (i) {
+                    select.cdb = i[0][0];
+                    cdb.list = i;
+                    page.count = (cdb.list.length > 0 ? 1 : 0);
+                } as (i: any[]) => void
+            },
+            send_select : {
+                to : function () {
+                    emitter.emit('to_mpage_send_select', new Map().set('cdb', select.cdb).set('page', select.page).set('card', select.card));
+                } as () => void,
+                on : function (i) {
+                    select.card = i.get('card');
+                    select.page = i.get('page');
+                    if (select.page > -1 && cdb.list.length > select.page)
+                        page.count = select.page;
+                    if (select.card > -1)
+                        emit.card_page.select_card.to(select.card);
+                } as (i: Map<string, number>) => void,
+                remove : function (cdb: string) {
+                    emitter.emit('to_mpage_remove_select', cdb);
+                } as (cdb: string) => void
+            }
+        },
+        card_page : {
+            select_card : {
+                to : function (i) {
+                    emitter.emit('to_cpage_send_select', new Map().set('card', i).set('page', page.count));
+                } as (i: number) => void
+            },
+            card_changed : {
+                on : function (i) {
+                    console.log(i);
+                    if (page.count == 0) return;
+                    cdb.list[page.count][select.card] = i;
+                } as (i: Map<string, any>) => void
+            },
+            cdb_changed : {
+                to : function () {
+                    emitter.emit('to_cpage_cdb_changed', cdb.list);
+                } as () => void,
+                on : async function (id = -1) {
+                    try {
+                        let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
+                            cdb: select.cdb
+                        });
+                        console.log(response.data);
+                        let c = -1;
+                        let p = 1;
+                        if (id == -1)
+                            id = select.id;
+                        if (id > -1) {
+                            for (let i = 0; i < response.data.length; i++) {
+                                for (let j = 0; j < response.data[i].length; j++) {
+                                    if (response.data[i][j].split(' ')[0] == (id)) {
+                                        p = i;
+                                        c = j;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        select.page = p;
+                        page.count = p;
+                        select.card = c;
+                        cdb.list = response.data;
+                        select.cdb = response.data[0][0];
+                        emit.card_page.cdb_changed.to();
+                        emit.card_page.select_card.to(c);
+                    } catch (error) {}
+                } as (id ?: number) => Promise<void>
+            },
+            get_over : {
+                on : function () {
+                    wait.save_get = true;
+                } as () => void
+            }
+        },
+        remove : function () {
+            emitter.off('to_lpage_cdb_opened', emit.mainpage.cdb_opened.on);
+            emitter.off('to_lpage_send_select', emit.mainpage.send_select.on);
+            emitter.off('to_lpage_card_changed', emit.card_page.card_changed.on);
+            emitter.off('to_lpage_cdb_changed', emit.card_page.cdb_changed.on);
+            emitter.off('to_lpage_get_over', emit.card_page.get_over.on);
+        } as () => void
     }
 
-    function close_cdb() {
-        if (confirm('确认关闭cdb吗，此操作可能导致数据丢失'))
-            emit('event_close_cdb', list_page.selected.cdb);
-    }
+    emitter.on('to_lpage_cdb_opened', emit.mainpage.cdb_opened.on);
+    emitter.on('to_lpage_send_select', emit.mainpage.send_select.on);
+    emitter.on('to_lpage_card_changed', emit.card_page.card_changed.on);
+    emitter.on('to_lpage_cdb_changed', emit.card_page.cdb_changed.on);
+    emitter.on('to_lpage_get_over', emit.card_page.get_over.on);
 
-    function whether_show_list_page() {
-        emitter.emit('event_select_card', new Map().set('card', -1).set('id', -1).set('page', list_page.page.count[0]).set('cdb', get_props.cdb));
-        emit('event_unshow_list_page', -1, new Map().set('cdb', list_page.selected.cdb).set('page', list_page.selected.page).set('card', list_page.selected.card.seq).set('id', list_page.selected.card.id));
-    }
 </script>
 
 <style scoped>

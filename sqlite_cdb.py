@@ -106,6 +106,29 @@ def change_cdb(row, file):
     except:
         if opend: conn.close()
 
+def add_cdb(file):
+    card_id = int('1' + '0' * 10)
+    opend = False
+    try:
+        conn = connect(file)
+        opend = True
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT datas.*,texts.* FROM datas,texts WHERE datas.id=texts.id and ( datas.id={card_id} or datas.alias={card_id}) ")
+        results = cursor.fetchall()
+        while len(results) > 0:
+            card_id += 1
+            cursor.execute(f"SELECT datas.*,texts.* FROM datas,texts WHERE datas.id=texts.id and ( datas.id={card_id} or datas.alias={card_id}) ")
+            results = cursor.fetchall()
+        cursor.execute(f"INSERT INTO datas VALUES({card_id}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0});")
+        cursor.execute(f"INSERT INTO texts VALUES({card_id}, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '');")
+        conn.commit()
+        conn.close()
+    except:
+        if opend: conn.close()
+        card_id = -1
+
+    return card_id
+
 def delete_cdb(card_id, file):
     opend = False
     try:
@@ -132,9 +155,9 @@ def create_cdb(file):
     except:
         if opend: conn.close()
 
-if __name__ == '__main__':
-    # row = read_cdb('d:\YGO\KoishiPro\cards.cdb', 'rows')[0]
-    # print(row)
-    # change_cdb(row, 'cdb_reader_example.cdb')
-    delete_cdb(2511, 'cdb_reader_example.cdb')
-
+# if __name__ == '__main__':
+#     file = 'cdb_reader_example.cdb'
+#     create_cdb(file)
+#     add_cdb(file)
+#     cdb_list = read_cdb(file, 'list')
+#     print(cdb_list)

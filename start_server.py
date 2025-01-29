@@ -5,9 +5,9 @@ from shutil import rmtree, copy
 from webbrowser import open_new
 from io import BytesIO
 from time import ctime
-from sqlite_cdb import read_cdb, change_cdb, delete_cdb, create_cdb
 from read_config import read_card_info
 import file_manager
+import sqlite_cdb
 
 app = Flask(__name__, static_folder='dist')
 
@@ -45,7 +45,7 @@ def get_cdbs():
 def create_new_cdb():
     file_manager.initialize_dir(buffer)
     file = file_manager.get_only_one_file_path(buffer, f'{str(ctime()).replace(" ", "-").replace(":", "-")}.cdb')
-    create_cdb(file)
+    sqlite_cdb.create_cdb(file)
     return jsonify(), 200
 
 @app.route('/api/initialize', methods = ['GET'])
@@ -88,7 +88,7 @@ def get_file():
 def get_cdb_menu():
     data = request.json
     cdb = data.get('cdb')
-    cdb_list = read_cdb(f'{buffer}/{cdb}', 'list')
+    cdb_list = sqlite_cdb.read_cdb(f'{buffer}/{cdb}', 'list')
     if len(cdb_list) == 0:
         return jsonify({'message': '无cdb'}), 200
     return jsonify(cdb_list), 200
@@ -108,12 +108,18 @@ def download_cdb():
         
         return response
 
+@app.route('/api/add_cdb', methods = ['POST'])
+def add_cdb():
+    data = request.json
+    cdb = data.get('cdb')
+    return jsonify(sqlite_cdb.add_cdb(f'{buffer}/{cdb}')), 200
+
 @app.route('/api/del_cdb', methods = ['POST'])
 def del_cdb():
     data = request.json
     code = data.get('code')
     cdb = data.get('cdb')
-    delete_cdb(code, f'{buffer}/{cdb}')
+    sqlite_cdb.delete_cdb(code, f'{buffer}/{cdb}')
     return jsonify(), 200
 
 @app.route('/api/save_cdb', methods = ['POST'])
@@ -124,9 +130,9 @@ def save_cdb():
     cdb = data.get('cdb')
     result = ''
     if code != card_data[0]:
-        delete_cdb(code, f'{buffer}/{cdb}')
+        sqlite_cdb.delete_cdb(code, f'{buffer}/{cdb}')
         result += 'removed'
-    change_cdb(card_data, f'{buffer}/{cdb}')
+    sqlite_cdb.change_cdb(card_data, f'{buffer}/{cdb}')
     return jsonify(result), 200
 
 @app.route('/api/read_card', methods = ['POST'])
@@ -138,7 +144,7 @@ def read_card():
     if not exists('./config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
 
-    card_data = read_cdb(f'{buffer}/{cdb}', 'data')
+    card_data = sqlite_cdb.read_cdb(f'{buffer}/{cdb}', 'data')
 
     if exists(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg'):
         card_data[int(page)][int(card)].append(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg')
