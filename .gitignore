@@ -28,7 +28,9 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+*.spec
 
 /node_modules/
 /dist/
 /__pycache__/
+/build/
