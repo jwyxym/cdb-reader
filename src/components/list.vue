@@ -110,7 +110,7 @@
             },
             cdb_closed : {
                 to : function () {
-                    em('event_close_cdb');
+                    em('event_close_cdb', select.cdb);
                 }
             },
             cdb_opened : {

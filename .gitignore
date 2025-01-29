@@ -29,6 +29,7 @@ coverage
 
 *.tsbuildinfo
 *.spec
+*.exe
 
 /node_modules/
 /dist/

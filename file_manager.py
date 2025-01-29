@@ -47,6 +47,7 @@ def remove_file(buffer, folder_path, file):
     if exists(f'{buffer}/{file}'):
         remove(f'{buffer}/{file}')
     for path in folder_path:
+        print(f'{buffer}/{path}/{file}')
         if exists(f'{buffer}/{path}/{file}'):
             remove(f'{buffer}/{path}/{file}')
 

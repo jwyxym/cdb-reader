@@ -1,41 +1,44 @@
 from flask import Flask, send_from_directory, jsonify, request, Response
-from flask_socketio import SocketIO
-from os.path import exists, join
+from engineio.async_drivers import gevent
+from os.path import exists, join, abspath
 from os import mkdir, remove, listdir
 from shutil import rmtree, copy
 from webbrowser import open_new
 from io import BytesIO
 from time import ctime
+import sys
 
 from read_config import read_card_info
 import file_manager
 import sqlite_cdb
 import unpackage
 
-app = Flask(__name__, static_folder = 'dist')
-socketio = SocketIO(app, async_mode = 'gevent')
 
-buffer = './dist/buffer'
+def get_path():
+    def get():
+        if hasattr(sys, '_MEIPASS'):
+            return sys.executable
+        else:
+            return abspath(__file__)
+
+    path = get().replace('\\', '/')
+    return path[: path.rfind('/')]
+
+app = Flask(__name__)
+
+buffer = f'{get_path()}/dist/buffer'
 cdb_backup_folder_path = 'cdb_backup'
 pics_folder_path = 'pics'
 script_folder_path = 'script'
 package_folder_path = 'package'
 
-@socketio.on('connect')
-def handle_connect():
-    print('Client connected')
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
-
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if path != "" and exists(join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
+    if path != "" and exists(join(f'{get_path()}/dist/', path)):
+        return send_from_directory(f'{get_path()}/dist/', path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(f'{get_path()}/dist/', 'index.html')
 
 @app.route('/api/remove_file', methods = ['POST'])
 def remove_file():
@@ -62,9 +65,9 @@ def create_new_cdb():
 
 @app.route('/api/initialize', methods = ['GET'])
 def initialize():
-    if not exists('./config/cardinfo_chinese.txt'):
+    if not exists(f'{get_path()}/config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
-    info = read_card_info('./config/cardinfo_chinese.txt')
+    info = read_card_info(f'{get_path()}/config/cardinfo_chinese.txt')
     return jsonify(info), 200
 
 @app.route('/api/get_file', methods = ['POST'])
@@ -165,5 +168,5 @@ def read_card():
 if __name__ == '__main__':
     rmtree(buffer, ignore_errors = True)
     open_new('http://127.0.0.1:8000/')
-    socketio.run(app, host='0.0.0.0', port = 8000)
+    app.run(host='0.0.0.0', port = 8000)
 
