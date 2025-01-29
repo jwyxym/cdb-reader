@@ -145,7 +145,6 @@
             },
             card_changed : {
                 on : function (i) {
-                    console.log(i);
                     if (page.count == 0) return;
                     cdb.list[page.count][select.card] = i;
                 } as (i: Map<string, any>) => void
@@ -159,7 +158,6 @@
                         let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
                             cdb: select.cdb
                         });
-                        console.log(response.data);
                         let c = -1;
                         let p = 1;
                         if (id == -1)
