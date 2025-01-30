@@ -1,7 +1,7 @@
 from flask import Flask, send_from_directory, jsonify, request, Response
 from engineio.async_drivers import gevent
 from os.path import exists, join, abspath
-from os import mkdir, remove, listdir
+from os import mkdir, remove, listdir, walk
 from shutil import rmtree, copy
 from webbrowser import open_new
 from io import BytesIO
@@ -31,6 +31,7 @@ cdb_backup_folder_path = 'cdb_backup'
 pics_folder_path = 'pics'
 script_folder_path = 'script'
 package_folder_path = 'package'
+unpackage_folder_path = 'unpackage'
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -44,7 +45,7 @@ def serve(path):
 def remove_file():
     data = request.json
     file = data.get('file')
-    file_manager.remove_file(buffer, [pics_folder_path, script_folder_path, package_folder_path, cdb_backup_folder_path], file)
+    file_manager.remove_file(buffer, [pics_folder_path, script_folder_path, unpackage_folder_path, cdb_backup_folder_path], file)
     return jsonify(), 200
 
 @app.route('/api/get_cdbs', methods = ['GET'])
@@ -104,6 +105,31 @@ def get_file():
             if pic_result:
                 remove(file_path)
                 return jsonify(pic_result), 200
+        elif 'text' in file_type or file_name.endswith('.lua'):
+            lua_result = file_manager.copy_text(file_path, buffer, script_folder_path)
+            if lua_result:
+                remove(lua_result)
+                return jsonify(), 200
+        elif file_name.endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
+            unpackage.start_unpackage(file_path, f'{buffer}/{unpackage_folder_path}')
+            chk = True
+            while chk:
+                chk = False
+                for root, dirs, fs in walk(f'{buffer}/{unpackage_folder_path}'):
+                    for f in fs:
+                        if f.endswith('.cdb'):
+                            copy_cdb_result = file_manager.copy_cdb(join(root, f), buffer, cdb_backup_folder_path)
+                        elif f.endswith(('.jpg', '.jpeg', 'png', 'bmp')):
+                            pic_result = file_manager.process_pic(join(root, f), buffer, pics_folder_path)
+                        elif f.endswith(('.lua', '.txt', '.py', '.c', 'cs', 'js', 'css', 'html', 'ts', 'json')):
+                            lua_result = file_manager.copy_text(join(root, f), buffer, script_folder_path)
+                        elif f.endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
+                            unpackage.start_unpackage(join(root, f), f'{buffer}/{unpackage_folder_path}')
+                            remove(join(root, f))
+                            chk = True
+            remove(file_path)
+            rmtree(f'{buffer}/{unpackage_folder_path}', ignore_errors = True)
+            return jsonify(), 200
         
     return jsonify([]), 200
 

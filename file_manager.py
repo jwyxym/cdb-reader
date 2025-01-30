@@ -1,12 +1,11 @@
 from PIL import Image
 from os.path import exists, join
-from os import mkdir, remove, listdir
+from os import mkdir, remove, listdir, rename
 from shutil import rmtree, copy
 from ctypes import windll
 
 def process_pic(pic_path, buffer = './dist/buffer', pics_folder = 'pics'):
-    if not exists(f'{buffer}/{pics_folder_path}'):
-        mkdir(f'{buffer}/{pics_folder_path}')
+    initialize_dir(f'{buffer}/{pics_folder}')
     try:
         pic_name = pic_path[pic_path.rfind('/') + 1 : pic_path.rfind('.')]
         img = Image.open(pic_path)
@@ -17,6 +16,16 @@ def process_pic(pic_path, buffer = './dist/buffer', pics_folder = 'pics'):
     except:
         return None
 
+def copy_text(text_path, buffer = './dist/buffer', script = 'script'):
+    initialize_dir(f'{buffer}/{script}')
+    try:
+        if not text_path.endswith('.lua'):
+            rename(text_path, f'{text_path[ : text_path.rfind('.')]}.lua')
+        copy(f'{text_path[ : text_path.rfind('.')]}.lua', f'{buffer}/{script}')
+        return f'{buffer}/{text_path[text_path.rfind('/') + 1 : text_path.rfind('.')]}.lua'
+    except:
+        return None
+        
 def copy_cdb(cdb_path, buffer = './dist/buffer', cdb_folder = 'cdb_backup'):
     if not exists(f'{buffer}/{cdb_folder}'):
         mkdir(f'{buffer}/{cdb_folder}')

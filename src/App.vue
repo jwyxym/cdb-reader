@@ -128,7 +128,9 @@
         click : function (e) {
             try {
                 let files = e.target.files;
-                if (files.length) {
+                if (files.length > 30) {
+                    window.alert('文件过多，请使用压缩包上传');
+                } else if (files.length > 0) {
                     for (let i = 0; i < files.length; i++) {
                         let file = files[i];
                         let formData = new FormData();
@@ -140,7 +142,9 @@
         } as (e: any) => void,
         drag : function (e) {
             let files = e.dataTransfer.files;
-            if (files.length) {
+            if (files.length > 30) {
+                window.alert('文件过多，请使用压缩包上传');
+            } else if (files.length > 0) {
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
                     if (!upload_file.check(file.type, file.name)) {

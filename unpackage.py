@@ -23,9 +23,9 @@ def un7z_file(sevenz_path, extract_to):
         sevenz_ref.extractall(path = extract_to)
 
 def start_unpackage(file_path, extract_to):
-    if file_path.endswith('.zip'):
+    if file_path.endswith(('.zip', 'ypk')):
         unzip_file(file_path, extract_to)
-    elif file_path.endswith('.tar.gz') or file_path.endswith('.tgz') or file_path.endswith('.tar'):
+    elif file_path.endswith(('.tar.gz', '.tgz', '.tar')):
         untar_file(file_path, extract_to)
     elif file_path.endswith('.rar'):
         unrar_file(file_path, extract_to)
