@@ -3,7 +3,9 @@
         <div id = "card_name">
             <span>卡名:&nbsp;&nbsp;</span>
             <input v-model = "card.name"/>
-        </div>
+            <span>&nbsp;&nbsp;</span>
+        <button id = "search_btn" :style="{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.search()">搜索</button>
+    </div>
         <div id = "card_pic">
             <img :src = "card.pic"/>
             <div id = "card_link">
@@ -135,7 +137,6 @@
     });
     
     let card = reactive({
-        title : '',
         name : '',
         desc : '',
         pic : '/cover.png',
@@ -175,8 +176,26 @@
                 } as (i: number) => void
             }
         },
+        search : function() {
+            select.id = 0;
+            emit.list_page.search.to([
+                card_count.id,
+                card_count.ot,
+                card_count.alias,
+                card_count.setcard,
+                card_count.type,
+                card_count.atk,
+                card_count.def,
+                card_count.level,
+                card_count.race,
+                card_count.attribute,
+                card_count.category,
+                card_count.id,
+                card.name,
+                card.desc
+            ].concat(card.hint));
+        },
         clear : function() {
-            card.title = ''
             card.name = '';
             card.ot = lists.ot[0][1] as string;
             card.attribute = lists.attribute[0][1] as string;
@@ -196,8 +215,7 @@
             card.setcard = Array(4).fill('0');
             card.origin_id = 0;
             card.origin_name = '';
-            select.page = -1;
-            select.card = -1;
+            select.id = 0;
         } as () => void,
         del : async function() {
             await card.data.del();
@@ -214,11 +232,9 @@
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/read_card', {
                         cdb: open.cdb,
-                        page: select.page,
-                        card: select.card
+                        id: select.id,
                     });
-                    let data = response.data[1];
-                    card.title = response.data[0]
+                    let data = response.data;
                     card.origin_id = data[0];
                     card.id = data[0];
                     card.ot = data[1];
@@ -249,7 +265,7 @@
                 } catch (error) {}
             } as (i : number) => Promise<void>,
             save : async function() {
-                if (select.page < 0 || select.card < 0) return;
+                if (select.id <= 0) return;
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                         data: [
@@ -446,8 +462,7 @@
     });
 
     let select = reactive({
-        page : -1,
-        card : -1
+        id : -1
     });
 
     let emit = {
@@ -477,13 +492,12 @@
         },
         list_page : {
             select_card : {
-                on : async function (i : Map<string, any> = new Map().set('page', -1).set('card', -1)) {
-                    if (select.card >= 0)
+                on : async function (i : Map<string, any> = new Map().set('id', -1)) {
+                    if (select.id > 0)
                         await card.data.save();
-                    select.page = i.get('page');
-                    select.card = i.get('card');
+                    select.id = i.get('id');
 
-                    if (select.card < 0)
+                    if (select.id < 0)
                         card.clear();
                     else
                         await card.data.get();
@@ -508,6 +522,11 @@
                 to : function() {
                     emitter.emit('to_lpage_get_over');
                 }
+            },
+            search : {
+                to : function(str) {
+                    emitter.emit('to_lpage_search', str);
+                } as (str: any[]) => void
             }
         },
         download_page : {
@@ -618,6 +637,18 @@
         grid-column-end: 3;
 
         justify-self: center;
+    }
+
+    #search_btn {
+        width: 4vw;
+        height: 4vh;
+
+        border: none;
+        border-radius: 4px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+
+        cursor: pointer;
     }
 
     #card_ot, #card_attribute, #card_level, #card_race, #card_setcard, #card_id, #card_atk {

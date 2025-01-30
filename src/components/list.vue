@@ -56,7 +56,7 @@
                 select.card = -1;
                 select.id = -1;
             }
-            emit.card_page.select_card.to(v);
+            emit.card_page.select_card.to();
         } as (v: number) => void
     });
 
@@ -130,7 +130,7 @@
                     if (select.page > -1 && cdb.list.length > select.page)
                         page.count = select.page;
                     if (select.card > -1)
-                        emit.card_page.select_card.to(select.card);
+                        emit.card_page.select_card.to();
                 } as (i: Map<string, number>) => void,
                 remove : function (cdb: string) {
                     emitter.emit('to_mpage_remove_select', cdb);
@@ -139,9 +139,9 @@
         },
         card_page : {
             select_card : {
-                to : function (i) {
-                    emitter.emit('to_cpage_send_select', new Map().set('card', i).set('page', page.count));
-                } as (i: number) => void
+                to : function () {
+                    emitter.emit('to_cpage_send_select', new Map().set('id', select.id));
+                } as () => void
             },
             card_changed : {
                 on : function (i) {
@@ -179,7 +179,7 @@
                         cdb.list = response.data;
                         select.cdb = response.data[0][0];
                         emit.card_page.cdb_changed.to();
-                        emit.card_page.select_card.to(c);
+                        emit.card_page.select_card.to();
                     } catch (error) {}
                 } as (id ?: number) => Promise<void>
             },
@@ -187,6 +187,20 @@
                 on : function () {
                     wait.save_get = true;
                 } as () => void
+            },
+            search : {
+                on : async function (i) {
+                    try {
+                        let response = await axios.post('http://127.0.0.1:8000/api/search_cdb', {
+                            keyword : i,
+                            cdb: select.cdb
+                        });
+                        cdb.list = response.data;
+                        page.count = 1;
+                        select.page = -1;
+                        select.card = -1;
+                    } catch (error) {}
+                } as (i : any[]) => Promise<void>
             }
         },
         remove : function () {
@@ -195,6 +209,7 @@
             emitter.off('to_lpage_card_changed', emit.card_page.card_changed.on);
             emitter.off('to_lpage_cdb_changed', emit.card_page.cdb_changed.on);
             emitter.off('to_lpage_get_over', emit.card_page.get_over.on);
+            emitter.off('to_lpage_search', emit.card_page.search.on);
         } as () => void
     }
 
@@ -203,6 +218,7 @@
     emitter.on('to_lpage_card_changed', emit.card_page.card_changed.on);
     emitter.on('to_lpage_cdb_changed', emit.card_page.cdb_changed.on);
     emitter.on('to_lpage_get_over', emit.card_page.get_over.on);
+    emitter.on('to_lpage_search', emit.card_page.search.on);
 
 </script>
 

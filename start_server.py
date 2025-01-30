@@ -63,6 +63,14 @@ def create_new_cdb():
     sqlite_cdb.create_cdb(file)
     return jsonify(), 200
 
+@app.route('/api/search_cdb', methods = ['POST'])
+def search_cdb():
+    data = request.json
+    keyword = data.get('keyword')
+    cdb = data.get('cdb')
+    result = sqlite_cdb.search_cdb(f'{buffer}/{cdb}', keyword)
+    return jsonify(result), 200
+
 @app.route('/api/initialize', methods = ['GET'])
 def initialize():
     if not exists(f'{get_path()}/config/cardinfo_chinese.txt'):
@@ -151,19 +159,21 @@ def save_cdb():
 @app.route('/api/read_card', methods = ['POST'])
 def read_card():
     data = request.json
-    page = data.get('page')
-    card = data.get('card')
+    _id = data.get('id')
     cdb = data.get('cdb')
     if not exists('./config/cardinfo_chinese.txt'):
         return jsonify({'error': '无法读取卡片信息'}), 400
 
-    card_data = sqlite_cdb.read_cdb(f'{buffer}/{cdb}', 'data')
+    card_data = sqlite_cdb.read_cdb(f'{buffer}/{cdb}', 'data', _id)
+    if len(card_data) == 0:
+        return jsonify({'error': '卡片不存在'}), 400
 
-    if exists(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg'):
-        card_data[int(page)][int(card)].append(f'{buffer}/pics/{card_data[int(page)][int(card)][0]}.jpg')
+    card_id = card_data[0]
+    if exists(f'{buffer}/{pics_folder_path}/{card_id}.jpg'):
+        card_data.append(f'{buffer}/{pics_folder_path}/{card_id}.jpg')
     else:
-        card_data[int(page)][int(card)].append('/cover.png')
-    return jsonify([card_data[0][0], card_data[int(page)][int(card)]]), 200
+        card_data.append('/cover.png')
+    return jsonify(card_data), 200
 
 if __name__ == '__main__':
     rmtree(buffer, ignore_errors = True)
