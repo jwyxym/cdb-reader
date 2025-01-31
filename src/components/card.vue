@@ -166,13 +166,13 @@
             } as (i: number) => void,
             src : {
                 get : function(i) {
-                    if (lists.link_pics[i].endsWith('-I.png'))
+                    if (lists.link_pics[i].endsWith('-on.png'))
                         return;
-                    lists.link_pics[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '-I.png'
+                    lists.link_pics[i] = './link-arrow/arrow-' + (i < 4? i + 1 : i) + '-on.png'
                 } as (i: number) => void,
                 reset : function (i) {
                     if ((card.link & lists.link[i]) == 0)
-                        lists.link_pics[i] = './link-arrow/arrow' + (i < 4? i + 1 : i) + '.png'
+                        lists.link_pics[i] = './link-arrow/arrow-' + (i < 4? i + 1 : i) + '-off.png'
                 } as (i: number) => void
             }
         },
@@ -429,7 +429,7 @@
             if (i == 5) {
                 lists.link_pics.push('');
             }
-            lists.link_pics.push('./link-arrow/arrow' + i + '.png');
+            lists.link_pics.push('./link-arrow/arrow-' + i + '-off.png');
         }
         lists.get();
     });
