@@ -11,7 +11,8 @@
   "dependencies": {
     "axios": "^1.7.9",
     "mitt": "^3.0.1",
-    "vue": "^3.5.13"
+    "vue": "^3.5.13",
+    "yugioh-card": "^1.4.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",

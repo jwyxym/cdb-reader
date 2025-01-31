@@ -42,6 +42,23 @@ def serve(path):
     else:
         return send_from_directory(f'{get_path()}/dist/', 'index.html')
 
+@app.route('/api/get_pics', methods=['POST'])
+def get_pics():
+    print(request.files)
+    if 'file' not in request.files:
+        return jsonify(), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify(), 400
+
+    file_manager.initialize_dir_conceal(buffer)
+    filepath = join(buffer, file.filename)
+    file.save(filepath)
+    
+    return jsonify(), 200
+
 @app.route('/api/remove_file', methods = ['POST'])
 def remove_file():
     data = request.json

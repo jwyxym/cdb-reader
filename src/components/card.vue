@@ -91,6 +91,7 @@
             <transition name = "card_box_btn">
                 <div v-if = "vif.unshow.btn" id = "card_box_btn">
                     <download/>
+                    <get_pic/>
                     <button @click = "whether_show_rpage(true, 'type')">{{ vif.show.type.title[0] }}</button>
                     <button @click = "whether_show_rpage(true, 'category')">{{ vif.show.category.title[0] }}</button>
                     <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
@@ -111,6 +112,7 @@
     import emitter from '@/utils/emitter';
 
     import download from './download.vue'
+    import get_pic from './pic.vue'
 
     let lists = reactive({
         ot: [[0x0, '许可 N/A']],
