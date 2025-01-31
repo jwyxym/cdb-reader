@@ -1,5 +1,4 @@
 from flask import Flask, send_from_directory, jsonify, request, Response
-from engineio.async_drivers import gevent
 from os.path import exists, join, abspath
 from os import mkdir, remove, listdir, walk
 from shutil import rmtree, copy
