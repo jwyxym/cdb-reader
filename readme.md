@@ -5,7 +5,7 @@
 
 前置工作: (所需环境：Python3&node.js)
 ```bash
-    pip install flask
+    pip install -r requirements.txt
     npm install
 ```
 

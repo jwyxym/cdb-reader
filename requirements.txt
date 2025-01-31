@@ -1,0 +1,7 @@
+flask
+sqlite3
+zipfile
+rarfile
+tarfile
+py7zr
+webbrowser

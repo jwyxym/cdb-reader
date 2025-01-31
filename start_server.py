@@ -33,7 +33,7 @@ script_folder_path = 'script'
 package_folder_path = 'package'
 unpackage_folder_path = 'unpackage'
 
-@app.route('/', defaults={'path': ''})
+@app.route('/', defaults = {'path': ''})
 @app.route('/<path:path>')
 def serve(path):
     if path != "" and exists(join(f'{get_path()}/dist/', path)):
