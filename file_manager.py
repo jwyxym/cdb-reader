@@ -10,7 +10,7 @@ def process_pic(pic_path, buffer = './dist/buffer', pics_folder = 'pics'):
         pic_name = pic_path[pic_path.rfind('/') + 1 : pic_path.rfind('.')]
         img = Image.open(pic_path)
         img = img.convert('RGB')
-        img = img.resize((400, 580), Image.Resampling.LANCZOS)
+        img = img.resize((400, 583), Image.Resampling.LANCZOS)
         img.save(f'{buffer}/{pics_folder}/{pic_name}.jpg')
         return f'{buffer}/{pics_folder}/{pic_name}.jpg'
     except:

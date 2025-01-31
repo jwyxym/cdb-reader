@@ -1,9 +1,16 @@
 <template>
-    <button class = "get_pic" @click = "exportImage()">保存图片</button>
+    <img class = "pic" :src = "url_blob" />
 </template>
-<script setup name = 'get_pic' lang = 'js'>
+<script setup name = 'pic' lang = 'js'>
+    import { ref, reactive, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
     import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
+
+    onMounted(() => {
+        exportImage();
+    })
+
+    let url_blob = ref(null);
 
     async function exportImage() {
         let cardLeaf = new YugiohCard({
@@ -50,6 +57,7 @@
         let formData = new FormData();
         await cardLeaf.leafer.export('jpg', true).then(result => { 
             formData.append('file', result.data, 'blue-eyes.jpg');
+            url_blob.value = URL.createObjectURL(result.data);
         })
         await axios.post('http://127.0.0.1:8000/api/get_pics', formData)
     }

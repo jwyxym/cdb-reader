@@ -248,6 +248,9 @@
                     emitter.emit('to_lpage_cdb_opened', cdb);
                 } as (cdb: any[]) => void
             }
+        },
+        pic : {
+            
         }
     }
 

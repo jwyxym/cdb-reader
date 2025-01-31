@@ -7,7 +7,8 @@
         <button id = "search_btn" :style="{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.search()">搜索</button>
     </div>
         <div id = "card_pic">
-            <img :src = "card.pic"/>
+            <pic v-if = "card.pic == '/cover.png'"/>
+            <img :src = "card.pic" v-if = "card.pic != '/cover.png'"/>
             <div id = "card_link">
                 <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 }" v-if = "vif.show.link.chk && vif.is_type.link" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
             </div>
@@ -112,7 +113,7 @@
     import emitter from '@/utils/emitter';
 
     import download from './download.vue'
-    import get_pic from './pic.vue'
+    import pic from './pic.vue'
 
     let lists = reactive({
         ot: [[0x0, '许可 N/A']],
@@ -714,9 +715,9 @@
         justify-items: center;
     }
 
-    #card_pic img {
+    #card_pic img, .pic {
         max-width: 17.5vw;
-        height: 100%;
+        height: 110%;
         width: auto;
         display: block;
     }
