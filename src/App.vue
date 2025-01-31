@@ -14,15 +14,15 @@
                         </div>
                     </div>
                     <div id = "cdb_list">
-                        <button v-for="(i, v) in (main_page.page.count[0] > 0? Array(main_page.cdb.content.length >= main_page.page.count[0] * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "main_page.show(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] }}</button>
+                        <button v-for="(i, v) in (main_page.page.count > 0? Array(main_page.cdb.content.length >= main_page.page.count * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "main_page.show(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
                         <button @click = "main_page.page.previous"
-                            :style = "{ 'background-color': main_page.page.count[0] <= 1 ? 'gray' : 'green', 'color': main_page.page.count[0] <= 1 ? 'black' : 'white' }"
+                            :style = "{ 'background-color': main_page.page.count <= 1 ? 'gray' : 'green', 'color': main_page.page.count <= 1 ? 'black' : 'white' }"
                         >上一页</button>
-                        <span>第<input @input = "main_page.page.filter($event)" v-model = "main_page.page.count[0]"/>页<br>共{{ Math.ceil(main_page.cdb.content.length / 10) }}页</span>
+                        <span>第<input @input = "main_page.page.filter($event)" v-model = "main_page.page.count"/>页<br>共{{ Math.ceil(main_page.cdb.content.length / 10) }}页</span>
                         <button @click = "main_page.page.next"
-                            :style = "{ 'background-color': main_page.page.count[0] >= Math.ceil(main_page.cdb.content.length / 10) ? 'gray' : 'green', 'color': main_page.page.count[0] >= Math.ceil(main_page.cdb.content.length / 10) ? 'black' : 'white' }"
+                            :style = "{ 'background-color': main_page.page.count >= Math.ceil(main_page.cdb.content.length / 10) ? 'gray' : 'green', 'color': main_page.page.count >= Math.ceil(main_page.cdb.content.length / 10) ? 'black' : 'white' }"
                         >下一页</button>
                     </div>
                 </div>
@@ -44,14 +44,14 @@
 
     let main_page = reactive({
         page : {
-            count : [0],
+            count : 0,
             next : function () {
-                if (main_page.page.count[0] < Math.ceil(main_page.cdb.content.length / 10))
-                    main_page.page.count[0] ++ ;
+                if (main_page.page.count < Math.ceil(main_page.cdb.content.length / 10))
+                    main_page.page.count ++ ;
             } as () => void,
             previous : function () {
-                if (main_page.page.count[0] > 1)
-                    main_page.page.count[0] -- ;
+                if (main_page.page.count > 1)
+                    main_page.page.count -- ;
             } as () => void,
             filter : function (event) {
                 let input_value = event.target.value;
@@ -62,7 +62,7 @@
                     new_value = 0;
                 if (parseInt(new_value) < 1 && Math.ceil(main_page.cdb.content.length / 10) > 0)
                     new_value = 1;
-                main_page.page.count[0] = new_value;
+                main_page.page.count = new_value;
             } as (event: any) => void
         },
         cdb : {
@@ -71,7 +71,7 @@
                 let data = [[''], []];
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
-                        cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count[0]) - 1) * 10] : v)
+                        cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count) - 1) * 10] : v)
                     });
                     opening_cdb.value = response.data[0][0];
                     emit.card_page.cdb_opened.to(response.data);
@@ -89,7 +89,7 @@
             try {
                 let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
                 main_page.cdb.content = response.data;
-                main_page.page.count[0] = main_page.cdb.content.length > 0 ? Math.ceil(main_page.cdb.content.length / 10) : 0;
+                main_page.page.count = main_page.cdb.content.length > 0 ? Math.ceil(main_page.cdb.content.length / 10) : 0;
             } catch (error) {}
         } as () => Promise<void>,
         add : async function () {
@@ -100,8 +100,8 @@
         } as () => Promise<void>,
         remove : async function (cdb) {
             main_page.cdb.content.splice(main_page.cdb.content.indexOf(cdb), 1);
-            if (Math.ceil(main_page.cdb.content.length / 10) < main_page.page.count[0])
-                main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
+            if (Math.ceil(main_page.cdb.content.length / 10) < main_page.page.count)
+                main_page.page.count = Math.ceil(main_page.cdb.content.length / 10);
             await axios.post('http://127.0.0.1:8000/api/remove_file', {file: cdb});
             main_page.show();
         } as (i: string) => Promise<void>,
@@ -128,32 +128,51 @@
         click : function (e) {
             try {
                 let files = e.target.files;
-                if (files.length > 30) {
-                    window.alert('文件过多，请使用压缩包上传');
-                } else if (files.length > 0) {
+                if (files.length > 0) {
+                    let formData = new FormData();
+                    let size = 0;
+                    let count = 0;
                     for (let i = 0; i < files.length; i++) {
                         let file = files[i];
-                        let formData = new FormData();
-                        formData.append('file', file);
-                        upload_file.send(formData);
+                        if (!upload_file.check(file.type, file.name)) {
+                            continue;
+                        }
+                        formData.append('files[]', file);
+                        count ++;
+                        size += file.size;
+                        if (size >= 1024 * 1024 * 10 || count >= 100) {
+                            upload_file.send(formData);
+                            formData = new FormData();
+                            size = 0;
+                            count = 0;
+                        }
                     }
+                    upload_file.send(formData);
                 }
-            } catch (error) {}
+            } catch (error) { console.error(error); }
         } as (e: any) => void,
         drag : function (e) {
             let files = e.dataTransfer.files;
-            if (files.length > 30) {
-                window.alert('文件过多，请使用压缩包上传');
-            } else if (files.length > 0) {
+            if (files.length > 0) {
+                let formData = new FormData();
+                let size = 0;
+                let count = 0;
                 for (let i = 0; i < files.length; i++) {
                     let file = files[i];
                     if (!upload_file.check(file.type, file.name)) {
                         continue;
                     }
-                    let formData = new FormData();
-                    formData.append('file', file);
-                    upload_file.send(formData);
+                    formData.append('files[]', file);
+                    count ++;
+                    size += file.size;
+                    if (size >= 1024 * 1024 * 10 || count >= 100) {
+                        upload_file.send(formData);
+                        formData = new FormData();
+                        size = 0;
+                        count = 0;
+                    }
                 }
+                upload_file.send(formData);
             }
             main_page.uploading = false;
         } as (e: any) => void,
@@ -168,14 +187,13 @@
         send : async function (formData) {
             try {
                 let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
-                if (response.data.endsWith('.cdb')) {
-                    main_page.cdb.content.push(response.data);
+                for (let i = 0; i < response.data.length; i++) {
+                    if (response.data[i].endsWith('.cdb')) {
+                        main_page.cdb.content.push(response.data[i]);
+                    }
                 }
-                if (response.data.endsWith('.jpg')) {
-                    emit.card_page.new_pic.to(response.data);
-                }
-                if (Math.ceil(main_page.cdb.content.length / 10) > main_page.page.count[0]) {
-                    main_page.page.count[0] = Math.ceil(main_page.cdb.content.length / 10);
+                if (Math.ceil(main_page.cdb.content.length / 10) > main_page.page.count) {
+                    main_page.page.count = Math.ceil(main_page.cdb.content.length / 10);
                 }
             } catch (error) {}
         } as (formData: FormData) => Promise<void>
@@ -196,11 +214,6 @@
                 to : function (cdb) {
                     emitter.emit('to_cpage_cdb_opened', cdb);
                 } as (cdb: any[]) => void
-            },
-            new_pic: {
-                to : function (pic) {
-                    emitter.emit('to_cpage_new_pic', pic);
-                } as (pic: string) => void
             }
         },
         list_page: {

@@ -25,6 +25,7 @@ def get_path():
     return path[: path.rfind('/')]
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 buffer = f'{get_path()}/dist/buffer'
 cdb_backup_folder_path = 'cdb_backup'
@@ -81,57 +82,59 @@ def initialize():
 
 @app.route('/api/get_file', methods = ['POST'])
 def get_file():
-    if 'file' not in request.files:
+
+    if 'files[]' not in request.files:
         return jsonify({'error': '没有文件'}), 400
     
-    file = request.files['file']
-    file_type = file.content_type
-    file_name = file.filename
-    
-    if file_name == '':
+    files = request.files.getlist('files[]')
+    if not files:
         return jsonify({'error': '没有选择文件'}), 400
 
-    if file:
-        file_manager.initialize_dir_conceal(buffer)
+    file_manager.initialize_dir_conceal(buffer)
+
+    result = []
+    for file in files:
+        file_type = file.content_type
+        file_name = file.filename
+        if file_name == '':
+            continue
+
         file_path = file_manager.get_only_one_file_path(buffer, file_name)
         file.save(file_path)
 
-        if file_name.endswith('.cdb'):
-            copy_cdb_result = file_manager.copy_cdb(file_path, buffer, cdb_backup_folder_path)
-            if copy_cdb_result:
-                return jsonify(file_path[file_path.rfind('/') + 1 : ]), 200
+        if file_name.lower().endswith('.cdb'):
+            result.append(file_manager.copy_cdb(file_path, buffer, cdb_backup_folder_path))
         elif 'image' in file_type:
-            pic_result = file_manager.process_pic(file_path, buffer, pics_folder_path)
-            if pic_result:
-                remove(file_path)
-                return jsonify(pic_result), 200
-        elif 'text' in file_type or file_name.endswith('.lua'):
+            result.append(file_manager.process_pic(file_path, buffer, pics_folder_path))
+            remove(file_path)
+        elif 'text' in file_type or file_name.lower().endswith('.lua'):
             lua_result = file_manager.copy_text(file_path, buffer, script_folder_path)
             if lua_result:
                 remove(lua_result)
-                return jsonify(), 200
-        elif file_name.endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
+        elif file_name.lower().endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
             unpackage.start_unpackage(file_path, f'{buffer}/{unpackage_folder_path}')
             chk = True
             while chk:
                 chk = False
                 for root, dirs, fs in walk(f'{buffer}/{unpackage_folder_path}'):
                     for f in fs:
-                        if f.endswith('.cdb'):
-                            copy_cdb_result = file_manager.copy_cdb(join(root, f), buffer, cdb_backup_folder_path)
-                        elif f.endswith(('.jpg', '.jpeg', 'png', 'bmp')):
-                            pic_result = file_manager.process_pic(join(root, f), buffer, pics_folder_path)
-                        elif f.endswith(('.lua', '.txt', '.py', '.c', 'cs', 'js', 'css', 'html', 'ts', 'json')):
-                            lua_result = file_manager.copy_text(join(root, f), buffer, script_folder_path)
-                        elif f.endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
+                        if f.lower().endswith('.cdb'):
+                            result.append(file_manager.copy_cdb(join(root, f), buffer, cdb_backup_folder_path))
+                            remove(join(root, f))
+                        elif f.lower().endswith(('.jpg', '.jpeg', 'png', 'bmp')):
+                            result.append(file_manager.process_pic(join(root, f), buffer, pics_folder_path))
+                            remove(join(root, f))
+                        elif f.lower().endswith(('.lua', '.txt', '.py', '.c', 'cs', 'js', 'css', 'html', 'ts', 'json')):
+                            file_manager.copy_text(join(root, f), buffer, script_folder_path)
+                            remove(join(root, f))
+                        elif f.lower().endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
                             unpackage.start_unpackage(join(root, f), f'{buffer}/{unpackage_folder_path}')
                             remove(join(root, f))
                             chk = True
             remove(file_path)
             rmtree(f'{buffer}/{unpackage_folder_path}', ignore_errors = True)
-            return jsonify(), 200
         
-    return jsonify([]), 200
+    return jsonify(result), 200
 
 @app.route('/api/get_cdb_menu', methods = ['POST'])
 def get_cdb_menu():
@@ -196,7 +199,7 @@ def read_card():
 
     card_id = card_data[0]
     if exists(f'{buffer}/{pics_folder_path}/{card_id}.jpg'):
-        card_data.append(f'{buffer}/{pics_folder_path}/{card_id}.jpg')
+        card_data.append(f'{buffer[buffer.rfind('/') + 1 : ]}/{pics_folder_path}/{card_id}.jpg')
     else:
         card_data.append('/cover.png')
     return jsonify(card_data), 200

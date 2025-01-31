@@ -31,7 +31,7 @@ def copy_cdb(cdb_path, buffer = './dist/buffer', cdb_folder = 'cdb_backup'):
         mkdir(f'{buffer}/{cdb_folder}')
     try:
         copy(cdb_path, f'{buffer}/{cdb_folder}')
-        return f'{buffer}/{cdb_folder}/{cdb_path[cdb_path.rfind('/') + 1 : ]}'
+        return f'{cdb_path[cdb_path.rfind('/') + 1 : ]}'
     except:
         return None
 

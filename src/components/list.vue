@@ -130,6 +130,7 @@
                     if (select.page > -1 && cdb.list.length > select.page)
                         page.count = select.page;
                     if (select.card > -1)
+                        select.id = cdb.list[select.page][select.card].split(' ')[0];
                         emit.card_page.select_card.to();
                 } as (i: Map<string, number>) => void,
                 remove : function (cdb: string) {

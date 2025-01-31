@@ -177,7 +177,7 @@
             }
         },
         search : function() {
-            select.id = 0;
+            select.id = -1;
             emit.list_page.search.to([
                 card_count.id,
                 card_count.ot,
@@ -215,7 +215,7 @@
             card.setcard = Array(4).fill('0');
             card.origin_id = 0;
             card.origin_name = '';
-            select.id = 0;
+            select.id = -1;
         } as () => void,
         del : async function() {
             await card.data.del();
@@ -480,20 +480,12 @@
                     open.cdb = cdb[0][0];
                     open.list = cdb;
                 } as () => void
-            },
-            new_pic: {
-                on : function(pic) {
-                    if (pic != '' && card.pic != pic && card.origin_id > 0
-                        && pic.split('/').pop().split('.')[0] == card.origin_id.toString()
-                    )
-                        card.pic = pic;
-                } as (pic: string) => void
             }
         },
         list_page : {
             select_card : {
                 on : async function (i : Map<string, any> = new Map().set('id', -1)) {
-                    if (select.id > 0)
+                    if (select.id >= 0)
                         await card.data.save();
                     select.id = i.get('id');
 
@@ -544,7 +536,6 @@
 
     emitter.on('to_cpage_cdb_closed', emit.main_page.cdb_closed.on);
     emitter.on('to_cpage_cdb_opened', emit.main_page.cdb_opened.on);
-    emitter.on('to_cpage_new_pic', emit.main_page.new_pic.on);
     emitter.on('to_cpage_cdb_changed', emit.list_page.cdb_changed.on);
     emitter.on('to_cpage_send_select', emit.list_page.select_card.on);
     emitter.on('to_cpage_save', emit.download_page.save.on);
