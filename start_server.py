@@ -215,7 +215,7 @@ def read_card():
 
     card_id = card_data[0]
     if exists(f'{buffer}/{pics_folder_path}/{card_id}.jpg'):
-        card_data.append(f'{buffer[buffer.rfind('/') + 1 : ]}/{pics_folder_path}/{card_id}.jpg')
+        card_data.append(f'{buffer[buffer.rfind("/") + 1 : ]}/{pics_folder_path}/{card_id}.jpg')
     else:
         card_data.append('/cover.png')
     return jsonify(card_data), 200

@@ -7,7 +7,7 @@ from ctypes import windll
 def process_pic(pic_path, buffer = './dist/buffer', pics_folder = 'pics'):
     initialize_dir(f'{buffer}/{pics_folder}')
     try:
-        pic_name = pic_path[pic_path.rfind('/') + 1 : pic_path.rfind('.')]
+        pic_name = pic_path[pic_path.rfind("/") + 1 : pic_path.rfind(".")]
         img = Image.open(pic_path)
         img = img.convert('RGB')
         img = img.resize((400, 583), Image.Resampling.LANCZOS)
@@ -20,9 +20,9 @@ def copy_text(text_path, buffer = './dist/buffer', script = 'script'):
     initialize_dir(f'{buffer}/{script}')
     try:
         if not text_path.endswith('.lua'):
-            rename(text_path, f'{text_path[ : text_path.rfind('.')]}.lua')
-        copy(f'{text_path[ : text_path.rfind('.')]}.lua', f'{buffer}/{script}')
-        return f'{buffer}/{text_path[text_path.rfind('/') + 1 : text_path.rfind('.')]}.lua'
+            rename(text_path, f'{text_path[ : text_path.rfind(".")]}.lua')
+        copy(f'{text_path[ : text_path.rfind(".")]}.lua', f'{buffer}/{script}')
+        return f'{buffer}/{text_path[text_path.rfind("/") + 1 : text_path.rfind(".")]}.lua'
     except:
         return None
         
@@ -31,7 +31,7 @@ def copy_cdb(cdb_path, buffer = './dist/buffer', cdb_folder = 'cdb_backup'):
         mkdir(f'{buffer}/{cdb_folder}')
     try:
         copy(cdb_path, f'{buffer}/{cdb_folder}')
-        return f'{cdb_path[cdb_path.rfind('/') + 1 : ]}'
+        return f'{cdb_path[cdb_path.rfind("/") + 1 : ]}'
     except:
         return None
 
