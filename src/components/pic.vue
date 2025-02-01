@@ -4,18 +4,19 @@
 <script setup name = 'pic' lang = 'js'>
     import { ref, reactive, watch, onMounted, computed } from 'vue';
     import axios from 'axios';
+    import emitter from '@/utils/emitter';
     import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
-
     onMounted(() => {
         exportImage();
     })
 
     let url_blob = ref(null);
-
-    async function exportImage() {
-
+    async function exportImage(card, card_count) {
+        console.log(card, card_count);
+        if(!card||!card_count)return;
         let card_type = 'monster';
         let card_Type = 'normal';
+        let pendulum_scale = 0;
         let pendulum_type = 'normal-pendulum';
         let card_icon = '';
         let arrows = [];
@@ -150,9 +151,9 @@
                 image: './赌上你的灵魂.png',  // to be continued
                 cardType: card_Type,
                 pendulumType: pendulum_type,
-                level: card_level,
-                rank: card_level,
-                pendulumScale: (card_count.level>>24)&255,
+                level: card_count.level&65535,
+                rank: card_count.level&65535,
+                pendulumScale: card.pendulum,
                 pendulumDescription: '', // to be continued
                 monsterType: '龙族/通常', // to be continued
                 atkBar: true,
@@ -182,4 +183,7 @@
         })
         await axios.post('http://127.0.0.1:8000/api/get_pics', formData)
     }
+    emitter.on('exportImage', (obj)=>{
+        exportImage(obj.data1, obj.data2);
+    });
 </script>

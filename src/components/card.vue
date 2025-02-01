@@ -108,7 +108,7 @@
 </template>
 
 <script setup name = "card_page" lang = "ts">
-    import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed, TrackOpTypes } from 'vue';
+    import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed, TrackOpTypes, toRaw } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
 
@@ -445,6 +445,7 @@
         }
 
         card_count.get();
+        emitter.emit('exportImage', {data1: toRaw(card), data2: toRaw(card_count)});
 
         vif.is_type.link = (card_count.type & 0x4000000) > 0;
 
@@ -456,6 +457,7 @@
         } else { vif.is_type.pendulum = false; }
 
         emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
+
         
     }, { deep: true });
 
