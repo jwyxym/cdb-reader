@@ -98,7 +98,7 @@
                     <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
                     <button :style = "{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.add()">新建</button>
                     <button :style = "{ 'background-color': card.origin_id > 0 ? 'red' : 'gray' }" @click = "card.del()">删除</button>
-                    <button :style = "{ 'background-color': card.origin_id > 0 && card_count.id < 100000000 && card_count.id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
+                    <button :style = "{ 'background-color': card.origin_id > 0 && card_n.id < 100000000 && card_n.id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
                     <button :style = "{ 'background-color': copy.content.length > 0 && open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
                     <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
                 </div>
@@ -182,18 +182,18 @@
         search : function() {
             select.id = -1;
             emit.list_page.search.to([
-                card_count.id,
-                card_count.ot,
-                card_count.alias,
-                card_count.setcard,
-                card_count.type,
-                card_count.atk,
-                card_count.def,
-                card_count.level,
-                card_count.race,
-                card_count.attribute,
-                card_count.category,
-                card_count.id,
+                card_n.id,
+                card_n.ot,
+                card_n.alias,
+                card_n.setcard,
+                card_n.type,
+                card_n.atk,
+                card_n.def,
+                card_n.level,
+                card_n.race,
+                card_n.attribute,
+                card_n.category,
+                card_n.id,
                 card.name,
                 card.desc
             ].concat(card.hint));
@@ -272,18 +272,18 @@
                 try {
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                         data: [
-                            card_count.id,
-                            card_count.ot,
-                            card_count.alias,
-                            card_count.setcard,
-                            card_count.type,
-                            card_count.atk,
-                            card_count.def,
-                            card_count.level,
-                            card_count.race,
-                            card_count.attribute,
-                            card_count.category,
-                            card_count.id,
+                            card_n.id,
+                            card_n.ot,
+                            card_n.alias,
+                            card_n.setcard,
+                            card_n.type,
+                            card_n.atk,
+                            card_n.def,
+                            card_n.level,
+                            card_n.race,
+                            card_n.attribute,
+                            card_n.category,
+                            card_n.id,
                             card.name,
                             card.desc
                         ].concat(card.hint),
@@ -316,7 +316,7 @@
         }
     });
 
-    let card_count = reactive({
+    let card_n = reactive({
         id : 0,
         alias : 0,
         ot : 0,
@@ -329,24 +329,24 @@
         type : 0,
         category : 0,
         get : function() {
-            card_count.type = 0;
+            card_n.type = 0;
             card.type.forEach((e, v) => {
-                if (e) card_count.type += lists.type[v][0]
+                if (e) card_n.type += lists.type[v][0]
             });
 
-            card_count.category = 0;
+            card_n.category = 0;
             card.category.forEach((e, v) => {
-                if (e) card_count.category += lists.category[v][0]
+                if (e) card_n.category += lists.category[v][0]
             });
-            card_count.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
-            card_count.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
-            card_count.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
-            card_count.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
-            card_count.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
-            card_count.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
-            card_count.atk = card.atk != '?' ? card.atk as number : -2; 
-            card_count.def = (card_count.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
-            card_count.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
+            card_n.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
+            card_n.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
+            card_n.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
+            card_n.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
+            card_n.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
+            card_n.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
+            card_n.atk = card.atk != '?' ? card.atk as number : -2; 
+            card_n.def = (card_n.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
+            card_n.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
         } as () => void
     });
 
@@ -386,22 +386,22 @@
     let copy = reactive({
         content : [],
         from : async function() {
-            if (card.origin_id <= 0 || card_count.id >= 100000000 || card_count.id == 0) return;
+            if (card.origin_id <= 0 || card_n.id >= 100000000 || card_n.id == 0) return;
             await card.data.save();
             copy.content = [[
                 [
-                    card_count.id,
-                    card_count.ot,
-                    card_count.alias,
-                    card_count.setcard,
-                    card_count.type,
-                    card_count.atk,
-                    card_count.def,
-                    card_count.level,
-                    card_count.race,
-                    card_count.attribute,
-                    card_count.category,
-                    card_count.id,
+                    card_n.id,
+                    card_n.ot,
+                    card_n.alias,
+                    card_n.setcard,
+                    card_n.type,
+                    card_n.atk,
+                    card_n.def,
+                    card_n.level,
+                    card_n.race,
+                    card_n.attribute,
+                    card_n.category,
+                    card_n.id,
                     card.name,
                     card.desc
                 ].concat(card.hint),
@@ -444,15 +444,14 @@
             vif.warn.same_id = false;
         }
 
-        card_count.get();
-        emitter.emit('exportImage', {data1: toRaw(card), data2: toRaw(card_count)});
+        card_n.get();
+        emitter.emit('exportImage', {data1: toRaw(card), data2: toRaw(card_n)});
 
-        vif.is_type.link = (card_count.type & 0x4000000) > 0;
+        vif.is_type.link = (card_n.type & 0x4000000) > 0;
 
-        if ((card_count.type & 0x1000000) > 0) {
-            card_count.level = parseInt((card_count.level).toString())
-            card_count.level |= (card.pendulum << 16);
-            card_count.level |= (card.pendulum << 24);
+        if ((card_n.type & 0x1000000) > 0) {
+            card_n.level |= (card.pendulum << 16);
+            card_n.level |= (card.pendulum << 24);
             vif.is_type.pendulum = true;
         } else { vif.is_type.pendulum = false; }
 

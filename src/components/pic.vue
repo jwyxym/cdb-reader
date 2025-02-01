@@ -11,174 +11,159 @@
     })
 
     let url_blob = ref(null);
-    async function exportImage(card, card_count) {
-        console.log(card, card_count);
-        if(!card||!card_count)return;
-        let card_type = 'monster';
-        let card_Type = 'normal';
-        let pendulum_scale = 0;
-        let pendulum_type = 'normal-pendulum';
-        let card_icon = '';
-        let arrows = [];
-        if(card_count.type & 16777216){
-            card_type = 'pendulum';
-            if(card_count.type & 32){
-                pendulum_type = 'effect-pendulum';
-            }
-            else if(card_count.type & 128){
-                pendulum_type = 'ritual-pendulum';
-            }
-            else if(card_count.type & 64){
-                pendulum_type = 'fusion-pendulum';
-            }
-            else if(card_count.type & 8192){
-                pendulum_type = 'synchro-pendulum';
-            }
-            else if(card_count.type & 8388608){
-                pendulum_type = 'xyz-pendulum';
-            }
+
+    function to_data (card, card_n) {
+        if(!card || !card_n) return;
+        let data = {
+            language: 'sc',
+            font: '',
+            name: card.name,
+            color: '',
+            align: 'left',
+            gradient: false,
+            gradientColor1: '#999999',
+            gradientColor2: '#ffffff',
+            type: 'monster',
+            attribute: '',
+            icon: '',
+            image: './赌上你的灵魂.png',  // to be continued
+            cardType: 'normal',
+            pendulumType: 'normal-pendulum',
+            level: card_n.level & 0xffff,
+            rank: card_n.level & 0xffff,
+            pendulumScale: card.pendulum,
+            pendulumDescription: '', // to be continued
+            monsterType: '', // to be continued
+            atkBar: true,
+            atk: card_n.atk >= 0 ? card_n.atk : -1,
+            def: card_n.def >= 0 ? card_n.def : -1,
+            arrowList: [],
+            description: card.desc,
+            firstLineCompress: false,
+            descriptionAlign: false,
+            descriptionZoom: 1,
+            descriptionWeight: 0,
+            package: '',
+            password: card_n.id,
+            copyright: '',
+            laser: '',
+            rare: '',
+            twentieth: false,
+            radius: true,
+            scale: 1,
         }
-        else if(card_count.type & 1){
-            card_type = 'monster';
-            if(card_count.type & 32){
-                card_Type = 'effect';
-            }
-            else if(card_count.type & 128){
-                card_Type = 'ritual';
-            }
-            else if(card_count.type & 64){
-                card_Type = 'fusion';
-            }
-            else if(card_count.type & 8192){
-                card_Type = 'synchro';
-            }
-            else if(card_count.type & 8388608){
-                card_Type = 'xyz';
-            }
-            else if(card_count.type & 67108864){
-                card_Type = 'link';
-                if(card_count.def & 128){
-                    arrows.push(1);
-                }
-                else if(card_count.def & 256){
-                    arrows.push(2);
-                }
-                else if(card_count.def & 32){
-                    arrows.push(3);
-                }
-                else if(card_count.def & 4){
-                    arrows.push(4);
-                }
-                else if(card_count.def & 2){
-                    arrows.push(5);
-                }
-                else if(card_count.def & 1){
-                    arrows.push(6);
-                }
-                else if(card_count.def & 8){
-                    arrows.push(7);
-                }
-                else if(card_count.def & 64){
-                    arrows.push(8);
-                }
-            }
-            else if(card_count.type & 16384){
-                card_Type = 'token';
-            }
+
+        let list = {
+            type : new Map ([
+                [0x1,'monster'],
+                [0x2,'spell'],
+                [0x4, 'trap'],
+                [0x1000000, 'pendulum']
+            ]),
+            monster_type : new Map ([
+                [0x1, 'normal'],
+                [0x20, 'effect'],
+                [0x40, 'fusion'],
+                [0x80, 'ritual'],
+                [0x2000, 'synchro'],
+                [0x4000, 'token'],
+                [0x800000, 'xyz'],
+                [0x4000000, 'link']
+            ]),
+            p_type : new Map ([
+                [0x1, 'normal-pendulum'],
+                [0x20, 'effect-pendulum'],
+                [0x40, 'fusion-pendulum'],
+                [0x80, 'ritual-pendulum'],
+                [0x2000,'synchro-pendulum'],
+                [0x800000, 'xyz-pendulum']
+            ]),
+            link : new Map ([
+                [0x1, 6],
+                [0x2, 5],
+                [0x4, 4],
+                [0x8, 7],
+                [0x20, 3],
+                [0x40, 8],
+                [0x80, 1],
+                [0x100, 2]
+            ]),
+            spell_type : new Map ([
+                [0x80, 'ritual'],
+                [0x10000, 'quick-play'],
+                [0x20000, 'continuous'],
+                [0x40000, 'equip'],
+                [0x80000, 'field']
+            ]),
+            trap_type : new Map ([
+                [0x20000, 'continuous'],
+                [0x100000, 'counter']
+            ]),
+            attribute : new Map ([
+                [0x1, 'earth'],
+                [0x2, 'water'],
+                [0x4, 'fire'],
+                [0x8, 'wind'],
+                [0x10, 'light'],
+                [0x20, 'dark'],
+                [0x40, 'divine']
+            ]),
         }
-        else if(card_count.type & 2){
-            card_type = 'spell';
-            if(card_count.type & 262144){
-                card_icon = 'equip';
-            }
-            else if(card_count.type & 524288){
-                card_icon = 'field';
-            }
-            else if(card_count.type & 65536){
-                card_icon = 'quick-play';
-            }
-            else if(card_count.type & 128){
-                card_icon = 'ritual';
-            }
-            else if(card_count.type & 131072){
-                card_icon = 'continuous';
-            }
+        list.type.forEach((value, key) => {
+            if((card_n.type & key) > 0)
+                data.type = value;
+        });
+
+        switch(data.type){
+            case'monster' :
+                list.attribute.forEach((value, key) => {
+                    if((card_n.attribute & key) > 0)
+                        data.attribute = value;
+                });
+                list.monster_type.forEach((value, key) => {
+                    if((card_n.type & key) > 0)
+                        data.cardType = value;
+                    });
+                if (data.cardType == 'link')
+                    list.link.forEach((value, key) => {
+                        if((card_n.def & key) > 0)
+                            data.arrowList.push(value);
+                    });
+                break;
+            case 'spell' :
+                list.spell_type.forEach((value, key) => {
+                    if((card_n.type & key) > 0)
+                        data.icon = value;
+                });
+                break;
+            case 'trap' :
+                list.trap_type.forEach((value, key) => {
+                    if((card_n.type & key) > 0)
+                        data.icon = value;
+                });
+                break;
+            case 'pendulum' :
+                list.p_type.forEach((value, key) => {
+                    if((card_n.type & key) > 0) {
+                        data.pendulumType = value;
+                    }
+                });
+                break;
         }
-        else if(card_count.type & 4){
-            card_type = 'trap';
-            if(card_count.type & 131072){
-                card_icon = 'continuous';
-            }
-            else if(card_count.type & 1048576){
-                card_icon = 'counter';
-            }
-        }
-        let card_attribute = '';
-        if(card_count.attribute & 32){
-            card_attribute = 'dark';
-        }
-        else if(card_count.attribute & 16){
-            card_attribute = 'light';
-        }
-        else if(card_count.attribute & 1){
-            card_attribute = 'earth';
-        }
-        else if(card_count.attribute & 2){
-            card_attribute = 'water';
-        }
-        else if(card_count.attribute & 4){
-            card_attribute = 'fire';
-        }
-        else if(card_count.attribute & 8){
-            card_attribute = 'wind';
-        }
-        else if(card_count.attribute & 64){
-            card_attribute = 'divine';
-        }
+
+        return data;
+    }
+
+    async function exportImage(card, card_n) {
         let cardLeaf = new YugiohCard({
-            data: {
-                language: 'sc',
-                font: '',
-                name: card.name,
-                color: '',
-                align: 'left',
-                gradient: false,
-                gradientColor1: '#999999',
-                gradientColor2: '#ffffff',
-                type: card_type,
-                attribute: card_attribute,
-                icon: card_icon,
-                image: './赌上你的灵魂.png',  // to be continued
-                cardType: card_Type,
-                pendulumType: pendulum_type,
-                level: card_count.level&65535,
-                rank: card_count.level&65535,
-                pendulumScale: card.pendulum,
-                pendulumDescription: '', // to be continued
-                monsterType: '龙族/通常', // to be continued
-                atkBar: true,
-                atk: card_count.atk,
-                def: card_count.def,
-                arrowList: arrows,
-                description: '以高攻击力著称的传说之龙。任何对手都能将之粉碎，其破坏力不可估量。',// to be continued
-                firstLineCompress: false,
-                descriptionAlign: false,
-                descriptionZoom: 1,
-                descriptionWeight: 0,
-                package: '',
-                password: card_count.origin_id,
-                copyright: '',
-                laser: '',
-                rare: '',
-                twentieth: false,
-                radius: true,
-                scale: 1,
-            },
+            data: to_data (card, card_n),
             resourcePath: './yugioh-card',
         });
         let formData = new FormData();
         await cardLeaf.leafer.export('jpg', true).then(result => { 
             formData.append('file', result.data, 'blue-eyes.jpg');
+            if (url_blob.value)
+                URL.revokeObjectURL(url_blob.value);
             url_blob.value = URL.createObjectURL(result.data);
         })
         await axios.post('http://127.0.0.1:8000/api/get_pics', formData)
