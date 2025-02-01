@@ -12,7 +12,7 @@
 
     let url_blob = ref(null);
 
-    function to_data (card, card_n) {
+    function to_data (card, card_n, type_list) {
         if(!card || !card_n) return;
         let data = {
             language: 'sc',
@@ -33,7 +33,7 @@
             rank: card_n.level & 0xffff,
             pendulumScale: card.pendulum,
             pendulumDescription: '', // to be continued
-            monsterType: '', // to be continued
+            monsterType: `${card.race != '种族 N/A' ? card.race : ''}族`,
             atkBar: true,
             atk: card_n.atk >= 0 ? card_n.atk : -1,
             def: card_n.def >= 0 ? card_n.def : -1,
@@ -150,24 +150,42 @@
                 break;
         }
 
+        
+
+        type_list = type_list.filter(item => ![0x1, 0x40, 0x80, 0x2000, 0x800000, 0x2000000].includes(item[0]));
+        type_list.sort((a, b) => b[0] - a[0]);
+        type_list.splice(type_list.findIndex(e => e.includes(0x1000000)), 0, [0x40, '融合'], [0x80, '仪式'], [0x2000, '同调'], [0x800000, '超量'], [0x2000000, '特殊召唤']);
+        for (let i = 0; i < type_list.length; i++) {
+            if ((card_n.type & type_list[i][0]) > 0)
+                data.monsterType += `${data.monsterType == '' ? '' : '/'}${type_list[i][1]}`
+        }
+
         return data;
     }
 
-    async function exportImage(card, card_n) {
+    async function exportImage(chk, card, card_n, type_list) {
         let cardLeaf = new YugiohCard({
-            data: to_data (card, card_n),
+            data: to_data (card, card_n, type_list),
             resourcePath: './yugioh-card',
         });
-        let formData = new FormData();
-        await cardLeaf.leafer.export('jpg', true).then(result => { 
-            formData.append('file', result.data, 'blue-eyes.jpg');
-            if (url_blob.value)
-                URL.revokeObjectURL(url_blob.value);
-            url_blob.value = URL.createObjectURL(result.data);
-        })
-        await axios.post('http://127.0.0.1:8000/api/get_pics', formData)
+        if (chk == 'load') {
+            await cardLeaf.leafer.export('jpg', true).then(result => { 
+                if (url_blob.value)
+                    URL.revokeObjectURL(url_blob.value);
+                url_blob.value = URL.createObjectURL(result.data);
+            })
+        } else if (chk == 'download') {
+            let formData = new FormData();
+                await cardLeaf.leafer.export('jpg', true).then(result => { 
+                formData.append('file', result.data, 'blue-eyes.jpg');
+            })
+            await axios.post('http://127.0.0.1:8000/api/get_pics', formData)
+        }
     }
-    emitter.on('exportImage', (obj)=>{
-        exportImage(obj.data1, obj.data2);
+    emitter.on('to_ppage_load_pic', (i)=>{
+        exportImage('load', i.get('card'), i.get('card_n'), i.get('list'));
+    });
+    emitter.on('to_ppage_download_pic', (i)=>{
+        exportImage('download', i.get('card'), i.get('card_n'), i.get('list'));
     });
 </script>

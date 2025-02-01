@@ -270,6 +270,7 @@
             save : async function() {
                 if (select.id <= 0) return;
                 try {
+                    emit.pic_page.download_pic.to();
                     let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
                         data: [
                             card_n.id,
@@ -445,7 +446,7 @@
         }
 
         card_n.get();
-        emitter.emit('exportImage', {data1: toRaw(card), data2: toRaw(card_n)});
+        emit.pic_page.load_pic.to();
 
         vif.is_type.link = (card_n.type & 0x4000000) > 0;
 
@@ -533,6 +534,18 @@
                 } as () => Promise<void>,
                 to : function() {
                     emitter.emit('to_dpage_save');
+                } as () => void
+            }
+        },
+        pic_page : {
+            load_pic : {
+                to : function() {
+                    emitter.emit('to_ppage_load_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));
+                } as () => void
+            },
+            download_pic : {
+                to : function() {
+                    emitter.emit('to_ppage_download_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));
                 } as () => void
             }
         }
