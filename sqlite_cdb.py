@@ -191,10 +191,12 @@ def get_select_SQL(k = []):
             c_name = c_name.replace("%%", "%")
         else:
             c_name = "%" + c_name.replace("%", "/%").replace("_", "/_") + "%"
-        key += f" and texts.name like '{c_name.replace("'", "''")}' "
+        temp = c_name.replace("'", "''")
+        key += f" and texts.name like '{temp}' "
 
     if c_desc:
-        key += f" and texts.desc like '%{c_desc.replace("'", "''")}%' "
+        temp = c_desc.replace("'", "''")
+        key += f" and texts.desc like '%{temp}%' "
 
     if c_ot > 0:
         key += f" and datas.ot = {c_ot} "
