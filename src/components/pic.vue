@@ -71,7 +71,6 @@
                 [0x4000000, 'link']
             ]),
             p_type : new Map ([
-                [0x1, 'normal-pendulum'],
                 [0x20, 'effect-pendulum'],
                 [0x40, 'fusion-pendulum'],
                 [0x80, 'ritual-pendulum'],
