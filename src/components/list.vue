@@ -159,24 +159,22 @@
                         let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
                             cdb: select.cdb
                         });
-                        let c = -1;
-                        let p = 1;
                         if (id == -1)
                             id = select.id;
                         if (id > -1) {
-                            for (let i = 0; i < response.data.length; i++) {
-                                for (let j = 0; j < response.data[i].length; j++) {
-                                    if (response.data[i][j].split(' ')[0] == (id)) {
-                                        p = i;
-                                        c = j;
-                                        break;
+                            response.data.some((page, p) => {
+                                return page.some((card, c) => {
+                                    if (card.split(' ')[0] == id) {
+                                        select.page = p;
+                                        page.count = p;
+                                        select.card = c;
+                                        select.id = card.split(' ')[0];
+                                        return true;
                                     }
-                                }
-                            }
+                                    return false;
+                                });
+                            });
                         }
-                        select.page = p;
-                        page.count = p;
-                        select.card = c;
                         cdb.list = response.data;
                         select.cdb = response.data[0][0];
                         emit.card_page.cdb_changed.to();

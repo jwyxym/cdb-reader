@@ -227,7 +227,7 @@
         } as () => void,
         add: async function() {
             let response = await card.data.add();
-            await card.data.save();
+            // await card.data.save();
             emit.list_page.cdb_changed.to(response);
         } as () => void,
         data : {
@@ -456,7 +456,8 @@
             vif.is_type.pendulum = true;
         } else { vif.is_type.pendulum = false; }
 
-        emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
+        if (select.id >= 0)
+            emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
 
         
     }, { deep: true });
