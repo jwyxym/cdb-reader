@@ -84,7 +84,7 @@ def get_data(row, file):
     return card_data
 
 def get_list(rows, file):
-    card_list = [[file[file.rfind('/') + 1 : ]], []]
+    card_list = [[file[file.rfind('\\') + 1 : ]], []]
     for row in rows:
         if len(card_list[-1]) ==  10:
             card_list.append([])

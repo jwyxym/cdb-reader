@@ -177,15 +177,21 @@
                 if (url_blob.value)
                     URL.revokeObjectURL(url_blob.value);
                 url_blob.value = URL.createObjectURL(result.data);
-            })
+            });
+            console.log(url_blob.value);
         } else if (chk == 'download') {
             let formData = new FormData();
                 await cardLeaf.leafer.export('jpg', true).then(result => { 
                 formData.append('file', result.data, 'blue-eyes.jpg');
-            })
-            await axios.post('http://127.0.0.1:8000/api/get_pics', formData)
+            });
+            await axios.post('http://127.0.0.1:8000/api/get_pics', formData);
         }
     }
+    emitter.on('to_ppage_unload_pic', (i)=>{
+        if (url_blob.value)
+            URL.revokeObjectURL(url_blob.value);
+        url_blob.value = null;
+    });
     emitter.on('to_ppage_load_pic', (i)=>{
         exportImage('load', i.get('card'), i.get('card_n'), i.get('list'));
     });

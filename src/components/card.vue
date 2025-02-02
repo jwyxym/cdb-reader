@@ -4,13 +4,13 @@
             <span>卡名:&nbsp;&nbsp;</span>
             <input v-model = "card.name"/>
             <span>&nbsp;&nbsp;</span>
-        <button id = "search_btn" :style="{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.search()">搜索</button>
+        <button id = "search_btn" :style = "{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.search()">搜索</button>
     </div>
         <div id = "card_pic">
-            <pic v-if = "card.pic == '/cover.png'"/>
-            <img :src = "card.pic" v-if = "card.pic != '/cover.png'"/>
+            <pic :style = "{ 'display': card.pic != '' ? 'none' : '' }"/>
+            <img :src = "card.pic" v-if = "card.pic != ''"/>
             <div id = "card_link">
-                <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 }" v-if = "vif.show.link.chk && vif.is_type.link" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
+                <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 , 'display': vif.show.link.chk && vif.is_type.link ? 'block' : 'none' }" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
             </div>
             <div>
                 <button ref = "show_links_btn"
@@ -142,7 +142,7 @@
     let card = reactive({
         name : '',
         desc : '',
-        pic : '/cover.png',
+        pic : '',
         id : 0,
         alias : 0,
         pendulum : 0,
@@ -206,7 +206,7 @@
             card.race = lists.race[0][1] as string;
             card.id = 0;
             card.alias = 0;
-            card.pic = '/cover.png';
+            card.pic = '';
             card.atk = 0;
             card.def = 0;
             card.pendulum = 0;
@@ -227,7 +227,7 @@
         } as () => void,
         add: async function() {
             let response = await card.data.add();
-            // await card.data.save();
+            await card.data.save('add');
             emit.list_page.cdb_changed.to(response);
         } as () => void,
         data : {
@@ -267,7 +267,7 @@
                     });
                 } catch (error) {}
             } as (i : number) => Promise<void>,
-            save : async function() {
+            save : async function(chk) {
                 if (select.id <= 0) return;
                 try {
                     emit.pic_page.download_pic.to();
@@ -291,11 +291,11 @@
                         code: card.origin_id,
                         cdb: open.cdb
                     });
-                    if (response.data == 'removed') {
+                    if (chk != 'add' && response.data == 'removed') {
                         emit.list_page.cdb_changed.to();
                     }
                 } catch (error) {}
-            } as () => Promise<void>,
+            } as (chk ?: string) => Promise<void>,
             add : async function() {
                 let id = -1;
                 try {
@@ -369,7 +369,7 @@
                 chk : false,
                 title : '点击隐藏连接箭头',
                 content : '&#10003'
-            },
+            }
         },
         unshow : {
             btn : true
@@ -446,7 +446,6 @@
         }
 
         card_n.get();
-        emit.pic_page.load_pic.to();
 
         vif.is_type.link = (card_n.type & 0x4000000) > 0;
 
@@ -459,7 +458,10 @@
         if (select.id >= 0)
             emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
 
-        
+        if (n.pic == '')
+            emit.pic_page.load_pic.to();
+        else
+            emit.pic_page.unload_pic.to();
     }, { deep: true });
 
     let open = reactive({
@@ -539,6 +541,11 @@
             }
         },
         pic_page : {
+            unload_pic : {
+                to : function() {
+                    emitter.emit('to_ppage_unload_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));
+                } as () => void
+            },
             load_pic : {
                 to : function() {
                     emitter.emit('to_ppage_load_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));

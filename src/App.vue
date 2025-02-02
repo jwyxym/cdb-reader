@@ -109,14 +109,14 @@
             if (main_page.show_list.card) {
                 main_page.show_list.card = false;
                 emit.card_page.cdb_closed.to();
-                await(new Promise(resolve => setTimeout(resolve, 500)));
+                await (new Promise(resolve => setTimeout(resolve, 500)));
                 main_page.show_list.cdb = true;
             } else {
                 let data = await main_page.cdb.get(v);
                 main_page.show_list.cdb = false;
-                await(new Promise(resolve => setTimeout(resolve, 500)));
+                await (new Promise(resolve => setTimeout(resolve, 500)));
                 main_page.show_list.card = true;
-                await(new Promise(resolve => setTimeout(resolve, 5)));
+                await (new Promise(resolve => setTimeout(resolve, 5)));
                 emit.list_page.cdb_opened.to(data);
                 emit.list_page.send_select.to();
             }

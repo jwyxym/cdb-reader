@@ -5,3 +5,4 @@ rarfile
 tarfile
 py7zr
 webbrowser
+pillow
