@@ -32,8 +32,8 @@
             level: card_n.level & 0xffff,
             rank: card_n.level & 0xffff,
             pendulumScale: card.pendulum,
-            pendulumDescription: '', // to be continued
-            monsterType: `${card.race != '种族 N/A' ? card.race : ''}族`,
+            pendulumDescription: '',
+            monsterType: card.race != '种族 N/A' ? `${card.race}族` : '',
             atkBar: true,
             atk: card_n.atk >= 0 ? card_n.atk : -1,
             def: card_n.def >= 0 ? card_n.def : -1,
@@ -147,6 +147,10 @@
                         data.pendulumType = value;
                     }
                 });
+                if (card.desc.includes('【怪兽效果】') && card.desc.includes(`←${card.pendulum} 【灵摆】 ${card.pendulum}→`)) {
+                    data.pendulumDescription = card.desc.split(`←${card.pendulum} 【灵摆】 ${card.pendulum}→`)[1].split('【怪兽效果】')[0].replace(/\s*[\r\n]/, '');
+                    data.description = card.desc.split('【怪兽效果】')[1].replace(/\s*[\r\n]/, '');
+                }
                 break;
         }
 
