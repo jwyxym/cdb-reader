@@ -110,6 +110,10 @@
                         <el-icon><Fold/></el-icon>
                         <span>{{ vif.show.hint.title }}</span>
                     </el-button>
+                    <el-button>
+                        <el-icon><Picture/></el-icon>
+                        <span>卡图设置</span>
+                    </el-button>
                     <el-button @click = "card.add()">
                         <el-icon><DocumentAdd/></el-icon>
                         <span>新建</span>
@@ -781,14 +785,6 @@
         height: 110%;
         width: auto;
         display: block;
-    }
-
-    #card_pic button {
-        border: none;
-        border-radius: 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-        background-color: green;
     }
 
     #card_link img {

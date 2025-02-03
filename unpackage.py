@@ -44,7 +44,7 @@ def zip_files(zip_path, files_to_zip):
                         arcname = relpath(file_path, start = dirname(file))
                         zip_ref.write(file_path, arcname)
 
-def start_package(buffer, cdb = 'cards.cdb'):
+def start_package(cdb):
     from start_server import buffer, package_folder_path
     zip_files(join(buffer, f'{cdb.split(".")[0]}.ypk'), [join(package_folder_path, cdb), join(package_folder_path, 'script'), join(package_folder_path, 'pics')])
     return f'{cdb.split(".")[0]}.ypk'

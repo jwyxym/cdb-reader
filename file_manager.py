@@ -28,12 +28,14 @@ def copy_text(text_path):
     except:
         return None
         
-def copy_cdb(cdb_path):
+def copy_cdb(cdb_path, cdb_name):
     from start_server import buffer, cdb_backup_folder_path
     if not exists(join(cdb_backup_folder_path)):
         mkdir(join(cdb_backup_folder_path))
     try:
         copy(cdb_path, join(cdb_backup_folder_path))
+        if not exists(join(buffer, cdb_name)):
+            copy(join(cdb_path), join(buffer, cdb_name))
         return f'{cdb_path[cdb_path.rfind("\\") + 1 : ]}'
     except:
         return None
@@ -65,18 +67,18 @@ def remove_file(file):
             remove(join(path, file))
 
 def package_file(lists, cdb = 'cards.cdb'):
-    from start_server import buffer, pics_folder_path, script_folder_path, unpackage_folder_path
-    if exists(join(unpackage_folder_path)): rmtree(join(unpackage_folder_path))
-    initialize_dir(join(pics_folder_path))
-    initialize_dir(join(script_folder_path))
-    initialize_dir(join(unpackage_folder_path))
-    initialize_dir(join(unpackage_folder_path, 'pics'))
-    initialize_dir(join(unpackage_folder_path, 'script'))
-    copy(join(buffer, cdb), join(unpackage_folder_path, cdb))
+    from start_server import buffer, pics_folder_path, script_folder_path, package_folder_path
+    if exists(package_folder_path): rmtree(package_folder_path)
+    initialize_dir(pics_folder_path)
+    initialize_dir(script_folder_path)
+    initialize_dir(package_folder_path)
+    initialize_dir(join(package_folder_path, 'pics'))
+    initialize_dir(join(package_folder_path,'script'))
+    copy(join(buffer, cdb), join(package_folder_path, cdb))
     for files in lists:
         for file in files:
             f = file.split(' ')[0]
             if exists(join(pics_folder_path, f'{f}.jpg')):
-                copy(join(pics_folder_path, f'{f}.jpg'), join(unpackage_folder_path, pics_folder_path, f'{f}.jpg'))
-            if exists(join(script_folder_path, f'{f}.lua')):
-                copy(join(script_folder_path, f'{f}.lua'), join(unpackage_folder_path, script_folder_path, f'{f}.lua'))
+                copy(join(pics_folder_path, f'{f}.jpg'), join(package_folder_path, 'pics', f'{f}.jpg'))
+            if exists(join(script_folder_path, f'c{f}.lua')):
+                copy(join(script_folder_path, f'c{f}.lua'), join(package_folder_path, 'script', f'c{f}.lua'))

@@ -118,7 +118,7 @@ def get_file():
         file.save(file_path)
 
         if file_name.lower().endswith('.cdb'):
-            result.append(file_manager.copy_cdb(file_path))
+            result.append(file_manager.copy_cdb(file_path, file_name))
         elif 'image' in file_type:
             result.append(file_manager.process_pic(file_path))
             remove(file_path)
@@ -127,14 +127,14 @@ def get_file():
             if lua_result:
                 remove(lua_result)
         elif file_name.lower().endswith(('.ypk', '.zip', '.tar', '.tgz', '.tar.gz', '.7z', '.rar')):
-            unpackage.start_unpackage(file_path, join(unpackage_folder_path))
+            unpackage.start_unpackage(file_path, unpackage_folder_path)
             chk = True
             while chk:
                 chk = False
-                for root, dirs, fs in walk(join(unpackage_folder_path)):
+                for root, dirs, fs in walk(unpackage_folder_path):
                     for f in fs:
                         if f.lower().endswith('.cdb'):
-                            result.append(file_manager.copy_cdb(join(root, f)))
+                            result.append(file_manager.copy_cdb(join(root, f), f))
                             remove(join(root, f))
                         elif f.lower().endswith(('.jpg', '.jpeg', 'png', 'bmp')):
                             result.append(file_manager.process_pic(join(root, f)))
