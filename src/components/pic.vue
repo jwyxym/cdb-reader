@@ -154,7 +154,10 @@
                 break;
         }
 
-        
+        if (card.desc.includes('【怪兽效果】') && card.desc.includes(`←${card.pendulum} 【灵摆】 ${card.pendulum}→`)) {
+            data.pendulumDescription = card.desc.split(`←${card.pendulum} 【灵摆】 ${card.pendulum}→`)[1].split('【怪兽效果】')[0].replace(/\s*[\r\n]/, '');
+            data.description = card.desc.split('【怪兽效果】')[1].replace(/\s*[\r\n]/, '');
+        }
 
         type_list = type_list.filter(item => ![0x1, 0x40, 0x80, 0x2000, 0x800000, 0x2000000].includes(item[0]));
         type_list.sort((a, b) => b[0] - a[0]);
@@ -164,6 +167,12 @@
                 data.monsterType += `${data.monsterType == '' ? '' : '/'}${type_list[i][1]}`
         }
 
+        if (data.cardType == 'fusion' || data.cardType == 'synchro' || data.cardType == 'xyz' || data.cardType == 'link') {
+            let i = data.description.split(/\s*[\r\n]/)
+            data.description = `${i[0]}\r\n${data.description.replace(i[0], '').replace(/\s*[\r\n]/g, '')}`;
+        } else {
+            data.description = data.description.replace(/\s*[\r\n]/g, '');
+        }
         return data;
     }
 
