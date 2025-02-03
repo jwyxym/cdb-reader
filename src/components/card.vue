@@ -153,7 +153,7 @@
         link_pics: [] as string[],
         get : async function() {
             try {
-                let response = await axios.get('http://127.0.0.1:8000/api/initialize')
+                let response = await axios.get(`${window.location.href}api/initialize`)
                     lists.ot = response.data[1];
                     lists.attribute = response.data[2];
                     lists.level = response.data[3];
@@ -270,7 +270,7 @@
         data : {
             get : async function () {
                 try {
-                    let response = await axios.post('http://127.0.0.1:8000/api/read_card', {
+                    let response = await axios.post(`${window.location.href}api/read_card`, {
                         cdb: open.cdb,
                         id: select.id,
                     });
@@ -297,7 +297,7 @@
             } as () => Promise<void>,
             paste : async function(i) {
                 try {
-                    let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
+                    let response = await axios.post(`${window.location.href}api/save_cdb`, {
                         data: copy.content[i][0],
                         code: copy.content[i][1],
                         cdb: open.cdb
@@ -308,7 +308,7 @@
                 if (select.id <= 0) return;
                 try {
                     emit.pic_page.download_pic.to();
-                    let response = await axios.post('http://127.0.0.1:8000/api/save_cdb', {
+                    let response = await axios.post(`${window.location.href}api/save_cdb`, {
                         data: [
                             card_n.id,
                             card_n.ot,
@@ -336,7 +336,7 @@
             add : async function() {
                 let id = -1;
                 try {
-                    let response = await axios.post('http://127.0.0.1:8000/api/add_cdb', {
+                    let response = await axios.post(`${window.location.href}api/add_cdb`, {
                         cdb: open.cdb
                     });
                     id = response.data;
@@ -345,7 +345,7 @@
             } as () => Promise<number>,
             del : async function() {
                 try {
-                    let response = await axios.post('http://127.0.0.1:8000/api/del_cdb', {
+                    let response = await axios.post(`${window.location.href}api/del_cdb`, {
                         code: card.origin_id,
                         cdb: open.cdb
                     });

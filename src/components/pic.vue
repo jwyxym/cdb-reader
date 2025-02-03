@@ -184,7 +184,7 @@
                 await cardLeaf.leafer.export('jpg', true).then(result => { 
                 formData.append('file', result.data, 'blue-eyes.jpg');
             });
-            await axios.post('http://127.0.0.1:8000/api/get_pics', formData);
+            await axios.post(`${window.location.href}api/get_pics`, formData);
         }
     }
     emitter.on('to_ppage_unload_pic', (i)=>{

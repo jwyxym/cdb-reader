@@ -65,7 +65,7 @@
             get : async function (v) {
                 let data = [[''], []];
                 try {
-                    let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
+                    let response = await axios.post(`${window.location.href}api/get_cdb_menu`, {
                         cdb: ( typeof v === 'number' ? main_page.cdb.content[v + (Math.abs(main_page.page.count) - 1) * 10] : v)
                     });
                     opening_cdb.value = response.data[0][0];
@@ -82,14 +82,14 @@
         uploading : false,
         get : async function () {
             try {
-                let response = await axios.get('http://127.0.0.1:8000/api/get_cdbs');
+                let response = await axios.get(`${window.location.href}api/get_cdbs`);
                 main_page.cdb.content = response.data;
                 main_page.page.count = main_page.cdb.content.length > 0 ? Math.ceil(main_page.cdb.content.length / 10) : 0;
             } catch (error) {}
         } as () => Promise<void>,
         add : async function () {
             try {
-                let response = await axios.post('http://127.0.0.1:8000/api/create_new_cdb');
+                let response = await axios.post(`${window.location.href}api/create_new_cdb`);
                 main_page.get();
             } catch (error) {}
         } as () => Promise<void>,
@@ -97,7 +97,7 @@
             main_page.cdb.content.splice(main_page.cdb.content.indexOf(cdb), 1);
             if (Math.ceil(main_page.cdb.content.length / 10) < main_page.page.count)
                 main_page.page.count = Math.ceil(main_page.cdb.content.length / 10);
-            await axios.post('http://127.0.0.1:8000/api/remove_file', {file: cdb});
+            await axios.post(`${window.location.href}api/remove_file`, {file: cdb});
             main_page.show();
         } as (i: string) => Promise<void>,
         show : async function (v = -1, i = new Map().set('cdb', '')) { 
@@ -181,7 +181,7 @@
         } as (type: string, name: string) => boolean,
         send : async function (formData) {
             try {
-                let response = await axios.post('http://127.0.0.1:8000/api/get_file', formData);
+                let response = await axios.post(`${window.location.href}api/get_file`, formData);
                 for (let i = 0; i < response.data.length; i++) {
                     if (response.data[i].endsWith('.cdb')) {
                         main_page.cdb.content.push(response.data[i]);

@@ -43,7 +43,7 @@
 
     async function download_cdb() {
         try {
-            let response = await axios.post('http://127.0.0.1:8000/api/download_cdb', {
+            let response = await axios.post(`${window.location.href}api/download_cdb`, {
                 cdb: open.cdb
             }, { responseType: 'blob' });
 

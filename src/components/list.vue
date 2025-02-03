@@ -161,7 +161,7 @@
                 } as () => void,
                 on : async function (id = -1) {
                     try {
-                        let response = await axios.post('http://127.0.0.1:8000/api/get_cdb_menu', {
+                        let response = await axios.post(`${window.location.href}api/get_cdb_menu`, {
                             cdb: select.cdb
                         });
                         if (id == -1)
@@ -195,7 +195,7 @@
             search : {
                 on : async function (i) {
                     try {
-                        let response = await axios.post('http://127.0.0.1:8000/api/search_cdb', {
+                        let response = await axios.post(`${window.location.href}api/search_cdb`, {
                             keyword : i,
                             cdb: select.cdb
                         });
