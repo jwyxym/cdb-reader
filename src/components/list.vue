@@ -5,9 +5,11 @@
             <div>
                 <el-button @click = "show.unshow()">
                     <el-icon><Fold/></el-icon>
+                    <span>收起</span>
                 </el-button>
                 <el-button @click = "show.close()">
                     <el-icon><Delete/></el-icon>
+                    <span>删除</span>
                 </el-button>
             </div>
         </div>
