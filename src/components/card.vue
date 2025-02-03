@@ -489,7 +489,12 @@
     });
 
     watch(card, (n) => {
-        if (open.list.flat().filter(e => e.split(' ')[0] == n.id).length > 0 && card.origin_id != n.id) {
+        if (select.id > 0)
+            emit.list_page.card_changed.to(card.id, card.name);
+
+        if (open.list.flat().filter(e => e.split(' ')[0] == n.id).length > 1 && card.origin_id != n.id) {
+            if (select.id > 0)
+                emit.list_page.card_changed.to(card.origin_id, card.name);
             vif.warn.same_id = true;
         } else if (vif.warn.same_id) {
             vif.warn.same_id = false;
@@ -505,13 +510,11 @@
             vif.is_type.pendulum = true;
         } else { vif.is_type.pendulum = false; }
 
-        if (select.id > 0)
-            emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
-
         if (n.pic == '')
             emit.pic_page.load_pic.to();
         else
             emit.pic_page.unload_pic.to();
+
     }, { deep: true });
 
     let open = reactive({
