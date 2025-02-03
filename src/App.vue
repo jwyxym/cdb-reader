@@ -6,8 +6,7 @@
             </transition>
             <transition name = "under_list_page">
                 <div v-if = "main_page.show_list.cdb" id = "under_list_page">
-                    <div style = "display: flex; width: 30vw; height: 10vh;">
-                        <div id = "add_area" @click = "main_page.add()"><h4>新建</h4></div>
+                    <div style = "width: 30vw; height: 10vh;">
                         <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
                             <h4>拖拽文件或点击此处上传文件</h4>
                             <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
@@ -17,18 +16,14 @@
                         <button v-for="(i, v) in (main_page.page.count > 0? Array(main_page.cdb.content.length >= main_page.page.count * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "main_page.show(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
-                        <button @click = "main_page.page.previous"
-                            :style = "{ 'background-color': main_page.page.count <= 1 ? 'gray' : 'green', 'color': main_page.page.count <= 1 ? 'black' : 'white' }"
-                        >上一页</button>
+                        <el-button @click = "main_page.page.previous">上一页</el-button>
                         <span>第<input @input = "main_page.page.filter($event)" v-model = "main_page.page.count"/>页<br>共{{ Math.ceil(main_page.cdb.content.length / 10) }}页</span>
-                        <button @click = "main_page.page.next"
-                            :style = "{ 'background-color': main_page.page.count >= Math.ceil(main_page.cdb.content.length / 10) ? 'gray' : 'green', 'color': main_page.page.count >= Math.ceil(main_page.cdb.content.length / 10) ? 'black' : 'white' }"
-                        >下一页</button>
+                        <el-button @click = "main_page.page.next">下一页</el-button>
                     </div>
                 </div>
             </transition>
         </div>
-        <card_page/>
+        <card_page @event_create_new_cdb = "main_page.add" @event_remove_cdb = "main_page.remove"/>
     </div>
 </template>
 
@@ -284,8 +279,9 @@
 
         width: 30vw;
         height: 8vh;
-
-        border: none;
+        border: 0.01px solid #dcdfe6;
+        background-color: white;
+        color : #606266;
         border-radius: 4px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 
@@ -294,31 +290,24 @@
 
     #cdb_list button:hover {
         width: 31vw;
-        color: white;
-        background-color: green;
+        color: #409eff;
+        background-color: #ecf5ff;
+        border: 0.01px solid #409eff;
     }
 
-    #upload_area, #add_area {
+    #upload_area {
+        width: 80%;
+        height: 90%;
         border: 2px dashed #bbbbbb;
-
         color: #bbbbbb;
 
+        justify-self: center;
         text-align: center;
 
         cursor: pointer;
     }
 
-    #upload_area {
-        width: 25vw;
-        height: 10vh;
-    }
-
-    #add_area {
-        width: 5vw;
-        height: 10vh;
-    }
-
-    #upload_area:hover, #add_area:hover {
+    #upload_area:hover {
         border: 2px dashed black;
         color: black;
     }
@@ -331,11 +320,7 @@
     .cdb_list_btn button {
         width: 10vw;
         height: 8vh;
-        border: none;
-        border-radius: 4px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-
-        cursor: pointer;
     }
 
     .cdb_list_btn span {

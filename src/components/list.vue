@@ -2,26 +2,29 @@
     <div class = "list_page">
         <div class = "list_header">
             <h1>{{ select.cdb }}</h1>
-            <button id = "unshow_list_page_btn" @click = "show.unshow()" title = "上一级目录">&lt;</button>
-            <button id = "close_cdb_btn" @click = "show.close()" title = "关闭cdb">&times;</button>
+            <div>
+                <el-button @click = "show.unshow()">
+                    <el-icon><Fold/></el-icon>
+                </el-button>
+                <el-button @click = "show.close()">
+                    <el-icon><Delete/></el-icon>
+                </el-button>
+            </div>
         </div>
         <div class = "list_content">
             <button v-for = "(i,v) in cdb.list[page.count]":key = "v"
                 @click = "select.set(v)"
                 :style="{
-                    'background-color': select.page == page.count && select.card == v ? 'green' : '',
-                    'color': select.page == page.count && select.card == v ? 'white' : ''
+                    'border': select.page == page.count && select.card == v ? '0.01px solid #409eff' : '',
+                    'background-color': select.page == page.count && select.card == v ? '#ecf5ff' : '',
+                    'color': select.page == page.count && select.card == v ? '#409eff' : ''
                     }"
             >{{ i }}</button>
         </div>
         <div class = "list_btn">
-            <button @click = "page.previous"
-                :style = "{ 'background-color': page.count <= 1 ? 'gray' : 'green', 'color': page.count <= 1 ? 'black' : 'white' }"
-            >上一页</button>
+            <el-button @click = "page.previous">上一页</el-button>
             <span>第<input @input = "page.filter($event)" v-model = "page.count" ref = "page.btn"/>页<br>共{{ cdb.list.length - 1 }}页</span>
-            <button @click = "page.next()"
-                :style = "{ 'background-color': page.count >= cdb.list.length - 1 ? 'gray' : 'green', 'color': page.count >= cdb.list.length - 1 ? 'black' : 'white' }"
-            >下一页</button>
+            <el-button @click = "page.next">下一页</el-button>
         </div>
     </div>
 </template>
@@ -243,38 +246,16 @@
         grid-column-end: 4;
         grid-row-start: 1;
         grid-row-end: 3;
+        justify-self: left;
     }
 
-    #unshow_list_page_btn {
-        width: 4vw;
-        height: 4vh;
-
-        align-self: center;
-        justify-self: right;
-
-        border: none;
-        border-radius: 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-        background-color: green;
-
-        cursor: pointer;
-    }
-
-    #close_cdb_btn {
-        width: 4vw;
-        height: 4vh;
-
-        align-self: center;
-        justify-self: right;
-
-        border: none;
-        border-radius: 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-        background-color: red;
-
-        cursor: pointer;
+    .list_header div {
+        grid-column-start: 4;
+        grid-column-end: 5;
+        grid-row-start: 1;
+        grid-row-end: 3;
+        display: grid;
+        justify-items: right;
     }
 
     .list_content {
@@ -283,14 +264,15 @@
 
     .list_content button {
         display: grid;
+        align-items:  center;
 
         width: 30vw;
         height: 8vh;
-
-        align-items:  center;
-
-        border: none;
+        border: 0.01px solid #dcdfe6;
+        background-color: white;
+        color : #606266;
         border-radius: 4px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 
         cursor: pointer;
@@ -298,8 +280,9 @@
 
     .list_content button:hover {
         width: 31vw;
-        color: white;
-        background-color: green;
+        color: #409eff;
+        background-color: #ecf5ff;
+        border: 0.01px solid #409eff;
     }
 
     .list_btn {
@@ -310,11 +293,7 @@
     .list_btn button {
         width: 10vw;
         height: 8vh;
-        border: none;
-        border-radius: 4px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-
-        cursor: pointer;
     }
 
     .list_btn span {

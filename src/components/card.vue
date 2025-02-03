@@ -4,8 +4,11 @@
             <span>卡名:&nbsp;&nbsp;</span>
             <input v-model = "card.name"/>
             <span>&nbsp;&nbsp;</span>
-        <button id = "search_btn" :style = "{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.search()">搜索</button>
-    </div>
+            <el-button @click = "card.search()">
+                <el-icon><search/></el-icon>
+                <span>搜索</span>
+            </el-button>
+        </div>
         <div id = "card_pic">
             <pic :style = "{ 'display': card.pic != '' ? 'none' : '' }"/>
             <img :src = "card.pic" v-if = "card.pic != ''"/>
@@ -13,12 +16,7 @@
                 <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 , 'display': vif.show.link.chk && vif.is_type.link ? 'block' : 'none' }" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
             </div>
             <div>
-                <button ref = "show_links_btn"
-                @click = "() => { vif.show.link.chk = !vif.show.link.chk; }"
-                :title = "vif.show.link.chk ? '点击隐藏连接箭头' : '点击显示连接箭头'"
-                v-html = "vif.show.link.chk ? '&#10003' : '&times'"
-                :style = "{ 'background-color': vif.show.link.chk ? 'green' : 'red' }"
-                v-if = "vif.is_type.link"></button>
+                <el-switch v-if = "vif.is_type.link" v-model = "vif.show.link.chk" active-color = "green" inactive-color = ""></el-switch>
             </div>
         </div>
         <div id = "card_ot">
@@ -68,21 +66,30 @@
         <div id = "card_box">
             <transition name = "card_type">
                 <div v-if = "vif.show.type.chk" id = "card_type">
-                    <button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'type')" :title = "vif.show.type.title[1]">&gt;</button>
+                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'type')">
+                        <el-icon><Expand/></el-icon>
+                        <span>收起</span>
+                    </el-button>
                     <h2>卡片类型</h2>
                     <div v-for = "(i, v) in lists.type" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.type[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_category">
                 <div v-if = "vif.show.category.chk" id = "card_category">
-                    <button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'category')" :title = "vif.show.category.title[1]">&gt;</button>
+                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'category')">
+                        <el-icon><Expand/></el-icon>
+                        <span>收起</span>
+                    </el-button>
                     <h2>效果分类</h2>
                     <div v-for = "(i, v) in lists.category" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.category[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_hint">
                 <div v-if = "vif.show.hint.chk" id = "card_hint" >
-                    <button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'hint')" :title = "vif.show.hint.title[1]">&gt;</button>
+                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'hint')">
+                        <el-icon><Expand/></el-icon>
+                        <span>收起</span>
+                    </el-button>
                     <h2>脚本提示文字</h2>
                     <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
                         <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card.hint[v]"/>
@@ -91,15 +98,35 @@
             </transition>
             <transition name = "card_box_btn">
                 <div v-if = "vif.unshow.btn" id = "card_box_btn">
+                    <el-button @click = "whether_show_rpage(true, 'type')">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.type.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage(true, 'category')">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.category.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage(true, 'hint')">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.hint.title }}</span>
+                    </el-button>
+                    <el-button @click = "card.add()">
+                        <el-icon><DocumentAdd/></el-icon>
+                        <span>新建</span>
+                    </el-button>
+                    <el-button @click = "card.del()">
+                        <el-icon><Delete/></el-icon>
+                        <span>删除</span>
+                    </el-button>
+                    <el-button @click = "copy.from()">
+                        <el-icon><CopyDocument/></el-icon>
+                        <span>复制</span>
+                    </el-button>
+                    <el-button @click = "copy.to()">
+                        <el-icon><DocumentCopy/></el-icon>
+                        <span>黏贴</span>
+                    </el-button>
                     <download/>
-                    <get_pic/>
-                    <button @click = "whether_show_rpage(true, 'type')">{{ vif.show.type.title[0] }}</button>
-                    <button @click = "whether_show_rpage(true, 'category')">{{ vif.show.category.title[0] }}</button>
-                    <button @click = "whether_show_rpage(true, 'hint')">{{ vif.show.hint.title[0] }}</button>
-                    <button :style = "{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "card.add()">新建</button>
-                    <button :style = "{ 'background-color': card.origin_id > 0 ? 'red' : 'gray' }" @click = "card.del()">删除</button>
-                    <button :style = "{ 'background-color': card.origin_id > 0 && card_n.id < 100000000 && card_n.id > 0 ? 'cornflowerblue' : 'gray' }" @click = "copy.from()">复制</button>
-                    <button :style = "{ 'background-color': copy.content.length > 0 && open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "copy.to()">黏贴</button>
                     <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
                 </div>
             </transition>
@@ -221,14 +248,24 @@
             select.id = -1;
         } as () => void,
         del : async function() {
+            if (open.cdb == '') return;
+            if (select.id <= 0) {
+                emit.main_page.cdb_closed.to();
+                return;
+            }
             await card.data.del();
             card.clear();
             emit.list_page.cdb_changed.to();
         } as () => void,
         add: async function() {
-            let response = await card.data.add();
-            await card.data.save('add');
-            emit.list_page.cdb_changed.to(response);
+            if (open.cdb == '') {
+                emit.main_page.cdb_add.to();
+                return;
+            } else {
+                let response = await card.data.add();
+                await card.data.save('add');
+                emit.list_page.cdb_changed.to(response);
+            }
         } as () => void,
         data : {
             get : async function () {
@@ -355,15 +392,15 @@
         show : {
             category : {
                 chk : false,
-                title : ['效果分类', '隐藏效果分类']
+                title : '效果分类'
             },
             type : {
                 chk : false,
-                title : ['卡片类型', '隐藏卡片类型']
+                title : '卡片类型'
             },
             hint : {
                 chk : false,
-                title : ['提示文字', '隐藏卡片脚本提示文字']
+                title : '提示文字'
             },
             link : {
                 chk : false,
@@ -387,7 +424,12 @@
     let copy = reactive({
         content : [],
         from : async function() {
-            if (card.origin_id <= 0 || card_n.id >= 100000000 || card_n.id == 0) return;
+            if (card.origin_id <= 0 || card_n.id >= 100000000 || card_n.id == 0) {
+                if (card.origin_id <= 0)
+                    window.alert('请先选择卡片');
+                else window.alert('请先定义卡号');
+                return;
+            }
             await card.data.save();
             copy.content = [[
                 [
@@ -412,7 +454,10 @@
             window.alert('已复制:   ' + card.id + ' ' + card.name);
         } as () => void,
         to : async function() {
-            if (copy.content.length == 0 || open.cdb == '') return;
+            if (copy.content.length == 0 || open.cdb == '') {
+                window.alert('请先复制');
+                return;
+            }
             let same_group = [];
             for (let i = 0; i < copy.content.length; i++)
                 if (open.list.flat().filter(e => e.split(' ')[0] == copy.content[i][0][0]).length > 0)
@@ -436,6 +481,7 @@
             lists.link_pics.push('./link-arrow/arrow-' + i + '-off.png');
         }
         lists.get();
+        card.clear();
     });
 
     watch(card, (n) => {
@@ -473,6 +519,8 @@
         id : -1
     });
 
+    let em = defineEmits(['event_create_new_cdb', 'event_remove_cdb'])
+
     let emit = {
         main_page : {
             cdb_closed : {
@@ -481,12 +529,20 @@
                     card.clear();
                     open.cdb = '';
                     open.list = [];
+                } as () => void,
+                to : function() {
+                    em('event_remove_cdb', open.cdb);
                 } as () => void
             },
             cdb_opened  : {
                 on : function(cdb) {
                     open.cdb = cdb[0][0];
                     open.list = cdb;
+                } as () => void
+            },
+            cdb_add : {
+                to : function() {
+                    em('event_create_new_cdb');
                 } as () => void
             }
         },
@@ -655,18 +711,6 @@
         justify-self: center;
     }
 
-    #search_btn {
-        width: 4vw;
-        height: 4vh;
-
-        border: none;
-        border-radius: 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-
-        cursor: pointer;
-    }
-
     #card_ot, #card_attribute, #card_level, #card_race, #card_setcard, #card_id, #card_atk {
         grid-column-start: 2;
         grid-column-end: 3;
@@ -676,11 +720,6 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(3, 1fr);
-    }
-
-    #card_setcard span, #card_id span, #card_atk span {
-        grid-column-start: 1;
-        grid-column-end: 2;
     }
 
     #card_setcard input, #card_id input, #card_atk input {
@@ -800,19 +839,8 @@
     }
 
     .unshow_rpage_btn {
-        width: 4vw;
-        height: 4vh;
-
         align-self: center;
         justify-self: left;
-
-        border: none;
-        border-radius: 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-        background-color: green;
-
-        cursor: pointer;
 
         grid-column-start: 1;
         grid-column-end: 2;
@@ -877,19 +905,8 @@
     }
 
     #card_box_btn button {        
-        width: 4vw;
-        height: 4vh;
-
         align-self: center;
         justify-self: right;
-
-        border: none;
-        border-radius: 4px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        color: white;
-        background-color: green;
-
-        cursor: pointer;
     }
 
     .card_box_btn-enter-active,

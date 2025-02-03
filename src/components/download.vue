@@ -1,5 +1,8 @@
 <template>
-    <button class = "download" :style = "{ 'background-color': open.cdb != '' ? 'cornflowerblue' : 'gray' }" @click = "emit.card_page.save.to()">保存</button>
+    <el-button class = "download" @click = "emit.card_page.save.to()">
+        <el-icon><Download/></el-icon>
+        <span>下载</span>
+    </el-button>
 </template>
 
 <script setup name="download" lang="js">
