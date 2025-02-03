@@ -142,7 +142,8 @@
                             count = 0;
                         }
                     }
-                    upload_file.send(formData);
+                    if (count > 0)
+                        upload_file.send(formData);
                 }
             } catch (error) { console.error(error); }
         } as (e: any) => void,
@@ -167,7 +168,8 @@
                         count = 0;
                     }
                 }
-                upload_file.send(formData);
+                if (count > 0)
+                    upload_file.send(formData);
             }
             main_page.uploading = false;
         } as (e: any) => void,

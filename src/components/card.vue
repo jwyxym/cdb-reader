@@ -505,7 +505,7 @@
             vif.is_type.pendulum = true;
         } else { vif.is_type.pendulum = false; }
 
-        if (select.id >= 0)
+        if (select.id > 0)
             emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
 
         if (n.pic == '')
@@ -553,8 +553,7 @@
         list_page : {
             select_card : {
                 on : async function (i : Map<string, any> = new Map().set('id', -1)) {
-                    if (select.id >= 0)
-                        await card.data.save();
+                    await card.data.save();
                     select.id = i.get('id');
 
                     if (select.id < 0)

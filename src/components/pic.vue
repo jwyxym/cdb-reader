@@ -178,7 +178,6 @@
                     URL.revokeObjectURL(url_blob.value);
                 url_blob.value = URL.createObjectURL(result.data);
             });
-            console.log(url_blob.value);
         } else if (chk == 'download') {
             let formData = new FormData();
                 await cardLeaf.leafer.export('jpg', true).then(result => { 
