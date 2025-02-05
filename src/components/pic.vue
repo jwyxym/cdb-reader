@@ -12,8 +12,8 @@
 
     let url_blob = ref(null);
 
-    function to_data (card, card_n, type_list) {
-        if(!card || !card_n) return;
+    function to_data (card, card_n, type_list, pic) {
+        if(!card || !card_n || !type_list || !pic) return;
         let data = {
             language: 'sc',
             font: '',
@@ -40,16 +40,16 @@
             arrowList: [],
             description: card.desc,
             firstLineCompress: false,
-            descriptionAlign: false,
-            descriptionZoom: 1,
-            descriptionWeight: 0,
-            package: '',
+            descriptionAlign: pic.descriptionAlign,
+            descriptionZoom: pic.descriptionZoom,
+            descriptionWeight: pic.descriptionWeight,
+            package: pic.package,
             password: card_n.id,
-            copyright: '',
-            laser: '',
-            rare: '',
+            copyright: pic.copyright,
+            laser: pic.laser,
+            rare: pic.rare,
             twentieth: false,
-            radius: true,
+            radius: pic.radius,
             scale: 1,
         }
 
@@ -176,9 +176,9 @@
         return data;
     }
 
-    async function exportImage(chk, card, card_n, type_list) {
+    async function exportImage(chk, card, card_n, type_list, pic) {
         let cardLeaf = new YugiohCard({
-            data: to_data (card, card_n, type_list),
+            data: to_data (card, card_n, type_list, pic),
             resourcePath: './yugioh-card',
         });
         if (chk == 'load') {
@@ -201,9 +201,9 @@
         url_blob.value = null;
     });
     emitter.on('to_ppage_load_pic', (i)=>{
-        exportImage('load', i.get('card'), i.get('card_n'), i.get('list'));
+        exportImage('load', i.get('card'), i.get('card_n'), i.get('list'), i.get('pic'));
     });
     emitter.on('to_ppage_download_pic', (i)=>{
-        exportImage('download', i.get('card'), i.get('card_n'), i.get('list'));
+        exportImage('download', i.get('card'), i.get('card_n'), i.get('list'), i.get('pic'));
     });
 </script>

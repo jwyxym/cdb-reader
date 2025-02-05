@@ -64,7 +64,7 @@
         </div>
         <textarea id = "card_desc" v-model = "card.desc"></textarea>
         <div id = "card_box">
-            <transition name = "card_type">
+            <transition name = "card_right">
                 <div v-if = "vif.show.type.chk" id = "card_type">
                     <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'type')">
                         <el-icon><Expand/></el-icon>
@@ -74,7 +74,7 @@
                     <div v-for = "(i, v) in lists.type" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.type[v]"/> </div>
                 </div>
             </transition>
-            <transition name = "card_category">
+            <transition name = "card_right">
                 <div v-if = "vif.show.category.chk" id = "card_category">
                     <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'category')">
                         <el-icon><Expand/></el-icon>
@@ -84,7 +84,7 @@
                     <div v-for = "(i, v) in lists.category" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.category[v]"/> </div>
                 </div>
             </transition>
-            <transition name = "card_hint">
+            <transition name = "card_right">
                 <div v-if = "vif.show.hint.chk" id = "card_hint" >
                     <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'hint')">
                         <el-icon><Expand/></el-icon>
@@ -94,6 +94,16 @@
                     <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
                         <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card.hint[v]"/>
                     </div>
+                </div>
+            </transition>
+            <transition name = "card_right">
+                <div v-if = "vif.show.pic.chk" id = "card_pic_setting" >
+                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'pic')">
+                        <el-icon><Expand/></el-icon>
+                        <span>收起</span>
+                    </el-button>
+                    <h2>卡图设置</h2>
+                    <span>圆角:&nbsp;&nbsp;</span><el-switch v-model="pic_setting.radius" active-color = "green" inactive-color = ""/>
                 </div>
             </transition>
             <transition name = "card_box_btn">
@@ -110,9 +120,9 @@
                         <el-icon><Fold/></el-icon>
                         <span>{{ vif.show.hint.title }}</span>
                     </el-button>
-                    <el-button>
+                    <el-button @click = "whether_show_rpage(true, 'pic')">
                         <el-icon><Picture/></el-icon>
-                        <span>卡图设置</span>
+                        <span>{{ vif.show.pic.title }}</span>
                     </el-button>
                     <el-button @click = "card.add()">
                         <el-icon><DocumentAdd/></el-icon>
@@ -406,6 +416,10 @@
                 chk : false,
                 title : '提示文字'
             },
+            pic : {
+                chk : false,
+                title : '卡图设置'
+            },
             link : {
                 chk : false,
                 title : '点击隐藏连接箭头',
@@ -475,7 +489,16 @@
         } as () => void
     });
 
-    let show_links_btn = ref(null);
+    let pic_setting = reactive({
+        package : '',//卡包
+        descriptionZoom : 1,//描述缩放
+        descriptionWeight : 0,//字重
+        descriptionAlign : false,//描述居中
+        copyright : '',//版权'sc' / 'jp' / 'en'
+        laser : '',//角标'laser1' / 'laser2' / 'laser3' / 'laser4'
+        rare : '',//稀有度'dt' / 'ur' / 'gr' / 'hr' / 'ser' / 'gser' / 'pser'
+        radius : true//圆角
+    });
 
     onMounted(() => {
         for (let i = 1; i < 9; i++) {
@@ -515,6 +538,13 @@
         else
             emit.pic_page.unload_pic.to();
 
+    }, { deep: true });
+
+    watch(pic_setting, () => {
+        if (card.pic == '')
+            emit.pic_page.load_pic.to();
+        else
+            emit.pic_page.unload_pic.to();
     }, { deep: true });
 
     let open = reactive({
@@ -605,17 +635,17 @@
         pic_page : {
             unload_pic : {
                 to : function() {
-                    emitter.emit('to_ppage_unload_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));
+                    emitter.emit('to_ppage_unload_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting));
                 } as () => void
             },
             load_pic : {
                 to : function() {
-                    emitter.emit('to_ppage_load_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));
+                    emitter.emit('to_ppage_load_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting));
                 } as () => void
             },
             download_pic : {
                 to : function() {
-                    emitter.emit('to_ppage_download_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()));
+                    emitter.emit('to_ppage_download_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting));
                 } as () => void
             }
         }
@@ -676,6 +706,9 @@
                 case 'hint':
                     vif.show.hint.chk = true;
                     break;
+                case 'pic':
+                    vif.show.pic.chk = true;
+                    break;
             }
         } else {
             switch (v) {
@@ -687,6 +720,9 @@
                     break;
                 case 'hint':
                     vif.show.hint.chk = false;
+                    break;
+                case 'pic':
+                    vif.show.pic.chk = false;
                     break;
             }
             await(new Promise(resolve => setTimeout(resolve, 500)));
@@ -854,7 +890,7 @@
         justify-items: left;
     }
 
-    #card_category h2, #card_type h2, #card_hint h2 {
+    #card_category h2, #card_type h2, #card_hint h2, #card_pic_setting h2 {
         justify-self: center;
         grid-column-start: 1;
         grid-column-end: 4;
@@ -862,7 +898,7 @@
         grid-row-end: 2;
     }
 
-    #card_type, #card_category, #card_hint {
+    #card_type, #card_category, #card_hint, #card_pic_setting {
         width: 30vw;
         height: 100vh;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -909,28 +945,18 @@
 
     .card_box_btn-enter-active,
     .card_box_btn-leave-active,
-    .card_category-enter-active,
-    .card_category-leave-active,
-    .card_hint-enter-active,
-    .card_hint-leave-active,
-    .card_type-enter-active,
-    .card_type-leave-active {
+    .card_right-enter-active,
+    .card_right-leave-active {
         transition: transform 0.5s ease;
     }
-    .card_category-enter-from,
-    .card_category-leave-to,
-    .card_hint-enter-from,
-    .card_hint-leave-to,
-    .card_type-enter-from,
-    .card_type-leave-to {
+
+    .card_right-enter-from,
+    .card_right-leave-to {
         transform: translateX(100%);
     }
-    .card_category-enter-to,
-    .card_category-leave-from,
-    .card_hint-enter-to,
-    .card_hint-leave-from,
-    .card_type-enter-to,
-    .card_type-leave-from {
+
+    .card_right-enter-to,
+    .card_right-leave-from {
         transform: translateX(0%);
     }
 
