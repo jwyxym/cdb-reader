@@ -577,7 +577,10 @@
             upload_file.url = '';
         },
         click : async function (e) {
-            if (select.id <= 0) return;
+            if (select.id <= 0) {
+                e.target.value = '';
+                return;
+            }
             try {
                 let files = e.target.files;
                 if (files.length > 0) {
@@ -588,6 +591,7 @@
                         emit.pic_cut_page.upload.to(upload_file.url);
                     }
                 }
+                e.target.value = '';
             } catch (error) { console.error(error); }
         } as (e: any) => Promise<void>,
         drag : async function (e) {

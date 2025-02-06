@@ -145,6 +145,7 @@
                     if (count > 0)
                         upload_file.send(formData);
                 }
+                e.target.value = '';
             } catch (error) { console.error(error); }
         } as (e: any) => void,
         drag : function (e) {
