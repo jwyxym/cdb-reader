@@ -75,11 +75,12 @@ def remove_file(file):
             remove(join(path, file))
 
 def package_file(lists, cdb = 'cards.cdb'):
-    from start_server import buffer, pics_folder_path, script_folder_path, package_folder_path
+    from start_server import buffer, pics_folder_path, auto_pics_folder_path, script_folder_path, package_folder_path
     if exists(package_folder_path): rmtree(package_folder_path)
     initialize_dir(pics_folder_path)
     initialize_dir(script_folder_path)
     initialize_dir(package_folder_path)
+    initialize_dir(auto_pics_folder_path)
     initialize_dir(join(package_folder_path, 'pics'))
     initialize_dir(join(package_folder_path,'script'))
     copy(join(buffer, cdb), join(package_folder_path, cdb))
@@ -88,5 +89,7 @@ def package_file(lists, cdb = 'cards.cdb'):
             f = file.split(' ')[0]
             if exists(join(pics_folder_path, f'{f}.jpg')):
                 copy(join(pics_folder_path, f'{f}.jpg'), join(package_folder_path, 'pics', f'{f}.jpg'))
+            elif exists(join(auto_pics_folder_path, f'{f}.jpg')):
+                copy(join(auto_pics_folder_path, f'{f}.jpg'), join(package_folder_path, 'pics', f'{f}.jpg'))
             if exists(join(script_folder_path, f'c{f}.lua')):
                 copy(join(script_folder_path, f'c{f}.lua'), join(package_folder_path, 'script', f'c{f}.lua'))
