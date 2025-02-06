@@ -287,7 +287,7 @@
                 card_n.id,
                 card_n.ot,
                 card_n.alias,
-                card_n.setcard,
+                card.setcard,
                 card_n.type,
                 card_n.atk,
                 card_n.def,

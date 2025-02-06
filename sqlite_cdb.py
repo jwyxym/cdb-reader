@@ -242,7 +242,11 @@ def get_select_SQL(k = []):
     elif c_alias > 0:
         key += f" and datas.alias = {c_alias} "
 
-    if c_setcode:
-        key += f" and datas.setcode = {c_setcode} "
+    for i in c_setcode:
+        if i == '0' or i == '':
+            continue
+        if len(i) < 3:
+            i = f'{'0' * (3 - len(i))}{i}'
+        key += f" and (datas.setcode & 0x{'f' * len(i)} = 0x{i} or datas.setcode >> 16 & 0x{'f' * len(i)} = 0x{i} or datas.setcode >> 32 & 0x{'f' * len(i)} = 0x{i} or datas.setcode >> 48 & 0x{'f' * len(i)} = 0x{i}) "
 
     return key
