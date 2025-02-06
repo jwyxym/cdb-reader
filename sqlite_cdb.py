@@ -175,7 +175,7 @@ def get_select_SQL(k = []):
     c_id = k[0]
     c_ot = k[1]
     c_alias = k[2]
-    c_setcard = k[3]
+    c_setcode = k[3]
     c_type = k[4]
     c_atk = k[5]
     c_def = k[6]
@@ -183,8 +183,8 @@ def get_select_SQL(k = []):
     c_race = k[8]
     c_attribute = k[9]
     c_category = k[10]
-    c_name = k[11]
-    c_desc = k[12]
+    c_name = k[12]
+    c_desc = k[13]
 
     if c_name:
         if "%%" in c_name:
@@ -242,8 +242,7 @@ def get_select_SQL(k = []):
     elif c_alias > 0:
         key += f" and datas.alias = {c_alias} "
 
-    return key
+    if c_setcode:
+        key += f" and datas.setcode = {c_setcode} "
 
-# if __name__ == '__main__':
-#     file = './example.cdb'
-#     print(read_cdb(file, 'data', 2511))
+    return key
