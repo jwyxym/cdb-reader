@@ -28,6 +28,8 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 buffer = join(get_path(), 'dist\\buffer')
 cdb_backup_folder_path = join(buffer, 'cdb_backup')
+center_pics_folder_path = join(buffer, 'center_pics')
+auto_pics_folder_path = join(buffer, 'auto_pics')
 pics_folder_path = join(buffer, 'pics')
 script_folder_path = join(buffer, 'script')
 package_folder_path = join(buffer, 'package')
@@ -51,8 +53,8 @@ def get_pics():
     if file.filename == '':
         return jsonify(), 400
 
-    file_manager.initialize_dir_conceal(buffer)
-    filepath = join(buffer, file.filename)
+    file_manager.initialize_dir_conceal(auto_pics_folder_path)
+    filepath = join(auto_pics_folder_path, file.filename)
     file.save(filepath)
     
     return jsonify(), 200
@@ -94,6 +96,16 @@ def initialize():
         return jsonify({'error': '无法读取卡片信息'}), 400
     info = read_card_info(join(get_path(), 'config\\cardinfo_chinese.txt'))
     return jsonify(info), 200
+
+@app.route('/api/get_center_pic', methods=['POST'])
+def get_center_pic():
+    file = request.files.get('file')
+    if not file:
+        return jsonify(), 400
+
+    file_manager.initialize_dir(center_pics_folder_path)
+    file.save(join(center_pics_folder_path, file.filename))
+    return jsonify(f'./buffer/{center_pics_folder_path[center_pics_folder_path.rfind("\\") + 1 : ]}/{file.filename}'), 200
 
 @app.route('/api/get_file', methods = ['POST'])
 def get_file():
@@ -185,6 +197,8 @@ def del_cdb():
     code = data.get('code')
     cdb = data.get('cdb')
     sqlite_cdb.delete_cdb(code, join(buffer, cdb))
+    file_manager.remove_file(f'{code}.jpg')
+    file_manager.remove_file(f'c{code}.lua')
     return jsonify(), 200
 
 @app.route('/api/save_cdb', methods = ['POST'])
@@ -196,6 +210,8 @@ def save_cdb():
     result = ''
     if code != card_data[0]:
         sqlite_cdb.delete_cdb(code, join(buffer, cdb))
+        file_manager.rename_file(f'{code}.jpg', f'{card_data[0]}.jpg')
+        file_manager.rename_file(f'c{code}.lua', f'c{card_data[0]}.lua')
         result += 'removed'
     sqlite_cdb.change_cdb(card_data, join(buffer, cdb))
     return jsonify(result), 200
@@ -215,6 +231,11 @@ def read_card():
     card_id = card_data[0]
     if exists(join(pics_folder_path, f'{card_id}.jpg')):
         card_data.append(f'./buffer/{pics_folder_path[pics_folder_path.rfind("\\") + 1 : ]}/{card_id}.jpg')
+    else:
+        card_data.append('')
+
+    if exists(join(center_pics_folder_path, f'{card_id}.jpg')):
+        card_data.append(f'./buffer/{center_pics_folder_path[center_pics_folder_path.rfind("\\") + 1 : ]}/{card_id}.jpg')
     else:
         card_data.append('')
     return jsonify(card_data), 200

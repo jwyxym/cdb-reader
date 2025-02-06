@@ -58,11 +58,19 @@ def get_only_one_file_path(file_name):
         i += 1
     return file_path
 
+def rename_file(old_file, new_file):
+    from start_server import buffer, cdb_backup_folder_path, pics_folder_path, script_folder_path, unpackage_folder_path, package_folder_path, center_pics_folder_path, auto_pics_folder_path
+    if exists(join(buffer, old_file)):
+        rename(join(buffer, old_file), join(buffer, new_file))
+    for path in [pics_folder_path, script_folder_path, unpackage_folder_path, cdb_backup_folder_path, package_folder_path, center_pics_folder_path, auto_pics_folder_path]:
+        if exists(join(path, old_file)):
+            rename(join(path, old_file), join(path, new_file))
+
 def remove_file(file):
-    from start_server import buffer, cdb_backup_folder_path, pics_folder_path, script_folder_path, unpackage_folder_path
+    from start_server import buffer, cdb_backup_folder_path, pics_folder_path, script_folder_path, unpackage_folder_path, package_folder_path, center_pics_folder_path, auto_pics_folder_path
     if exists(join(buffer, file)):
         remove(join(buffer, file))
-    for path in [pics_folder_path, script_folder_path, unpackage_folder_path, cdb_backup_folder_path]:
+    for path in [pics_folder_path, script_folder_path, unpackage_folder_path, cdb_backup_folder_path, package_folder_path, center_pics_folder_path, auto_pics_folder_path]:
         if exists(join(path, file)):
             remove(join(path, file))
 

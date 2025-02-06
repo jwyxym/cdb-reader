@@ -7,13 +7,13 @@
             <transition name = "under_list_page">
                 <div v-if = "main_page.show_list.cdb" id = "under_list_page">
                     <div style = "width: 30vw; height: 10vh;">
-                        <div id = "upload_area" @dragenter.prevent="main_page.uploading = true" @dragover.prevent="main_page.uploading = true" @dragleave.prevent="main_page.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
+                        <div id = "upload_area" @dragenter.prevent = "main_page.uploading = true" @dragover.prevent = "main_page.uploading = true" @dragleave.prevent = "main_page.uploading = false" @drop.prevent = "upload_file.drag" @click = "() => { upload_file_input.click(); }">
                             <h4>拖拽文件或点击此处上传文件</h4>
-                            <input type = "file" multiple accept="image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
+                            <input type = "file" multiple accept = "image/*, text/*, .lua, .cdb, .ypk, .zip, .tar, .tgz, .tar.gz, .7z, .rar" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
                         </div>
                     </div>
                     <div id = "cdb_list">
-                        <button v-for="(i, v) in (main_page.page.count > 0? Array(main_page.cdb.content.length >= main_page.page.count * 10? 10 : main_page.cdb.content.length % 10) : [])" :key="v" @click = "main_page.show(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count) - 1) * 10] }}</button>
+                        <button v-for = "(i, v) in (main_page.page.count > 0? Array(main_page.cdb.content.length >= main_page.page.count * 10? 10 : main_page.cdb.content.length % 10) : [])" :key = "v" @click = "main_page.show(v)">{{ main_page.cdb.content[v + (Math.abs(main_page.page.count) - 1) * 10] }}</button>
                     </div>
                     <div class = "cdb_list_btn">
                         <el-button @click = "main_page.page.previous">上一页</el-button>

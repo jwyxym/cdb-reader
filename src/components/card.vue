@@ -16,7 +16,7 @@
                 <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 , 'display': vif.show.link.chk && vif.is_type.link ? 'block' : 'none' }" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
             </div>
             <div>
-                <el-switch v-if = "vif.is_type.link" v-model = "vif.show.link.chk" active-color = "green" inactive-color = ""></el-switch>
+                <el-switch v-if = "vif.is_type.link" v-model = "vif.show.link.chk"></el-switch>
             </div>
         </div>
         <div id = "card_ot">
@@ -103,7 +103,66 @@
                         <span>收起</span>
                     </el-button>
                     <h2>卡图设置</h2>
-                    <span>圆角:&nbsp;&nbsp;</span><el-switch v-model="pic_setting.radius" active-color = "green" inactive-color = ""/>
+                    <el-switch
+                        v-model = "vif.show.pic_cut.cut_or_set"
+                        active-text = "设置"
+                        inactive-text = "卡图裁切"
+                        style = "grid-column-start: 1; grid-column-end: 4; justify-self: center;"
+                        @change = "upload_file.resert()"
+                    />
+                    <transition name = "card_right">
+                        <div class = "card_pic_setting_content" v-if = "vif.show.pic_cut.cut_or_set">
+                            <span>圆角:</span>
+                            <el-switch v-model="pic_setting.radius"/>
+                            <span>描述居中:</span>
+                            <el-switch v-model="pic_setting.descriptionAlign"/>
+                            <span>首行压缩:</span>
+                            <el-switch v-model="pic_setting.firstLineCompress"/>
+                            <span>文字缩放:</span>
+                            <el-input-number v-model = "pic_setting.descriptionZoom" :min = "0" :max = "1" :step = "0.01"></el-input-number>
+                            <span>文字大小:</span>
+                            <el-input-number v-model = "pic_setting.descriptionWeight" :min = "0" :max = "1" :step = "0.1"></el-input-number>
+                            <span>版权:</span>
+                            <el-select v-model = "pic_setting.copyright" placeholder = "">
+                                <el-option label = "无" value = "" />
+                                <el-option label = "简体中文" value = "sc" />
+                                <el-option label = "日文" value = "jp" />
+                                <el-option label = "英文" value = "en" />
+                            </el-select>
+                            <span>角标:</span>
+                            <el-select v-model = "pic_setting.laser" placeholder = "">
+                                <el-option label = "无" value = "" />
+                                <el-option label = "样式一" value = "laser1" />
+                                <el-option label = "样式二" value = "laser2" />
+                                <el-option label = "样式三" value = "laser3" />
+                                <el-option label = "样式四" value = "laser4" />
+                            </el-select>
+                            <span>罕贵:</span>
+                            <el-select v-model = "pic_setting.rare" placeholder = "">
+                                <el-option label = "无" value = "" />
+                                <el-option label = "DT" value = "dt" />
+                                <el-option label = "UR" value = "ur" />
+                                <el-option label = "GR" value = "gr" />
+                                <el-option label = "HR" value = "hr" />
+                                <el-option label = "SER" value = "ser" />
+                                <el-option label = "GSER" value = "gser" />
+                                <el-option label = "PSER" value = "pser" />
+                            </el-select>
+                            <span>卡包:</span>
+                            <el-input v-model = "pic_setting.package"></el-input>
+                        </div>
+                    </transition>
+                    <transition name = "card_right">
+                        <div class = "card_pic_setting_content" v-if = "!vif.show.pic_cut.cut_or_set">
+                            <div style = "width: 30vw; grid-column-start: 1; grid-column-end: 4;">
+                                <div id = "upload_area" @dragenter.prevent="upload_file.uploading = true" @dragover.prevent="upload_file.uploading = true" @dragleave.prevent="upload_file.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
+                                    <h4>上传中心图</h4>
+                                    <input type = "file" accept = "image/*" ref = "upload_file_input" @change = "upload_file.click" style = "display: none;"/>
+                                </div>
+                            </div>
+                            <pic_cut style = "grid-column-start: 1; grid-column-end: 4; grid-row-start: 3; grid-row-end: 18;"/>
+                        </div>
+                    </transition>
                 </div>
             </transition>
             <transition name = "card_box_btn">
@@ -155,6 +214,7 @@
 
     import download from './download.vue'
     import pic from './pic.vue'
+    import pic_cut from './pic_cut.vue'
 
     let lists = reactive({
         ot: [[0x0, '许可 N/A']],
@@ -184,6 +244,7 @@
         name : '',
         desc : '',
         pic : '',
+        center_pic : '',
         id : 0,
         alias : 0,
         pendulum : 0,
@@ -248,6 +309,7 @@
             card.id = 0;
             card.alias = 0;
             card.pic = '';
+            card.center_pic = '';
             card.atk = 0;
             card.def = 0;
             card.pendulum = 0;
@@ -307,6 +369,7 @@
                     card.desc = data[13];
                     card.hint = data[14];
                     card.pic = data[15];
+                    card.center_pic = data[16];
                 } catch (error) {}
             } as () => Promise<void>,
             paste : async function(i) {
@@ -424,6 +487,10 @@
                 chk : false,
                 title : '点击隐藏连接箭头',
                 content : '&#10003'
+            },
+            pic_cut : {
+                chk : false,
+                cut_or_set : false
             }
         },
         unshow : {
@@ -490,15 +557,59 @@
     });
 
     let pic_setting = reactive({
-        package : '',//卡包
-        descriptionZoom : 1,//描述缩放
-        descriptionWeight : 0,//字重
-        descriptionAlign : false,//描述居中
-        copyright : '',//版权'sc' / 'jp' / 'en'
-        laser : '',//角标'laser1' / 'laser2' / 'laser3' / 'laser4'
-        rare : '',//稀有度'dt' / 'ur' / 'gr' / 'hr' / 'ser' / 'gser' / 'pser'
-        radius : true//圆角
+        package : '',
+        descriptionZoom : 1,
+        descriptionWeight : 0,
+        descriptionAlign : false,
+        firstLineCompress : false,
+        copyright : '',
+        laser : '',
+        rare : '',
+        radius : true
     });
+
+    let upload_file_input = ref(null);
+    let upload_file = {
+        url : '',
+        uploading : false,
+        resert : function() {
+            URL.revokeObjectURL(upload_file.url);
+            upload_file.url = '';
+        },
+        click : async function (e) {
+            if (select.id <= 0) return;
+            try {
+                let files = e.target.files;
+                if (files.length > 0) {
+                    let file = files[0];
+                    if (file.type.includes('image')) {
+                        upload_file.url = URL.createObjectURL(file);
+                        await (new Promise(resolve => setTimeout(resolve, 5)));
+                        emit.pic_cut_page.upload.to(upload_file.url);
+                    }
+                }
+            } catch (error) { console.error(error); }
+        } as (e: any) => Promise<void>,
+        drag : async function (e) {
+            if (select.id <= 0) return;
+            let files = e.dataTransfer.files;
+            if (files.length > 0) {
+                let file = files[0];
+                if (file.type.includes('image')) {
+                    upload_file.url = URL.createObjectURL(file);
+                    await (new Promise(resolve => setTimeout(resolve, 5)));
+                    emit.pic_cut_page.upload.to(upload_file.url);
+                }
+            }
+            upload_file.uploading = false;
+        } as (e: any) => Promise<void>,
+        send : async function (formData) {
+            try {
+                let response = await axios.post(`${window.location.href}api/get_center_pic`, formData);
+                card.center_pic = response.data;
+            } catch (error) {}
+        } as (formData: FormData) => Promise<void>
+    }
 
     onMounted(() => {
         for (let i = 1; i < 9; i++) {
@@ -635,18 +746,32 @@
         pic_page : {
             unload_pic : {
                 to : function() {
-                    emitter.emit('to_ppage_unload_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting));
+                    emitter.emit('to_ppage_unload_pic');
                 } as () => void
             },
             load_pic : {
                 to : function() {
-                    emitter.emit('to_ppage_load_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting));
+                    emitter.emit('to_ppage_load_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting).set('open', open.cdb));
                 } as () => void
             },
             download_pic : {
                 to : function() {
-                    emitter.emit('to_ppage_download_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting));
+                    emitter.emit('to_ppage_download_pic', new Map().set('card', card).set('card_n', card_n).set('list', lists.type.slice()).set('pic', pic_setting).set('open', open.cdb));
                 } as () => void
+            }
+        },
+        pic_cut_page : {
+            upload : {
+                to : function(url) {
+                    emitter.emit('to_pcpage_upload', new Map().set('url', url).set('id', card.origin_id));
+                } as (url: string) => void,
+                on : function(file) {
+                    let formData = new FormData();
+                    formData.append('file', file);
+                    URL.revokeObjectURL(upload_file.url);
+                    upload_file.url = '';
+                    upload_file.send(formData);
+                } as (file: File) => void
             }
         }
     }
@@ -656,6 +781,7 @@
     emitter.on('to_cpage_cdb_changed', emit.list_page.cdb_changed.on);
     emitter.on('to_cpage_send_select', emit.list_page.select_card.on);
     emitter.on('to_cpage_save', emit.download_page.save.on);
+    emitter.on('to_cpage_upload', emit.pic_cut_page.upload.on);
 
     function filter_input(event, t, str_filter = /[^0-9]/) {
         let input_value = event.target.value;
@@ -882,12 +1008,12 @@
         grid-row-end: 2;
     }
 
-    #card_hint {
+    #card_hint, #card_pic_setting {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(17, 1fr);
 
-        justify-items: left;
+        align-items: center;
     }
 
     #card_category h2, #card_type h2, #card_hint h2, #card_pic_setting h2 {
@@ -930,6 +1056,24 @@
         height: 80%;
     }
 
+    .card_pic_setting_content {
+        grid-column-start: 1;
+        grid-column-end: 4;
+        grid-row-start: 3;
+        grid-row-end: 18;
+
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(16, 1fr);
+
+        height: 100%;
+    }
+
+    .card_pic_setting_content span {
+        grid-column-start: 1;
+        grid-column-end: 2;
+    }
+
     #card_box_btn {
         right: 0;
 
@@ -943,6 +1087,23 @@
         justify-self: right;
     }
 
+    #upload_area {
+        width: 80%;
+        height: 90%;
+        border: 2px dashed #bbbbbb;
+        color: #bbbbbb;
+
+        justify-self: center;
+        text-align: center;
+
+        cursor: pointer;
+    }
+
+    #upload_area:hover {
+        border: 2px dashed black;
+        color: black;
+    }
+    
     .card_box_btn-enter-active,
     .card_box_btn-leave-active,
     .card_right-enter-active,

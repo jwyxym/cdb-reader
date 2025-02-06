@@ -6,10 +6,7 @@
     import axios from 'axios';
     import emitter from '@/utils/emitter';
     import { FieldCenterCard, RushDuelCard, YugiohBackCard, YugiohCard, YugiohSeries2Card } from 'yugioh-card';
-    onMounted(() => {
-        exportImage();
-    })
-
+    
     let url_blob = ref(null);
 
     function to_data (card, card_n, type_list, pic) {
@@ -26,7 +23,7 @@
             type: 'monster',
             attribute: '',
             icon: '',
-            image: './赌上你的灵魂.png',  // to be continued
+            image: card.center_pic,
             cardType: 'normal',
             pendulumType: 'normal-pendulum',
             level: card_n.level & 0xffff,
@@ -39,7 +36,7 @@
             def: card_n.def >= 0 ? card_n.def : -1,
             arrowList: [],
             description: card.desc,
-            firstLineCompress: false,
+            firstLineCompress: pic.firstLineCompress,
             descriptionAlign: pic.descriptionAlign,
             descriptionZoom: pic.descriptionZoom,
             descriptionWeight: pic.descriptionWeight,
@@ -176,34 +173,46 @@
         return data;
     }
 
-    async function exportImage(chk, card, card_n, type_list, pic) {
-        let cardLeaf = new YugiohCard({
-            data: to_data (card, card_n, type_list, pic),
+    async function exportImage(chk, card, card_n, type_list, pic, open) {
+        let cardLeaf = new YugiohBackCard({
+            data: {
+                type: 'normal',
+                logo: '',
+                konami: false,
+                register: false,
+                radius: pic.radius,
+                scale: 1,
+            },
             resourcePath: './yugioh-card',
         });
+        if (open != '')
+            cardLeaf = new YugiohCard({
+                data: to_data (card, card_n, type_list, pic),
+                resourcePath: './yugioh-card',
+            });
         if (chk == 'load') {
             await cardLeaf.leafer.export('jpg', true).then(result => { 
                 if (url_blob.value)
                     URL.revokeObjectURL(url_blob.value);
                 url_blob.value = URL.createObjectURL(result.data);
             });
-        } else if (chk == 'download') {
+        } else if (chk == 'download' && open != '' && card.center_pic != '' && card_n.id > 0) {
             let formData = new FormData();
                 await cardLeaf.leafer.export('jpg', true).then(result => { 
-                formData.append('file', result.data, 'blue-eyes.jpg');
+                formData.append('file', result.data, `${card_n.id}.jpg`);
             });
             await axios.post(`${window.location.href}api/get_pics`, formData);
         }
     }
-    emitter.on('to_ppage_unload_pic', (i)=>{
+    emitter.on('to_ppage_unload_pic', ()=>{
         if (url_blob.value)
             URL.revokeObjectURL(url_blob.value);
         url_blob.value = null;
     });
     emitter.on('to_ppage_load_pic', (i)=>{
-        exportImage('load', i.get('card'), i.get('card_n'), i.get('list'), i.get('pic'));
+        exportImage('load', i.get('card'), i.get('card_n'), i.get('list'), i.get('pic'), i.get('open'));
     });
     emitter.on('to_ppage_download_pic', (i)=>{
-        exportImage('download', i.get('card'), i.get('card_n'), i.get('list'), i.get('pic'));
+        exportImage('download', i.get('card'), i.get('card_n'), i.get('list'), i.get('pic'), i.get('open'));
     });
 </script>
