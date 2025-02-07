@@ -20,46 +20,49 @@
             </div>
         </div>
         <div id = "card_ot">
-            <span>许可:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;许可:</span>
             <select v-model = "card.ot">
                 <option v-for = "(i,v) in lists.ot" :key = "v" >{{ i[1] }}</option>
             </select>
         </div>
         <div id = "card_attribute">
-            <span>属性:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;属性:</span>
             <select v-model = "card.attribute">
                 <option v-for = "(i,v) in lists.attribute" :key = "v" >{{ i[1] }}</option>
             </select>
         </div>
         <div id = "card_level">
-            <span>星级:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;星级:</span>
             <select v-model = "card.level">
                 <option v-for = "(i,v) in lists.level" :key = "v" >{{ i[1] }}</option>
             </select>
         </div>
         <div id = "card_race">
-            <span>种族:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;种族:</span>
             <select  v-model = "card.race">
                 <option v-for = "(i,v) in lists.race" :key = "v" >{{ i[1] }}</option>
             </select>
         </div>
         <div id = "card_setcard">
-            <span v-for = "(i, v) in Array(4).fill(0)" :key = "v" :style = "{ 'grid-row-start': v + 1, 'grid-row-end': v + 2 }">字段:&nbsp;&nbsp;</span>
-            <input v-for = "(i, v) in Array(4).fill(0)" :key = "v" v-model = "card.setcard[v]" @input = "filter_input($event, ['card_setcard', v], /[^a-fA-F0-9]/g)"/>
+            <div v-for = "(i, v) in Array(4).fill(0)" :key = "v">
+                <span style = "grid-column-start: 1; grid-column-end: 2;">&nbsp;&nbsp;字段:</span>
+                <input v-model = "card.setcard[v]" @input = "filter_input($event, ['card_setcard', v], /[^a-fA-F0-9]/g)" style = "grid-column-start: 2; grid-column-end: 3; width: 80%;"/>
+                <input v-model = "card.setcard_name[v]" style = "grid-column-start: 3; grid-column-end: 4; width: 80%;"/>
+            </div>
         </div>
         <div id = "card_id">
-            <span>同名卡:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;同名卡:</span>
             <input @input = "filter_input($event, ['card_alias'])" v-model = "card.alias"/>
-            <span>卡号:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;卡号:</span>
             <input @input = "filter_input($event, ['card_id'])" v-model = "card.id"/>
             <strong v-if = "vif.warn.same_id">*卡号已存在</strong>
         </div>
         <div id = "card_atk">
-            <span>攻击力:&nbsp;&nbsp;</span>
+            <span>&nbsp;&nbsp;攻击力:</span>
             <input @input = "filter_input($event, ['card_atk'])" v-model = "card.atk"/>
-            <span v-if = "!vif.is_type.link">守备力:&nbsp;&nbsp;</span>
+            <span v-if = "!vif.is_type.link">&nbsp;&nbsp;守备力:</span>
             <input v-if = "!vif.is_type.link" @input = "filter_input($event, ['card_def'])" v-model = "card.def"/>
-            <span v-if = "vif.is_type.pendulum">灵摆刻度:&nbsp;&nbsp;</span>
+            <span v-if = "vif.is_type.pendulum">&nbsp;&nbsp;灵摆刻度:</span>
             <input v-if = "vif.is_type.pendulum" @input = "filter_input($event, ['card_pendulum'])" v-model = "card.pendulum"/>
         </div>
         <textarea id = "card_desc" v-model = "card.desc"></textarea>
@@ -83,7 +86,7 @@
             <download/>
             <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
         </div>
-        <div id = "card_box">
+        <div id = "card_right">
             <transition name = "card_right">
                 <div v-if = "vif.show.type.chk" id = "card_type">
                     <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
@@ -251,6 +254,7 @@
         category: [] as [number , string][],
         link: [] as number[],
         link_pics: [] as string[],
+        setcard : [] as string[],
         get : async function() {
             try {
                 let response = await axios.get(`${window.location.href}api/initialize`)
@@ -287,6 +291,7 @@
         category : [false],
         hint : [''],
         setcard : Array(4).fill('0'),
+        setcard_name : Array(4).fill(''),
         get_link : {
             link : function(i) {
                 if ((card.link & lists.link[i]) > 0)
@@ -345,6 +350,7 @@
             card.category = Array(lists.category.length).fill(false);
             card.hint = Array(16).fill('');
             card.setcard = Array(4).fill('0');
+            card.setcard_name = Array(4).fill('');
             card.origin_id = 0;
             card.origin_name = '';
             select.id = -1;
@@ -477,7 +483,7 @@
 
             card_n.category = 0;
             card.category.forEach((e, v) => {
-                if (e) card_n.category += lists.category[v][0]
+                if (e) card_n.category += lists.category[v][0] as number
             });
             card_n.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
             card_n.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
@@ -854,7 +860,7 @@
         vif.show.type.chk = false;
         vif.show.hint.chk = false;
         vif.show.pic.chk = false;
-        await(new Promise(resolve => setTimeout(resolve, 500)));
+        await(new Promise(resolve => setTimeout(resolve, 400)));
         switch (v) {
             case 'category':
                 vif.show.category.chk = true;
@@ -899,13 +905,13 @@
         grid-column-end: 3;
     }
 
-    #card_setcard, #card_id , #card_atk{
+    #card_id , #card_atk{
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(3, 1fr);
     }
 
-    #card_setcard input, #card_id input, #card_atk input {
+    #card_id input, #card_atk input {
         grid-column-start: 2;
         grid-column-end: 4;
         width: 80%;
@@ -915,6 +921,20 @@
         color: red;
         grid-column-start: 1;
         grid-column-end: 4;
+    }
+
+    #card_setcard {
+        width: 100%;
+        grid-row-gap: 0.5vh;
+        display: grid;
+        grid-template-rows: repeat(4, 1fr);
+        align-items: center;
+        justify-items: center;
+    }
+
+    #card_setcard div {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
     }
 
     #card_desc {
@@ -971,7 +991,7 @@
         width: 100%;
     }
 
-    #card_box {
+    #card_right {
         width: 32vw;
         height: 100vh;
         overflow: hidden;
@@ -992,7 +1012,7 @@
     }
 
     #card_category div, #card_type div {
-        width: 9vw;
+        width: 100%;
 
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -1002,12 +1022,14 @@
         grid-column-start: 1;
         grid-column-end: 3;
         justify-self: center;
+        align-self: center;
     }
 
     #card_category div input, #card_type div input {
         grid-column-start: 3;
         grid-column-end: 4;
         justify-self: right;
+        align-self: center;
 
         height: 50%;
         width: 50%;
@@ -1021,30 +1043,12 @@
         grid-row-end: 2;
     }
 
-    .unshow_rpage_btn {
-        align-self: center;
-        justify-self: left;
-
-        grid-column-start: 1;
-        grid-column-end: 2;
-        grid-row-start: 1;
-        grid-row-end: 2;
-    }
-
     #card_hint, #card_pic_setting {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         grid-template-rows: repeat(17, 1fr);
 
         align-items: center;
-    }
-
-    #card_category h2, #card_type h2, #card_hint h2, #card_pic_setting h2 {
-        justify-self: center;
-        grid-column-start: 1;
-        grid-column-end: 5;
-        grid-row-start: 1;
-        grid-row-end: 2;
     }
 
     #card_type, #card_category, #card_hint, #card_pic_setting {
@@ -1125,19 +1129,19 @@
         border: 2px dashed black;
         color: black;
     }
-    
+
     .card_right-enter-active,
     .card_right-leave-active {
-        transition: transform 0.5s ease;
+        transition: opacity 0.5s ease;
     }
 
     .card_right-enter-from,
     .card_right-leave-to {
-        transform: translateX(100%);
+        opacity: 0;
     }
 
     .card_right-enter-to,
     .card_right-leave-from {
-        transform: translateX(0%);
+        opacity: 1;
     }
 </style>
