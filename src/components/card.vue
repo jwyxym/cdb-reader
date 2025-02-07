@@ -63,34 +63,87 @@
             <input v-if = "vif.is_type.pendulum" @input = "filter_input($event, ['card_pendulum'])" v-model = "card.pendulum"/>
         </div>
         <textarea id = "card_desc" v-model = "card.desc"></textarea>
+        <div id = "card_box_btn">
+            <el-button @click = "card.add()">
+                <el-icon><DocumentAdd/></el-icon>
+                <span>新建</span>
+            </el-button>
+            <el-button @click = "card.del()">
+                <el-icon><Delete/></el-icon>
+                <span>删除</span>
+            </el-button>
+            <el-button @click = "copy.from()">
+                <el-icon><CopyDocument/></el-icon>
+                <span>复制</span>
+            </el-button>
+            <el-button @click = "copy.to()">
+                <el-icon><DocumentCopy/></el-icon>
+                <span>黏贴</span>
+            </el-button>
+            <download/>
+            <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
+        </div>
         <div id = "card_box">
             <transition name = "card_right">
                 <div v-if = "vif.show.type.chk" id = "card_type">
-                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'type')">
-                        <el-icon><Expand/></el-icon>
-                        <span>收起</span>
+                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
+                        <el-icon><Picture/></el-icon>
+                        <span>{{ vif.show.pic.title }}</span>
                     </el-button>
-                    <h2>卡片类型</h2>
+                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.type.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.category.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.hint.title }}</span>
+                    </el-button>
                     <div v-for = "(i, v) in lists.type" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.type[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_right">
                 <div v-if = "vif.show.category.chk" id = "card_category">
-                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'category')">
-                        <el-icon><Expand/></el-icon>
-                        <span>收起</span>
+                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
+                        <el-icon><Picture/></el-icon>
+                        <span>{{ vif.show.pic.title }}</span>
                     </el-button>
-                    <h2>效果分类</h2>
+                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.type.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.category.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.hint.title }}</span>
+                    </el-button>
                     <div v-for = "(i, v) in lists.category" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.category[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_right">
                 <div v-if = "vif.show.hint.chk" id = "card_hint" >
-                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'hint')">
-                        <el-icon><Expand/></el-icon>
-                        <span>收起</span>
+                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
+                        <el-icon><Picture/></el-icon>
+                        <span>{{ vif.show.pic.title }}</span>
                     </el-button>
-                    <h2>脚本提示文字</h2>
+                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.type.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.category.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.hint.title }}</span>
+                    </el-button>
                     <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
                         <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card.hint[v]"/>
                     </div>
@@ -98,38 +151,49 @@
             </transition>
             <transition name = "card_right">
                 <div v-if = "vif.show.pic.chk" id = "card_pic_setting" >
-                    <el-button class = "unshow_rpage_btn" @click = "whether_show_rpage(false, 'pic')">
-                        <el-icon><Expand/></el-icon>
-                        <span>收起</span>
+                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
+                        <el-icon><Picture/></el-icon>
+                        <span>{{ vif.show.pic.title }}</span>
                     </el-button>
-                    <h2>卡图设置</h2>
+                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.type.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.category.title }}</span>
+                    </el-button>
+                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn">
+                        <el-icon><Fold/></el-icon>
+                        <span>{{ vif.show.hint.title }}</span>
+                    </el-button>
                     <el-switch
                         v-model = "vif.show.pic_cut.cut_or_set"
                         active-text = "设置"
                         inactive-text = "卡图裁切"
-                        style = "grid-column-start: 1; grid-column-end: 4; justify-self: center;"
+                        style = "grid-column-start: 1; grid-column-end: 5; justify-self: center;"
                         @change = "upload_file.resert()"
                     />
                     <transition name = "card_right">
                         <div class = "card_pic_setting_content" v-if = "vif.show.pic_cut.cut_or_set">
-                            <span>圆角:</span>
+                            <span>&nbsp;&nbsp;圆角:</span>
                             <el-switch v-model="pic_setting.radius"/>
-                            <span>描述居中:</span>
+                            <span>&nbsp;&nbsp;描述居中:</span>
                             <el-switch v-model="pic_setting.descriptionAlign"/>
-                            <span>首行压缩:</span>
+                            <span>&nbsp;&nbsp;首行压缩:</span>
                             <el-switch v-model="pic_setting.firstLineCompress"/>
-                            <span>文字缩放:</span>
+                            <span>&nbsp;&nbsp;文字缩放:</span>
                             <el-input-number v-model = "pic_setting.descriptionZoom" :min = "0" :max = "1" :step = "0.01"></el-input-number>
-                            <span>文字大小:</span>
+                            <span>&nbsp;&nbsp;字重:</span>
                             <el-input-number v-model = "pic_setting.descriptionWeight" :min = "0" :max = "1" :step = "0.1"></el-input-number>
-                            <span>版权:</span>
+                            <span>&nbsp;&nbsp;版权:</span>
                             <el-select v-model = "pic_setting.copyright" placeholder = "">
                                 <el-option label = "无" value = "" />
                                 <el-option label = "简体中文" value = "sc" />
                                 <el-option label = "日文" value = "jp" />
                                 <el-option label = "英文" value = "en" />
                             </el-select>
-                            <span>角标:</span>
+                            <span>&nbsp;&nbsp;角标:</span>
                             <el-select v-model = "pic_setting.laser" placeholder = "">
                                 <el-option label = "无" value = "" />
                                 <el-option label = "样式一" value = "laser1" />
@@ -137,7 +201,7 @@
                                 <el-option label = "样式三" value = "laser3" />
                                 <el-option label = "样式四" value = "laser4" />
                             </el-select>
-                            <span>罕贵:</span>
+                            <span>&nbsp;&nbsp;罕贵:</span>
                             <el-select v-model = "pic_setting.rare" placeholder = "">
                                 <el-option label = "无" value = "" />
                                 <el-option label = "DT" value = "dt" />
@@ -148,7 +212,7 @@
                                 <el-option label = "GSER" value = "gser" />
                                 <el-option label = "PSER" value = "pser" />
                             </el-select>
-                            <span>卡包:</span>
+                            <span>&nbsp;&nbsp;卡包:</span>
                             <el-input v-model = "pic_setting.package"></el-input>
                         </div>
                     </transition>
@@ -163,44 +227,6 @@
                             <pic_cut style = "grid-column-start: 1; grid-column-end: 4; grid-row-start: 3; grid-row-end: 18;"/>
                         </div>
                     </transition>
-                </div>
-            </transition>
-            <transition name = "card_box_btn">
-                <div v-if = "vif.unshow.btn" id = "card_box_btn">
-                    <el-button @click = "whether_show_rpage(true, 'type')">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.type.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage(true, 'category')">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.category.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage(true, 'hint')">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.hint.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage(true, 'pic')">
-                        <el-icon><Picture/></el-icon>
-                        <span>{{ vif.show.pic.title }}</span>
-                    </el-button>
-                    <el-button @click = "card.add()">
-                        <el-icon><DocumentAdd/></el-icon>
-                        <span>新建</span>
-                    </el-button>
-                    <el-button @click = "card.del()">
-                        <el-icon><Delete/></el-icon>
-                        <span>删除</span>
-                    </el-button>
-                    <el-button @click = "copy.from()">
-                        <el-icon><CopyDocument/></el-icon>
-                        <span>复制</span>
-                    </el-button>
-                    <el-button @click = "copy.to()">
-                        <el-icon><DocumentCopy/></el-icon>
-                        <span>黏贴</span>
-                    </el-button>
-                    <download/>
-                    <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
                 </div>
             </transition>
         </div>
@@ -480,11 +506,11 @@
                 title : '提示文字'
             },
             pic : {
-                chk : false,
+                chk : true,
                 title : '卡图设置'
             },
             link : {
-                chk : false,
+                chk : true,
                 title : '点击隐藏连接箭头',
                 content : '&#10003'
             },
@@ -492,9 +518,6 @@
                 chk : false,
                 cut_or_set : false
             }
-        },
-        unshow : {
-            btn : true
         },
         is_type : {
             link : false,
@@ -822,41 +845,29 @@
         }
     }
 
-    async function whether_show_rpage(chk, v) {
-        if (chk) {
-            vif.unshow.btn = false;
-            await(new Promise(resolve => setTimeout(resolve, 500)));
-            switch (v) {
-                case 'category':
-                    vif.show.category.chk = true;
-                    break;
-                case 'type':
-                    vif.show.type.chk = true;
-                    break;
-                case 'hint':
-                    vif.show.hint.chk = true;
-                    break;
-                case 'pic':
-                    vif.show.pic.chk = true;
-                    break;
-            }
-        } else {
-            switch (v) {
-                case 'category':
-                    vif.show.category.chk = false;
-                    break;
-                case 'type':
-                    vif.show.type.chk = false;
-                    break;
-                case 'hint':
-                    vif.show.hint.chk = false;
-                    break;
-                case 'pic':
-                    vif.show.pic.chk = false;
-                    break;
-            }
-            await(new Promise(resolve => setTimeout(resolve, 500)));
-            vif.unshow.btn = true;
+    async function whether_show_rpage(v) {
+        if (vif.show.category.chk && v == 'category') return;
+        if (vif.show.type.chk && v == 'type') return;
+        if (vif.show.hint.chk && v == 'hint') return;
+        if (vif.show.pic.chk && v == 'pic') return;
+        vif.show.category.chk = false;
+        vif.show.type.chk = false;
+        vif.show.hint.chk = false;
+        vif.show.pic.chk = false;
+        await(new Promise(resolve => setTimeout(resolve, 500)));
+        switch (v) {
+            case 'category':
+                vif.show.category.chk = true;
+                break;
+            case 'type':
+                vif.show.type.chk = true;
+                break;
+            case 'hint':
+                vif.show.hint.chk = true;
+                break;
+            case 'pic':
+                vif.show.pic.chk = true;
+                break;
         }
     }
 </script>
@@ -974,7 +985,7 @@
     #card_type, #card_category {
         display: grid;
 
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         grid-template-rows: repeat(16, 1fr);
 
         justify-items: left;
@@ -1002,6 +1013,14 @@
         width: 50%;
     }
 
+    .change_rpage_btn {
+        align-self: center;
+        justify-self: right;
+
+        grid-row-start: 1;
+        grid-row-end: 2;
+    }
+
     .unshow_rpage_btn {
         align-self: center;
         justify-self: left;
@@ -1014,7 +1033,7 @@
 
     #card_hint, #card_pic_setting {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         grid-template-rows: repeat(17, 1fr);
 
         align-items: center;
@@ -1023,7 +1042,7 @@
     #card_category h2, #card_type h2, #card_hint h2, #card_pic_setting h2 {
         justify-self: center;
         grid-column-start: 1;
-        grid-column-end: 4;
+        grid-column-end: 5;
         grid-row-start: 1;
         grid-row-end: 2;
     }
@@ -1062,7 +1081,7 @@
 
     .card_pic_setting_content {
         grid-column-start: 1;
-        grid-column-end: 4;
+        grid-column-end: 5;
         grid-row-start: 3;
         grid-row-end: 18;
 
@@ -1079,16 +1098,15 @@
     }
 
     #card_box_btn {
-        right: 0;
+        grid-column-start: 1;
+        grid-column-end: 3;
+        grid-row-start: 16;
+        grid-row-end: 17;
 
-        display: grid;
-        grid-template-rows: repeat(3, 1fr);
-        row-gap: 1vh;
-    }
+        width: 100%;
 
-    #card_box_btn button {        
-        align-self: center;
-        justify-self: right;
+        display: flex;
+        justify-content: center;
     }
 
     #upload_area {
@@ -1108,8 +1126,6 @@
         color: black;
     }
     
-    .card_box_btn-enter-active,
-    .card_box_btn-leave-active,
     .card_right-enter-active,
     .card_right-leave-active {
         transition: transform 0.5s ease;
@@ -1123,15 +1139,5 @@
     .card_right-enter-to,
     .card_right-leave-from {
         transform: translateX(0%);
-    }
-
-    .card_box_btn-enter-to,
-    .card_box_btn-leave-from {
-        transform: translateX(0%);
-    }
-
-    .card_box_btn-enter-from,
-    .card_box_btn-leave-to {
-        transform: translateX(100%);
     }
 </style>
