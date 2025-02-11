@@ -164,7 +164,7 @@
                 data.monsterType += `${data.monsterType == '' ? '' : '/'}${type_list[i][1]}`
         }
 
-        if (data.cardType == 'fusion' || data.cardType == 'synchro' || data.cardType == 'xyz' || data.cardType == 'link') {
+        if (['fusion', 'synchro', 'xyz', 'link'].includes(data.cardType)) {
             let i = data.description.split(/\s*[\r\n]/)
             data.description = `${i[0]}\r\n${data.description.replace(i[0], '').replace(/\s*[\r\n]/g, '')}`;
         } else {
