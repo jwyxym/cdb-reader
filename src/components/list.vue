@@ -136,7 +136,7 @@
                         page.count = select.page;
                     if (select.card > -1)
                         select.id = cdb.list[select.page][select.card].split(' ')[0];
-                    emit.card_page.select_card.to();
+                        emit.card_page.select_card.to();
                 } as (i: Map<string, number>) => void,
                 remove : function (cdb: string) {
                     emitter.emit('to_mpage_remove_select', cdb);
@@ -183,6 +183,7 @@
                         cdb.list = response.data;
                         select.cdb = response.data[0][0];
                         emit.card_page.cdb_changed.to();
+                        emit.card_page.select_card.to();
                     } catch (error) {}
                 } as (id ?: number) => Promise<void>
             },
