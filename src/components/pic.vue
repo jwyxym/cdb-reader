@@ -9,6 +9,62 @@
     
     let url_blob = ref(null);
 
+    let list = {
+        type : new Map ([
+            [0x1,'monster'],
+            [0x2,'spell'],
+            [0x4, 'trap'],
+            [0x1000000, 'pendulum']
+        ]),
+        monster_type : new Map ([
+            [0x1, 'normal'],
+            [0x20, 'effect'],
+            [0x40, 'fusion'],
+            [0x80, 'ritual'],
+            [0x2000, 'synchro'],
+            [0x4000, 'token'],
+            [0x800000, 'xyz'],
+            [0x4000000, 'link']
+        ]),
+        p_type : new Map ([
+            [0x20, 'effect-pendulum'],
+            [0x40, 'fusion-pendulum'],
+            [0x80, 'ritual-pendulum'],
+            [0x2000,'synchro-pendulum'],
+            [0x800000, 'xyz-pendulum']
+        ]),
+        link : new Map ([
+            [0x1, 6],
+            [0x2, 5],
+            [0x4, 4],
+            [0x8, 7],
+            [0x20, 3],
+            [0x40, 8],
+            [0x80, 1],
+            [0x100, 2]
+        ]),
+        spell_type : new Map ([
+            [0x80, 'ritual'],
+            [0x10000, 'quick-play'],
+            [0x20000, 'continuous'],
+            [0x40000, 'equip'],
+            [0x80000, 'field']
+        ]),
+        trap_type : new Map ([
+            [0x20000, 'continuous'],
+            [0x100000, 'counter']
+        ]),
+        attribute : new Map ([
+            [0x1, 'earth'],
+            [0x2, 'water'],
+            [0x4, 'fire'],
+            [0x8, 'wind'],
+            [0x10, 'light'],
+            [0x20, 'dark'],
+            [0x40, 'divine']
+        ]),
+    };
+
     function to_data (card, card_n, type_list, pic) {
         if(!card || !card_n || !type_list || !pic) return;
         let data = {
@@ -50,61 +106,6 @@
             scale: 1,
         }
 
-        let list = {
-            type : new Map ([
-                [0x1,'monster'],
-                [0x2,'spell'],
-                [0x4, 'trap'],
-                [0x1000000, 'pendulum']
-            ]),
-            monster_type : new Map ([
-                [0x1, 'normal'],
-                [0x20, 'effect'],
-                [0x40, 'fusion'],
-                [0x80, 'ritual'],
-                [0x2000, 'synchro'],
-                [0x4000, 'token'],
-                [0x800000, 'xyz'],
-                [0x4000000, 'link']
-            ]),
-            p_type : new Map ([
-                [0x20, 'effect-pendulum'],
-                [0x40, 'fusion-pendulum'],
-                [0x80, 'ritual-pendulum'],
-                [0x2000,'synchro-pendulum'],
-                [0x800000, 'xyz-pendulum']
-            ]),
-            link : new Map ([
-                [0x1, 6],
-                [0x2, 5],
-                [0x4, 4],
-                [0x8, 7],
-                [0x20, 3],
-                [0x40, 8],
-                [0x80, 1],
-                [0x100, 2]
-            ]),
-            spell_type : new Map ([
-                [0x80, 'ritual'],
-                [0x10000, 'quick-play'],
-                [0x20000, 'continuous'],
-                [0x40000, 'equip'],
-                [0x80000, 'field']
-            ]),
-            trap_type : new Map ([
-                [0x20000, 'continuous'],
-                [0x100000, 'counter']
-            ]),
-            attribute : new Map ([
-                [0x1, 'earth'],
-                [0x2, 'water'],
-                [0x4, 'fire'],
-                [0x8, 'wind'],
-                [0x10, 'light'],
-                [0x20, 'dark'],
-                [0x40, 'divine']
-            ]),
-        }
         list.type.forEach((value, key) => {
             if((card_n.type & key) > 0)
                 data.type = value;
@@ -174,18 +175,20 @@
     }
 
     async function exportImage(chk, card, card_n, type_list, pic, open) {
-        let cardLeaf = new YugiohBackCard({
-            data: {
-                type: 'normal',
-                logo: '',
-                konami: false,
-                register: false,
-                radius: pic.radius,
-                scale: 1,
-            },
-            resourcePath: './yugioh-card',
-        });
-        if (open != '')
+        let cardLeaf;
+        if (open == '')
+            cardLeaf = new YugiohBackCard({
+                data: {
+                    type: 'normal',
+                    logo: '',
+                    konami: false,
+                    register: false,
+                    radius: pic.radius,
+                    scale: 1,
+                },
+                resourcePath: './yugioh-card',
+            });
+            else
             cardLeaf = new YugiohCard({
                 data: to_data (card, card_n, type_list, pic),
                 resourcePath: './yugioh-card',
@@ -204,6 +207,7 @@
             await axios.post(`${window.location.href}api/get_pics`, formData);
         }
     }
+    
     emitter.on('to_ppage_unload_pic', ()=>{
         if (url_blob.value)
             URL.revokeObjectURL(url_blob.value);
