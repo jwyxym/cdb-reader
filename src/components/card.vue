@@ -46,8 +46,8 @@
         <div id = "card_setcard">
             <div v-for = "(i, v) in Array(4).fill(0)" :key = "v">
                 <span style = "grid-column-start: 1; grid-column-end: 2;">&nbsp;&nbsp;字段:</span>
-                <input v-model = "card.setcard[v]" @input = "filter_input($event, ['card_setcard', v], /[^a-fA-F0-9]/g)" style = "grid-column-start: 2; grid-column-end: 3; width: 80%;"/>
-                <input v-model = "card.setcard_name[v]" style = "grid-column-start: 3; grid-column-end: 4; width: 80%;"/>
+                <input v-model = "card.setcard[v]" @input = "filter_input($event, ['card_setcard', v], /[^a-fA-F0-9]/g)" @change = "card_change.setcard(v)" style = "grid-column-start: 2; grid-column-end: 3; width: 80%;"/>
+                <input v-model = "card_n.setcard_name[v]" @change = "card_change.setcard_name(v)" style = "grid-column-start: 3; grid-column-end: 4; width: 80%;" :readonly = "lists.setcard.find(i => i[0] == card.setcard[v]) != undefined"/>
             </div>
         </div>
         <div id = "card_id">
@@ -105,7 +105,7 @@
                         <el-icon><Fold/></el-icon>
                         <span>{{ vif.show.hint.title }}</span>
                     </el-button>
-                    <div v-for = "(i, v) in lists.type" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.type[v]"/> </div>
+                    <div v-for = "(i, v) in lists.type" :key = "v" @change = "card_change.type(v)"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.type[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_right">
@@ -126,7 +126,7 @@
                         <el-icon><Fold/></el-icon>
                         <span>{{ vif.show.hint.title }}</span>
                     </el-button>
-                    <div v-for = "(i, v) in lists.category" :key = "v"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.category[v]"/> </div>
+                    <div v-for = "(i, v) in lists.category" :key = "v" @change = "card_change.category(v)"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.category[v]"/> </div>
                 </div>
             </transition>
             <transition name = "card_right">
@@ -237,7 +237,7 @@
 </template>
 
 <script setup name = "card_page" lang = "ts">
-    import { ref, reactive, onMounted, watch, defineEmits, defineProps, computed, TrackOpTypes, toRaw } from 'vue';
+    import { ref, reactive, onMounted, onBeforeMount, watch, defineEmits, defineProps, computed, TrackOpTypes, toRaw } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
 
@@ -255,6 +255,7 @@
         link: [] as number[],
         link_pics: [] as string[],
         setcard : [] as string[],
+        custom_setcard : [] as [string, string][],
         get : async function() {
             try {
                 let response = await axios.get(`${window.location.href}api/initialize`)
@@ -350,10 +351,11 @@
             card.category = Array(lists.category.length).fill(false);
             card.hint = Array(16).fill('');
             card.setcard = Array(4).fill('0');
-            card.setcard_name = Array(4).fill('');
             card.origin_id = 0;
             card.origin_name = '';
             select.id = -1;
+            card_n.type = 0;
+            card_n.category = 0;
         } as () => void,
         del : async function() {
             if (open.cdb == '') return;
@@ -402,6 +404,7 @@
                     card.hint = data[14];
                     card.pic = data[15];
                     card.center_pic = data[16];
+                    card_change.get_all();
                 } catch (error) {}
             } as () => Promise<void>,
             paste : async function(i) {
@@ -475,26 +478,7 @@
         attribute : 0,
         type : 0,
         category : 0,
-        get : function() {
-            card_n.type = 0;
-            card.type.forEach((e, v) => {
-                if (e) card_n.type += lists.type[v][0]
-            });
-
-            card_n.category = 0;
-            card.category.forEach((e, v) => {
-                if (e) card_n.category += lists.category[v][0] as number
-            });
-            card_n.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
-            card_n.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
-            card_n.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
-            card_n.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
-            card_n.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
-            card_n.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
-            card_n.atk = card.atk != '?' ? card.atk as number : -2; 
-            card_n.def = (card_n.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
-            card_n.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
-        } as () => void
+        setcard_name : Array(4).fill('')
     });
 
     let vif = reactive({
@@ -644,7 +628,81 @@
         } as (formData: FormData) => Promise<void>
     }
 
-    onMounted(() => {
+    let card_change = {
+        get_all : function() {
+            for (let i = 0; i < 4; i++) {
+                card_change.setcard(i);
+                card_change.setcard_name(i);
+            }
+            for (let i = 0; i < lists.type.length; i++) {
+                card_change.type(i);
+            }
+            for (let i = 0; i < lists.category.length; i++) {
+                card_change.category(i);
+            }
+        } as () => void,
+        setcard : function(i) {
+            // card_n.setcard_name[i] = lists.setcard.find(e => e[0] == card.setcard[i])?.[1] as string ?? (lists.custom_setcard.find(e => e[0] == card.setcard[i])?.[1] as string ?? '');
+            // card_n.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
+        } as (i: number) => void,
+        setcard_name : function(i) {
+            // if (card.setcard[i] == 0 || lists.setcard.find(e => e[0] == card.setcard[i])) return;
+            // let r = lists.custom_setcard.find(e => e[0] == card.setcard[i]);
+            // r ? r[1] = card_n.setcard_name[i] : lists.custom_setcard.push([card.setcard[i], card_n.setcard_name[i]]);
+        } as (i: number) => void,
+        atk : function() {
+            card_n.atk = card.atk != '?' ? card.atk as number : -2; 
+        } as () => void,
+        def : function() {
+            card_n.def = (card_n.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
+        } as () => void,
+        name : function() {
+            emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
+        } as () => void,
+        id : function() {
+            console.log(card.id);
+            if (open.list.flat().filter(e => e.split(' ')[0] == card.id).length > 0 && card.origin_id != card.id) {
+                vif.warn.same_id = true;
+                if (select.id > 0)
+                    emit.list_page.card_changed.to(card.origin_id, card.name);
+            } else {
+                if (vif.warn.same_id)
+                    vif.warn.same_id = false;
+                if (select.id > 0)
+                    emit.list_page.card_changed.to(card.id, card.name);
+            }
+            card_n.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
+        } as () => void,
+        alias : function() {
+            card_n.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
+        } as () => void,
+        ot : function() {
+            card_n.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
+        } as () => void,
+        level : function() {
+            card_n.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
+            if (vif.is_type.pendulum) {
+                card_n.level |= (card.pendulum << 16);
+                card_n.level |= (card.pendulum << 24);
+            }
+        } as () => void,
+        race : function () {
+            card_n.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
+        } as () => void,
+        attribute : function() {
+            card_n.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
+        } as () => void,
+        type : function(i) {
+            card.type[i] ? card_n.type |= lists.type[i][0] : card_n.type &= ~lists.type[i][0];
+            vif.is_type.pendulum = (card_n.type & 0x1000000) > 0;
+            vif.is_type.link = (card_n.type & 0x4000000) > 0;
+        } as (i: number) => void,
+        category : function(i) {
+            card.category[i] ? card_n.category |= lists.category[i][0] : card_n.category &= ~lists.category[i][0];
+        } as (i: number) => void,
+    };
+
+    onBeforeMount(() => {
         for (let i = 1; i < 9; i++) {
             if (i == 5) {
                 lists.link_pics.push('');
@@ -655,34 +713,20 @@
         card.clear();
     });
 
-    watch(card, (n) => {
-        if (select.id > 0)
-            emit.list_page.card_changed.to(card.id, card.name);
-
-        if (open.list.flat().filter(e => e.split(' ')[0] == n.id).length > 1 && card.origin_id != n.id) {
-            if (select.id > 0)
-                emit.list_page.card_changed.to(card.origin_id, card.name);
-            vif.warn.same_id = true;
-        } else if (vif.warn.same_id) {
-            vif.warn.same_id = false;
-        }
-
-        card_n.get();
-
-        vif.is_type.link = (card_n.type & 0x4000000) > 0;
-
-        if ((card_n.type & 0x1000000) > 0) {
-            card_n.level |= (card.pendulum << 16);
-            card_n.level |= (card.pendulum << 24);
-            vif.is_type.pendulum = true;
-        } else { vif.is_type.pendulum = false; }
-
-        if (n.pic == '')
-            emit.pic_page.load_pic.to();
-        else
-            emit.pic_page.unload_pic.to();
-
+    watch(card, async (n) => {
+        await (new Promise(resolve => setTimeout(resolve, 5)));
+        n.pic == '' ? emit.pic_page.load_pic.to() : emit.pic_page.unload_pic.to();
     }, { deep: true });
+
+    watch (() => card.id, () => { card_change.id(); });
+    watch (() => card.name, () => { card_change.name(); });
+    watch (() => card.atk, () => { card_change.atk(); });
+    watch (() => card.def, () => { card_change.def(); });
+    watch (() => card.alias, () => { card_change.alias(); });
+    watch (() => card.ot, () => { card_change.ot(); });
+    watch (() => card.level, () => { card_change.level(); });
+    watch (() => card.race, () => { card_change.race(); });
+    watch (() => card.attribute, () => { card_change.attribute(); });
 
     watch(pic_setting, () => {
         if (card.pic == '')

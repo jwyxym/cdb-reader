@@ -31,7 +31,7 @@
     import list_page from './components/list.vue'
     import card_page from './components/card.vue'
 
-    import { ref, reactive, watch, onMounted, computed } from 'vue';
+    import { ref, reactive, watch, onMounted, onBeforeMount, computed } from 'vue';
     import axios from 'axios';
     import emitter from '@/utils/emitter';
 
@@ -197,7 +197,7 @@
         } as (formData: FormData) => Promise<void>
     }
 
-    onMounted(() => {
+    onBeforeMount(() => {
         main_page.get();
     });
 
