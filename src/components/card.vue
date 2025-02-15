@@ -115,19 +115,23 @@
                     </div>
                     <transition name = "card_right">
                         <div v-if = "vif.show.card.type.chk" id = "card_type">
-                            <div v-for = "(i, v) in lists.type" :key = "v" @change = "card_change.type(v)"><el-checkbox v-model = "card.type[v]">&nbsp;&nbsp;{{ i[1] }}</el-checkbox></div>
+                            <div v-for = "(i, v) in lists.type" :key = "v" @change = "card_change.type(v)"><el-checkbox v-model = "card.type[v]" style = "left: 5%;">{{ i[1] }}</el-checkbox></div>
                         </div>
                     </transition>
                     <transition name = "card_right">
                         <div v-if = "vif.show.card.category.chk" id = "card_category">
-                            <div v-for = "(i, v) in lists.category" :key = "v" @change = "card_change.category(v)"><el-checkbox v-model = "card.category[v]">&nbsp;&nbsp;{{ i[1] }}</el-checkbox></div>
+                            <div v-for = "(i, v) in lists.category" :key = "v" @change = "card_change.category(v)"><el-checkbox v-model = "card.category[v]" style = "left: 5%;">{{ i[1] }}</el-checkbox></div>
                         </div>
                     </transition>
                     <transition name = "card_right">
-                        <div v-if = "vif.show.card.hint.chk" id = "card_hint" >
-                            <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
-                                <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card.hint[v]"/>
-                            </div>
+                        <div v-if = "vif.show.card.hint.chk" id = "card_hint">
+                            <el-input
+                                v-for = "(i, v) in Array(16).fill(0)" :key = "v"
+                                style = "width: 90%; grid-column-start: 1; grid-column-end: 5; left: 5%;"
+                                :placeholder = "'请输入描述：第' + v + '项'"
+                                suffix-icon = "el-icon-date"
+                                v-model = "card.hint[v]">
+                            </el-input>
                         </div>
                     </transition>
                 </div>
@@ -464,7 +468,7 @@
                 },
             },
             pic : {
-                chk : true,
+                chk : false,
                 title : '卡图设置'
             },
             link : {
@@ -875,9 +879,10 @@
     }
 
     async function whether_show_rpage(v) {
+        console.log(vif.show);
         if (vif.show.card.chk && v == 'card') return;
         if (vif.show.pic.chk && v == 'pic') return;
-        if ((vif.show.card.category.chk) && v == 'category') return;
+        if (vif.show.card.category.chk && v == 'category') return;
         if (vif.show.card.type.chk && v == 'type') return;
         if (vif.show.card.hint.chk && v == 'hint') return;
         switch (v) {
@@ -1115,31 +1120,6 @@
 
         height: 100%;
         width: 100%;
-    }
-
-    #card_hint div {
-        width: 100%;
-        grid-column-start: 1;
-        grid-column-end: 4;
-
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        justify-items: center;
-    }
-
-    #card_hint div span {
-        align-self: center;
-        font-size: 120%;
-        grid-column-start: 1;
-        grid-column-end: 2;
-    }
-
-    #card_hint div input {
-        grid-column-start: 2;
-        grid-column-end: 7;
-
-        width: 100%;
-        height: 80%;
     }
 
     .card_pic_setting_content {
