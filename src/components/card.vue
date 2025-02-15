@@ -87,89 +87,53 @@
             <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
         </div>
         <div id = "card_right">
+            <div style = "display: flex; justify-content: center; grid-row-start: 1; grid-row-end: 2;">
+                <el-button @click = "whether_show_rpage('card')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.card.chk }">
+                    <el-icon><Fold/></el-icon>
+                    <span>{{ vif.show.card.title }}</span>
+                </el-button>
+                <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.pic.chk }">
+                    <el-icon><Picture/></el-icon>
+                    <span>{{ vif.show.pic.title }}</span>
+                </el-button>
+            </div>
             <transition name = "card_right">
-                <div v-if = "vif.show.type.chk" id = "card_type">
-                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
-                        <el-icon><Picture/></el-icon>
-                        <span>{{ vif.show.pic.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.type.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.category.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.hint.title }}</span>
-                    </el-button>
-                    <div v-for = "(i, v) in lists.type" :key = "v" @change = "card_change.type(v)"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.type[v]"/> </div>
-                </div>
-            </transition>
-            <transition name = "card_right">
-                <div v-if = "vif.show.category.chk" id = "card_category">
-                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
-                        <el-icon><Picture/></el-icon>
-                        <span>{{ vif.show.pic.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.type.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.category.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.hint.title }}</span>
-                    </el-button>
-                    <div v-for = "(i, v) in lists.category" :key = "v" @change = "card_change.category(v)"><span>{{ i[1] }}:&nbsp;</span><input type = "checkbox" v-model = "card.category[v]"/> </div>
-                </div>
-            </transition>
-            <transition name = "card_right">
-                <div v-if = "vif.show.hint.chk" id = "card_hint" >
-                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn">
-                        <el-icon><Picture/></el-icon>
-                        <span>{{ vif.show.pic.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.type.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.category.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.hint.title }}</span>
-                    </el-button>
-                    <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
-                        <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card.hint[v]"/>
+                <div v-if = "vif.show.card.chk" id = "card_right_content">
+                    <div style = "display: flex; justify-content: center; grid-row-start: 1; grid-row-end: 2; grid-column-start: 1; grid-column-end: 5;">
+                        <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.card.type }">
+                            <el-icon><Fold/></el-icon>
+                            <span>{{ vif.show.card.type.title }}</span>
+                        </el-button>
+                        <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.card.category }">
+                            <el-icon><Fold/></el-icon>
+                            <span>{{ vif.show.card.category.title }}</span>
+                        </el-button>
+                        <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.card.hint }">
+                            <el-icon><Fold/></el-icon>
+                            <span>{{ vif.show.card.hint.title }}</span>
+                        </el-button>
                     </div>
+                    <transition name = "card_right">
+                        <div v-if = "vif.show.card.type.chk" id = "card_type">
+                            <div v-for = "(i, v) in lists.type" :key = "v" @change = "card_change.type(v)"><el-checkbox v-model = "card.type[v]">&nbsp;&nbsp;{{ i[1] }}</el-checkbox></div>
+                        </div>
+                    </transition>
+                    <transition name = "card_right">
+                        <div v-if = "vif.show.card.category.chk" id = "card_category">
+                            <div v-for = "(i, v) in lists.category" :key = "v" @change = "card_change.category(v)"><el-checkbox v-model = "card.category[v]">&nbsp;&nbsp;{{ i[1] }}</el-checkbox></div>
+                        </div>
+                    </transition>
+                    <transition name = "card_right">
+                        <div v-if = "vif.show.card.hint.chk" id = "card_hint" >
+                            <div v-for = "(i, v) in Array(16).fill(0)" :key = "v">
+                                <span>{{ v }}:&nbsp;</span><input type = "text" v-model = "card.hint[v]"/>
+                            </div>
+                        </div>
+                    </transition>
                 </div>
             </transition>
             <transition name = "card_right">
-                <div v-if = "vif.show.pic.chk" id = "card_pic_setting" >
-                    <el-button @click = "whether_show_rpage('pic')" class = "change_rpage_btn" style = "background-color: #ecf5ff; order: 0.01px solid #409eff; color: #409eff;">
-                        <el-icon><Picture/></el-icon>
-                        <span>{{ vif.show.pic.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.type.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('category')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.category.title }}</span>
-                    </el-button>
-                    <el-button @click = "whether_show_rpage('hint')" class = "change_rpage_btn">
-                        <el-icon><Fold/></el-icon>
-                        <span>{{ vif.show.hint.title }}</span>
-                    </el-button>
+                <div v-if = "vif.show.pic.chk" id = "card_right_content">
                     <el-switch
                         v-model = "vif.show.pic_cut.cut_or_set"
                         active-text = "设置"
@@ -178,7 +142,7 @@
                         @change = "upload_file.resert()"
                     />
                     <transition name = "card_right">
-                        <div class = "card_pic_setting_content" v-if = "vif.show.pic_cut.cut_or_set">
+                        <div class = "card_pic_setting_content" v-if = "vif.show.pic_cut.cut_or_set" style = "height: 100%;">
                             <span>&nbsp;&nbsp;圆角:</span>
                             <el-switch v-model="pic_setting.radius"/>
                             <span>&nbsp;&nbsp;描述居中:</span>
@@ -483,17 +447,21 @@
 
     let vif = reactive({
         show : {
-            category : {
-                chk : false,
-                title : '效果分类'
-            },
-            type : {
-                chk : false,
-                title : '卡片类型'
-            },
-            hint : {
-                chk : false,
-                title : '提示文字'
+            card : {
+                chk : true,
+                title : '卡片设置',
+                category : {
+                    chk : false,
+                    title : '效果分类'
+                },
+                type : {
+                    chk : true,
+                    title : '卡片类型'
+                },
+                hint : {
+                    chk : false,
+                    title : '提示文字'
+                },
             },
             pic : {
                 chk : true,
@@ -507,6 +475,17 @@
             pic_cut : {
                 chk : false,
                 cut_or_set : false
+            },
+            btn : {
+                card : {
+                    chk : true,
+                    type : true,
+                    category : false,
+                    hint : false,
+                },
+                pic : {
+                    chk : false
+                }
             }
         },
         is_type : {
@@ -896,27 +875,52 @@
     }
 
     async function whether_show_rpage(v) {
-        if (vif.show.category.chk && v == 'category') return;
-        if (vif.show.type.chk && v == 'type') return;
-        if (vif.show.hint.chk && v == 'hint') return;
+        if (vif.show.card.chk && v == 'card') return;
         if (vif.show.pic.chk && v == 'pic') return;
-        vif.show.category.chk = false;
-        vif.show.type.chk = false;
-        vif.show.hint.chk = false;
-        vif.show.pic.chk = false;
-        await(new Promise(resolve => setTimeout(resolve, 400)));
+        if ((vif.show.card.category.chk) && v == 'category') return;
+        if (vif.show.card.type.chk && v == 'type') return;
+        if (vif.show.card.hint.chk && v == 'hint') return;
         switch (v) {
             case 'category':
-                vif.show.category.chk = true;
+                vif.show.card.type.chk = false;
+                vif.show.card.hint.chk = false;
+                vif.show.btn.card.type = false;
+                vif.show.btn.card.hint = false;
+                vif.show.btn.card.category = true;
+                await(new Promise(resolve => setTimeout(resolve, 400)));
+                vif.show.card.category.chk = true;
                 break;
             case 'type':
-                vif.show.type.chk = true;
+                vif.show.card.category.chk = false;
+                vif.show.card.hint.chk = false;
+                vif.show.btn.card.category = false;
+                vif.show.btn.card.hint = false;
+                vif.show.btn.card.type = true;
+                await(new Promise(resolve => setTimeout(resolve, 400)));
+                vif.show.card.type.chk = true;
                 break;
             case 'hint':
-                vif.show.hint.chk = true;
+                vif.show.card.category.chk = false;
+                vif.show.card.type.chk = false;
+                vif.show.btn.card.type = false;
+                vif.show.btn.card.category = false;
+                vif.show.btn.card.hint = true;
+                await(new Promise(resolve => setTimeout(resolve, 400)));
+                vif.show.card.hint.chk = true;
                 break;
             case 'pic':
+                vif.show.card.chk = false;
+                vif.show.btn.card.chk = false;
+                vif.show.btn.pic.chk = true;
+                await(new Promise(resolve => setTimeout(resolve, 400)));
                 vif.show.pic.chk = true;
+                break;
+            case 'card':
+                vif.show.pic.chk = false;
+                vif.show.btn.pic.chk = false;
+                vif.show.btn.card.chk = true;
+                await(new Promise(resolve => setTimeout(resolve, 400)));
+                vif.show.card.chk = true;
                 break;
         }
     }
@@ -1039,6 +1043,8 @@
         width: 32vw;
         height: 100vh;
         overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        justify-self: center;
 
         grid-column-start: 3;
         grid-column-end: 5;
@@ -1047,36 +1053,49 @@
     }
 
     #card_type, #card_category {
+        grid-column-start: 1;
+        grid-column-end: 5;
+        grid-row-start: 2;
+        grid-row-end: 18;
+
+        justify-self: center;
+
+        width: 100%;
+        height: 100%;
+
         display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(17, 1fr);
+        
+        align-items: center;
+        justify-items: center;
+    }
 
+    #card_hint, #card_pic_setting {
+        grid-column-start: 1;
+        grid-column-end: 5;
+        grid-row-start: 2;
+        grid-row-end: 18;
+
+        justify-self: center;
+
+        width: 100%;
+        height: 100%;
+
+        display: grid;
         grid-template-columns: repeat(4, 1fr);
-        grid-template-rows: repeat(16, 1fr);
+        grid-template-rows: repeat(17, 1fr);
 
-        justify-items: left;
+        align-items: center;
     }
 
     #card_category div, #card_type div {
         width: 100%;
 
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-    }
 
-    #card_category div span, #card_type div span {
-        grid-column-start: 1;
-        grid-column-end: 3;
-        justify-self: center;
-        align-self: center;
-    }
-
-    #card_category div input, #card_type div input {
-        grid-column-start: 3;
-        grid-column-end: 4;
-        justify-self: right;
-        align-self: center;
-
-        height: 50%;
-        width: 50%;
+        justify-items: left;
+        align-items: center;
     }
 
     .change_rpage_btn {
@@ -1087,19 +1106,15 @@
         grid-row-end: 2;
     }
 
-    #card_hint, #card_pic_setting {
+    #card_right_content {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         grid-template-rows: repeat(17, 1fr);
 
         align-items: center;
-    }
 
-    #card_type, #card_category, #card_hint, #card_pic_setting {
-        width: 30vw;
-        height: 100vh;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        justify-self: center;
+        height: 100%;
+        width: 100%;
     }
 
     #card_hint div {
@@ -1130,7 +1145,7 @@
     .card_pic_setting_content {
         grid-column-start: 1;
         grid-column-end: 5;
-        grid-row-start: 3;
+        grid-row-start: 2;
         grid-row-end: 18;
 
         display: grid;
@@ -1138,6 +1153,7 @@
         grid-template-rows: repeat(16, 1fr);
 
         height: 100%;
+        align-items: center;
     }
 
     .card_pic_setting_content span {
@@ -1172,6 +1188,12 @@
     #upload_area:hover {
         border: 2px dashed black;
         color: black;
+    }
+
+    .active_rpage_btn {
+        background-color: #ecf5ff;
+        order: 0.01px solid #409eff;
+        color: #409eff;
     }
 
     .card_right-enter-active,
