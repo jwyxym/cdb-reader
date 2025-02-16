@@ -9,61 +9,47 @@
                 <span>搜索</span>
             </el-button>
         </div>
-        <div id = "card_pic">
-            <pic :style = "{ 'display': card.pic != '' ? 'none' : '' }"/>
-            <img :src = "card.pic" v-if = "card.pic != ''"/>
-            <div id = "card_link">
-                <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 , 'display': vif.show.link.chk && vif.is_type.link ? 'block' : 'none' }" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
+        <div id = "card_center" :class = "{ 'wrap_flex': wrap_flex_chk() }">
+            <div id = "card_pic">
+                <pic :style = "{ 'display': card.pic != '' ? 'none' : '' }"/>
+                <img :src = "card.pic" v-if = "card.pic != ''"/>
+                <div id = "card_link">
+                    <img v-for = "(i, v) in [0, 1, 2, 3, 5, 6, 7, 8]" :src = "lists.link_pics[i]" :style = "{ 'grid-row-start': [1, 3, 5][Math.floor(i / 3)], 'grid-row-end': [1, 3, 5][Math.floor(i / 3)] + 1, 'grid-column-start': (i % 3) + 1, 'grid-column-end': (i % 3) + 2 , 'display': vif.show.link.chk && vif.is_type.link ? 'block' : 'none' }" @mouseover = "card.get_link.src.get(i)" @mouseleave = "card.get_link.src.reset(i)" @click = "card.get_link.link(i)"/>
+                </div>
+                <div>
+                    <el-switch v-if = "vif.is_type.link" v-model = "vif.show.link.chk"></el-switch>
+                </div>
             </div>
-            <div>
-                <el-switch v-if = "vif.is_type.link" v-model = "vif.show.link.chk"></el-switch>
+            <div id = "card_center_setting">
+                <el-select v-model = "card.ot">
+                    <el-option v-for = "(i,v) in lists.ot" :key = "v" :label = "i[1]" :value = "i[0]"></el-option>
+                </el-select>
+                <el-select v-model = "card.attribute">
+                    <el-option v-for = "(i,v) in lists.attribute" :key = "v" :label = "i[1]" :value = "i[0]"></el-option>
+                </el-select>
+                <el-select v-model = "card.level">
+                    <el-option v-for = "(i,v) in lists.level" :key = "v" :label = "i[1]" :value = "i[0]"></el-option>
+                </el-select>
+                <el-select v-model = "card.race">
+                    <el-option v-for = "(i,v) in lists.race" :key = "v" :label = "i[1]" :value = "i[1]"></el-option>
+                </el-select>
+                <div id = "card_setcard">
+                    <div v-for = "(i, v) in Array(4).fill(0)" :key = "v">
+                        <el-input v-model = "card.setcard[v]" @input = "filter_input($event, ['card_setcard', v], /[^a-fA-F0-9]/g)" @change = "card_change.setcard(v)" placeholder = "字段"></el-input>
+                        <el-input v-model = "card_n.setcard_name[v]" @change = "card_change.setcard_name(v)" disabled></el-input>
+                    </div>
+                </div>
+                <div id = "card_id">
+                    <el-input @input = "filter_input($event, ['card_alias'])" v-model = "card.alias" placeholder = "同名卡"></el-input>
+                    <el-input @input = "filter_input($event, ['card_id'])" v-model = "card.id" placeholder = "卡号"></el-input>
+                    <strong v-if = "vif.warn.same_id">*卡号已存在</strong>
+                </div>
+                <div id = "card_atk">
+                    <el-input @input = "filter_input($event, ['card_atk'])" v-model = "card.atk" placeholder = "攻击力"></el-input>
+                    <el-input v-if = "!vif.is_type.link" @input = "filter_input($event, ['card_def'])" v-model = "card.def" placeholder = "守备力"></el-input>
+                    <el-input v-if = "vif.is_type.pendulum" @input = "filter_input($event, ['card_pendulum'])" v-model = "card.pendulum" placeholder = "灵摆刻度"></el-input>
+                </div>
             </div>
-        </div>
-        <div id = "card_ot">
-            <span>&nbsp;&nbsp;许可:</span>
-            <select v-model = "card.ot">
-                <option v-for = "(i,v) in lists.ot" :key = "v" >{{ i[1] }}</option>
-            </select>
-        </div>
-        <div id = "card_attribute">
-            <span>&nbsp;&nbsp;属性:</span>
-            <select v-model = "card.attribute">
-                <option v-for = "(i,v) in lists.attribute" :key = "v" >{{ i[1] }}</option>
-            </select>
-        </div>
-        <div id = "card_level">
-            <span>&nbsp;&nbsp;星级:</span>
-            <select v-model = "card.level">
-                <option v-for = "(i,v) in lists.level" :key = "v" >{{ i[1] }}</option>
-            </select>
-        </div>
-        <div id = "card_race">
-            <span>&nbsp;&nbsp;种族:</span>
-            <select  v-model = "card.race">
-                <option v-for = "(i,v) in lists.race" :key = "v" >{{ i[1] }}</option>
-            </select>
-        </div>
-        <div id = "card_setcard">
-            <div v-for = "(i, v) in Array(4).fill(0)" :key = "v">
-                <span style = "grid-column-start: 1; grid-column-end: 2;">&nbsp;&nbsp;字段:</span>
-                <input v-model = "card.setcard[v]" @input = "filter_input($event, ['card_setcard', v], /[^a-fA-F0-9]/g)" @change = "card_change.setcard(v)" style = "grid-column-start: 2; grid-column-end: 3; width: 80%;"/>
-                <input v-model = "card_n.setcard_name[v]" @change = "card_change.setcard_name(v)" style = "grid-column-start: 3; grid-column-end: 4; width: 80%;" :readonly = "lists.setcard.find(i => i[0] == card.setcard[v]) != undefined"/>
-            </div>
-        </div>
-        <div id = "card_id">
-            <span>&nbsp;&nbsp;同名卡:</span>
-            <input @input = "filter_input($event, ['card_alias'])" v-model = "card.alias"/>
-            <span>&nbsp;&nbsp;卡号:</span>
-            <input @input = "filter_input($event, ['card_id'])" v-model = "card.id"/>
-            <strong v-if = "vif.warn.same_id">*卡号已存在</strong>
-        </div>
-        <div id = "card_atk">
-            <span>&nbsp;&nbsp;攻击力:</span>
-            <input @input = "filter_input($event, ['card_atk'])" v-model = "card.atk"/>
-            <span v-if = "!vif.is_type.link">&nbsp;&nbsp;守备力:</span>
-            <input v-if = "!vif.is_type.link" @input = "filter_input($event, ['card_def'])" v-model = "card.def"/>
-            <span v-if = "vif.is_type.pendulum">&nbsp;&nbsp;灵摆刻度:</span>
-            <input v-if = "vif.is_type.pendulum" @input = "filter_input($event, ['card_pendulum'])" v-model = "card.pendulum"/>
         </div>
         <textarea id = "card_desc" v-model = "card.desc"></textarea>
         <div id = "card_box_btn">
@@ -241,25 +227,25 @@
     
     let card = reactive({
         name : '',
+        origin_name : '',
         desc : '',
         pic : '',
         center_pic : '',
-        id : 0,
-        alias : 0,
-        pendulum : 0,
         link : 0,
         origin_id : 0,
-        origin_name : '',
-        ot : '',
-        attribute : '',
-        level : '',
+        ot : 0,
+        attribute : 0,
+        level : 0,
         race : '',
-        atk : 0 as number | string,
-        def : 0 as number | string,
+        id : '' as number | string,
+        alias : '' as number | string,
+        pendulum : '' as number | string,
+        atk : '' as number | string,
+        def : '' as number | string,
         type : [false],
         category : [false],
         hint : [''],
-        setcard : Array(4).fill('0'),
+        setcard : Array(4).fill(''),
         setcard_name : Array(4).fill(''),
         get_link : {
             link : function(i) {
@@ -285,7 +271,7 @@
             select.id = -1;
             emit.list_page.search.to([
                 card_n.id,
-                card_n.ot,
+                card.ot,
                 card_n.alias,
                 card.setcard,
                 card_n.type,
@@ -293,7 +279,7 @@
                 card_n.def,
                 card_n.level,
                 card_n.race,
-                card_n.attribute,
+                card.attribute,
                 card_n.category,
                 card_n.id,
                 card.name,
@@ -302,23 +288,23 @@
         },
         clear : function() {
             card.name = '';
-            card.ot = lists.ot[0][1] as string;
-            card.attribute = lists.attribute[0][1] as string;
-            card.level = lists.level[0][1] as string;
+            card.ot = lists.ot[0][0] as number;
+            card.attribute = lists.attribute[0][0] as number;
+            card.level = lists.level[0][0] as number;
             card.race = lists.race[0][1] as string;
-            card.id = 0;
-            card.alias = 0;
+            card.id = '';
+            card.alias = '';
             card.pic = '';
             card.center_pic = '';
-            card.atk = 0;
-            card.def = 0;
-            card.pendulum = 0;
+            card.atk = '';
+            card.def = '';
+            card.pendulum = '';
             card.link = 0;
             card.desc = '';
             card.type = Array(lists.type.length).fill(false);
             card.category = Array(lists.category.length).fill(false);
             card.hint = Array(16).fill('');
-            card.setcard = Array(4).fill('0');
+            card.setcard = Array(4).fill('');
             card.origin_id = 0;
             card.origin_name = '';
             select.id = -1;
@@ -391,7 +377,7 @@
                     let response = await axios.post(`${window.location.href}api/save_cdb`, {
                         data: [
                             card_n.id,
-                            card_n.ot,
+                            card.ot,
                             card_n.alias,
                             card_n.setcard,
                             card_n.type,
@@ -399,7 +385,7 @@
                             card_n.def,
                             card_n.level,
                             card_n.race,
-                            card_n.attribute,
+                            card.attribute,
                             card_n.category,
                             card_n.id,
                             card.name,
@@ -437,13 +423,11 @@
     let card_n = reactive({
         id : 0,
         alias : 0,
-        ot : 0,
         level : 0,
         atk : 0,
         def : 0,
         setcard : 0,
         race : 0,
-        attribute : 0,
         type : 0,
         category : 0,
         setcard_name : Array(4).fill('')
@@ -515,7 +499,7 @@
             copy.content = [[
                 [
                     card_n.id,
-                    card_n.ot,
+                    card.ot,
                     card_n.alias,
                     card_n.setcard,
                     card_n.type,
@@ -523,7 +507,7 @@
                     card_n.def,
                     card_n.level,
                     card_n.race,
-                    card_n.attribute,
+                    card.attribute,
                     card_n.category,
                     card_n.id,
                     card.name,
@@ -626,7 +610,7 @@
         } as () => void,
         setcard : function(i) {
             // card_n.setcard_name[i] = lists.setcard.find(e => e[0] == card.setcard[i])?.[1] as string ?? (lists.custom_setcard.find(e => e[0] == card.setcard[i])?.[1] as string ?? '');
-            // card_n.setcard = parseInt(card.setcard.slice().sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
+            card_n.setcard = parseInt(card.setcard.slice().map(e => e == '' ? '0' : e).sort((a, b) => parseInt(a, 16) - parseInt(b, 16)).map(e => ('0'.repeat(4 - e.slice(0, 4).length)) + e.slice(0, 4)).join(''), 16);
         } as (i: number) => void,
         setcard_name : function(i) {
             // if (card.setcard[i] == 0 || lists.setcard.find(e => e[0] == card.setcard[i])) return;
@@ -640,10 +624,9 @@
             card_n.def = (card_n.type & 0x4000000) == 0 ? (card.def != '?' ? card.def as number : -2) : card.link; 
         } as () => void,
         name : function() {
-            emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : card.id, card.name);
+            emit.list_page.card_changed.to(vif.warn.same_id ? card.origin_id : (card.id != '' ? card.id as number : 0), card.name);
         } as () => void,
         id : function() {
-            console.log(card.id);
             if (open.list.flat().filter(e => e.split(' ')[0] == card.id).length > 0 && card.origin_id != card.id) {
                 vif.warn.same_id = true;
                 if (select.id > 0)
@@ -652,28 +635,22 @@
                 if (vif.warn.same_id)
                     vif.warn.same_id = false;
                 if (select.id > 0)
-                    emit.list_page.card_changed.to(card.id, card.name);
+                    emit.list_page.card_changed.to((card.id != '' ? card.id as number : 0), card.name);
             }
-            card_n.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : card.id);
+            card_n.id = (vif.warn.same_id || card.id.toString().length == 0 || card.id == 0 ? (card.origin_id > 10000000000 ? 0 : card.origin_id) : (card.id != '' ? card.id as number : 0));
         } as () => void,
         alias : function() {
-            card_n.alias = (card.alias.toString().length == 0 ? 0 : card.alias);
-        } as () => void,
-        ot : function() {
-            card_n.ot = lists.ot.find(e => e[1] == card.ot)?.[0] as number ?? 0;
+            card_n.alias = (card.alias != '' ? card.alias as number : 0);
         } as () => void,
         level : function() {
-            card_n.level = lists.level.find(e => e[1] == card.level)?.[0] as number ?? 0;
+            card_n.level = card.level;
             if (vif.is_type.pendulum) {
-                card_n.level |= (card.pendulum << 16);
-                card_n.level |= (card.pendulum << 24);
+                card_n.level |= (card.pendulum as number << 16);
+                card_n.level |= (card.pendulum as number << 24);
             }
         } as () => void,
         race : function () {
             card_n.race = lists.race.find(e => e[1] == card.race)?.[0] as number ?? 0;
-        } as () => void,
-        attribute : function() {
-            card_n.attribute = lists.attribute.find(e => e[1] == card.attribute)?.[0] as number ?? 0;
         } as () => void,
         type : function(i) {
             card.type[i] ? card_n.type |= lists.type[i][0] : card_n.type &= ~lists.type[i][0];
@@ -706,10 +683,8 @@
     watch (() => card.atk, () => { card_change.atk(); });
     watch (() => card.def, () => { card_change.def(); });
     watch (() => card.alias, () => { card_change.alias(); });
-    watch (() => card.ot, () => { card_change.ot(); });
     watch (() => card.level, () => { card_change.level(); });
     watch (() => card.race, () => { card_change.race(); });
-    watch (() => card.attribute, () => { card_change.attribute(); });
 
     watch(pic_setting, () => {
         if (card.pic == '')
@@ -843,8 +818,7 @@
     emitter.on('to_cpage_save', emit.download_page.save.on);
     emitter.on('to_cpage_upload', emit.pic_cut_page.upload.on);
 
-    function filter_input(event, t, str_filter = /[^0-9]/) {
-        let input_value = event.target.value;
+    function filter_input(input_value, t, str_filter = /[^0-9]/) {
         let new_value = input_value.replace(str_filter, '')
         switch (t[0]) {
             case'card_setcard':
@@ -878,8 +852,11 @@
         }
     }
 
+    function wrap_flex_chk() {
+        return window.innerWidth < window.innerHeight;
+    }
+
     async function whether_show_rpage(v) {
-        console.log(vif.show);
         if (vif.show.card.chk && v == 'card') return;
         if (vif.show.pic.chk && v == 'pic') return;
         if (vif.show.card.category.chk && v == 'category') return;
@@ -953,27 +930,38 @@
         justify-self: center;
     }
 
-    #card_ot, #card_attribute, #card_level, #card_race, #card_setcard, #card_id, #card_atk {
-        grid-column-start: 2;
+    #card_center {
+        grid-column-start: 1;
         grid-column-end: 3;
+        grid-row-start: 2;
+        grid-row-end: 8;
+
+        width: 35vw;
+        height: 50vh;
+        display: flex;
+        column-gap: 5%;
+        justify-content: center;
+    }
+
+    .wrap_flex {
+        flex-wrap: wrap;
+    }
+
+    #card_center_setting {
+        width: 17.5vh;
+        height: auto;
+
+        display: grid;
     }
 
     #card_id , #card_atk{
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: 1fr;
         grid-template-rows: repeat(3, 1fr);
     }
 
-    #card_id input, #card_atk input {
-        grid-column-start: 2;
-        grid-column-end: 4;
-        width: 80%;
-    }
-
     #card_id strong {
-        color: red;
-        grid-column-start: 1;
-        grid-column-end: 4;
+        color: red;;
     }
 
     #card_setcard {
@@ -986,8 +974,9 @@
     }
 
     #card_setcard div {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        width: 100%;
+        display: flex;
+        flex-wrap: nowrap;
     }
 
     #card_desc {
@@ -1007,15 +996,9 @@
 
     #card_pic {
         position: relative;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 
         justify-self: center;
         text-align: center;
-
-        grid-column-start: 1;
-        grid-column-end: 2;
-        grid-row-start: 2;
-        grid-row-end: 8;
     }
 
     #card_link {
@@ -1034,8 +1017,8 @@
 
     #card_pic img, .pic {
         max-width: 17.5vw;
-        height: 110%;
-        width: auto;
+        height: 100%;
+        width: 100%;
         display: block;
     }
 
@@ -1150,6 +1133,7 @@
         width: 100%;
 
         display: flex;
+        flex-wrap: wrap;
         justify-content: center;
     }
 

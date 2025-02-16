@@ -114,7 +114,7 @@
         switch(data.type){
             case'monster' :
                 list.attribute.forEach((value, key) => {
-                    if((card_n.attribute & key) > 0)
+                    if((card.attribute & key) > 0)
                         data.attribute = value;
                 });
                 list.monster_type.forEach((value, key) => {
