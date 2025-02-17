@@ -1,15 +1,19 @@
 <template>
     <div class = "card_page">
         <div id = "card_name">
-            <span>卡名:&nbsp;&nbsp;</span>
-            <input v-model = "card.name"/>
-            <span>&nbsp;&nbsp;</span>
+            <el-input placeholder="卡名" v-model = "card.name"></el-input>
             <el-button @click = "card.search()">
                 <el-icon><search/></el-icon>
                 <span>搜索</span>
             </el-button>
+            <!-- <input v-model = "card.name"/>
+            <span>&nbsp;&nbsp;</span> -->
+            <!-- <el-button @click = "card.search()">
+                <el-icon><search/></el-icon>
+                <span>搜索</span>
+            </el-button> -->
         </div>
-        <div id = "card_center" :class = "{ 'wrap_flex': wrap_flex_chk() }">
+        <div id = "card_center" :style = "{ 'flex-wrap': window_chk() ? 'wrap' : 'nowrap' }">
             <div id = "card_pic">
                 <pic :style = "{ 'display': card.pic != '' ? 'none' : '' }"/>
                 <img :src = "card.pic" v-if = "card.pic != ''"/>
@@ -20,7 +24,7 @@
                     <el-switch v-if = "vif.is_type.link" v-model = "vif.show.link.chk"></el-switch>
                 </div>
             </div>
-            <div id = "card_center_setting">
+            <div id = "card_center_setting" :style = "{ 'grid-template-columns' : window_chk() ? 'repeat(2, 1fr)' : '1fr' }">
                 <el-select v-model = "card.ot">
                     <el-option v-for = "(i,v) in lists.ot" :key = "v" :label = "i[1]" :value = "i[0]"></el-option>
                 </el-select>
@@ -44,7 +48,7 @@
                     <el-input @input = "filter_input($event, ['card_id'])" v-model = "card.id" placeholder = "卡号"></el-input>
                     <strong v-if = "vif.warn.same_id">*卡号已存在</strong>
                 </div>
-                <div id = "card_atk">
+                <div id = "card_atk" :style = "{'grid-column-start': window_chk() ? '2' : '1', 'grid-column-end': window_chk() ? '3' : '2'}">
                     <el-input @input = "filter_input($event, ['card_atk'])" v-model = "card.atk" placeholder = "攻击力"></el-input>
                     <el-input v-if = "!vif.is_type.link" @input = "filter_input($event, ['card_def'])" v-model = "card.def" placeholder = "守备力"></el-input>
                     <el-input v-if = "vif.is_type.pendulum" @input = "filter_input($event, ['card_pendulum'])" v-model = "card.pendulum" placeholder = "灵摆刻度"></el-input>
@@ -73,7 +77,7 @@
             <!-- <button style = "background-color: cornflowerblue;">设置</button> -->
         </div>
         <div id = "card_right">
-            <div style = "display: flex; justify-content: center; grid-row-start: 1; grid-row-end: 2;">
+            <div style = "display: flex; flex-wrap: wrap; justify-content: center; grid-row-start: 1; grid-row-end: 2;">
                 <el-button @click = "whether_show_rpage('card')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.card.chk }">
                     <el-icon><Fold/></el-icon>
                     <span>{{ vif.show.card.title }}</span>
@@ -83,9 +87,9 @@
                     <span>{{ vif.show.pic.title }}</span>
                 </el-button>
             </div>
-            <transition name = "card_right">
+            <transition name = "opacity">
                 <div v-if = "vif.show.card.chk" id = "card_right_content">
-                    <div style = "display: flex; justify-content: center; grid-row-start: 1; grid-row-end: 2; grid-column-start: 1; grid-column-end: 5;">
+                    <div style = "display: flex; flex-wrap: wrap; justify-content: center; grid-row-start: 1; grid-row-end: 2; grid-column-start: 1; grid-column-end: 5;">
                         <el-button @click = "whether_show_rpage('type')" class = "change_rpage_btn" :class = "{ 'active_rpage_btn': vif.show.btn.card.type }">
                             <el-icon><Fold/></el-icon>
                             <span>{{ vif.show.card.type.title }}</span>
@@ -99,22 +103,22 @@
                             <span>{{ vif.show.card.hint.title }}</span>
                         </el-button>
                     </div>
-                    <transition name = "card_right">
+                    <transition name = "opacity">
                         <div v-if = "vif.show.card.type.chk" id = "card_type">
                             <div v-for = "(i, v) in lists.type" :key = "v" @change = "card_change.type(v)"><el-checkbox v-model = "card.type[v]" style = "left: 5%;">{{ i[1] }}</el-checkbox></div>
                         </div>
                     </transition>
-                    <transition name = "card_right">
+                    <transition name = "opacity">
                         <div v-if = "vif.show.card.category.chk" id = "card_category">
                             <div v-for = "(i, v) in lists.category" :key = "v" @change = "card_change.category(v)"><el-checkbox v-model = "card.category[v]" style = "left: 5%;">{{ i[1] }}</el-checkbox></div>
                         </div>
                     </transition>
-                    <transition name = "card_right">
+                    <transition name = "opacity">
                         <div v-if = "vif.show.card.hint.chk" id = "card_hint">
                             <el-input
                                 v-for = "(i, v) in Array(16).fill(0)" :key = "v"
                                 style = "width: 90%; grid-column-start: 1; grid-column-end: 5; left: 5%;"
-                                :placeholder = "'请输入描述：第' + v + '项'"
+                                :placeholder = "v + '：'"
                                 suffix-icon = "el-icon-date"
                                 v-model = "card.hint[v]">
                             </el-input>
@@ -122,7 +126,7 @@
                     </transition>
                 </div>
             </transition>
-            <transition name = "card_right">
+            <transition name = "opacity">
                 <div v-if = "vif.show.pic.chk" id = "card_right_content">
                     <el-switch
                         v-model = "vif.show.pic_cut.cut_or_set"
@@ -131,7 +135,7 @@
                         style = "grid-column-start: 1; grid-column-end: 5; justify-self: center;"
                         @change = "upload_file.resert()"
                     />
-                    <transition name = "card_right">
+                    <transition name = "opacity">
                         <div class = "card_pic_setting_content" v-if = "vif.show.pic_cut.cut_or_set" style = "height: 100%;">
                             <span>&nbsp;&nbsp;圆角:</span>
                             <el-switch v-model="pic_setting.radius"/>
@@ -173,7 +177,7 @@
                             <el-input v-model = "pic_setting.package"></el-input>
                         </div>
                     </transition>
-                    <transition name = "card_right">
+                    <transition name = "opacity">
                         <div class = "card_pic_setting_content" v-if = "!vif.show.pic_cut.cut_or_set">
                             <div style = "width: 30vw; grid-column-start: 1; grid-column-end: 4;">
                                 <div id = "upload_area" @dragenter.prevent="upload_file.uploading = true" @dragover.prevent="upload_file.uploading = true" @dragleave.prevent="upload_file.uploading = false" @drop.prevent="upload_file.drag" @click="() => { upload_file_input.click(); }">
@@ -198,6 +202,7 @@
     import download from './download.vue'
     import pic from './pic.vue'
     import pic_cut from './pic_cut.vue'
+import { column } from 'element-plus/es/components/table-v2/src/common';
 
     let lists = reactive({
         ot: [[0x0, '许可 N/A']],
@@ -852,7 +857,7 @@
         }
     }
 
-    function wrap_flex_chk() {
+    function window_chk() {
         return window.innerWidth < window.innerHeight;
     }
 
@@ -928,6 +933,8 @@
         grid-column-end: 3;
 
         justify-self: center;
+        display: flex;
+        flex-wrap: nowrap;
     }
 
     #card_center {
@@ -943,8 +950,32 @@
         justify-content: center;
     }
 
-    .wrap_flex {
-        flex-wrap: wrap;
+    #card_desc {
+        grid-column-start: 1;
+        grid-column-end: 3;
+
+        grid-row-start: 9;
+        grid-row-end: 16;
+
+        justify-self: center;
+
+        width: 90%;
+        height: 100%;
+
+        resize: none;
+    }
+
+    #card_box_btn {
+        grid-column-start: 1;
+        grid-column-end: 3;
+        grid-row-start: 16;
+        grid-row-end: 17;
+
+        width: 100%;
+
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
     }
 
     #card_center_setting {
@@ -977,21 +1008,6 @@
         width: 100%;
         display: flex;
         flex-wrap: nowrap;
-    }
-
-    #card_desc {
-        grid-column-start: 1;
-        grid-column-end: 3;
-
-        grid-row-start: 9;
-        grid-row-end: 16;
-
-        justify-self: center;
-
-        width: 90%;
-        height: 100%;
-
-        resize: none;
     }
 
     #card_pic {
@@ -1028,9 +1044,8 @@
     }
 
     #card_right {
-        width: 32vw;
+        width: 100%;
         height: 100vh;
-        overflow: hidden;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         justify-self: center;
 
@@ -1124,19 +1139,6 @@
         grid-column-end: 2;
     }
 
-    #card_box_btn {
-        grid-column-start: 1;
-        grid-column-end: 3;
-        grid-row-start: 16;
-        grid-row-end: 17;
-
-        width: 100%;
-
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-
     #upload_area {
         width: 80%;
         height: 90%;
@@ -1160,18 +1162,18 @@
         color: #409eff;
     }
 
-    .card_right-enter-active,
-    .card_right-leave-active {
+    .opacity-enter-active,
+    .opacity-leave-active {
         transition: opacity 0.5s ease;
     }
 
-    .card_right-enter-from,
-    .card_right-leave-to {
+    .opacity-enter-from,
+    .opacity-leave-to {
         opacity: 0;
     }
 
-    .card_right-enter-to,
-    .card_right-leave-from {
+    .opacity-enter-to,
+    .opacity-leave-from {
         opacity: 1;
     }
 </style>
