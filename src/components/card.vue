@@ -6,12 +6,6 @@
                 <el-icon><search/></el-icon>
                 <span>搜索</span>
             </el-button>
-            <!-- <input v-model = "card.name"/>
-            <span>&nbsp;&nbsp;</span> -->
-            <!-- <el-button @click = "card.search()">
-                <el-icon><search/></el-icon>
-                <span>搜索</span>
-            </el-button> -->
         </div>
         <div id = "card_center" :style = "{ 'flex-wrap': window_chk() ? 'wrap' : 'nowrap' }">
             <div id = "card_pic">
